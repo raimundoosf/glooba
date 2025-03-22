@@ -1,5 +1,11 @@
 <h1 align="center">✨ Glooba, la Red Social de la sustentabilidad ✨</h1>
 
+Tecnologías:
+
+- Tech stack: Next.js App Router, Postgres, Prisma, Clerk & TypeScript
+- Estilo con Tailwind & Shadcn
+- Cargas de archivos con UploadThing
+
 ### Configuración de archivo .env 
 
 ```js
