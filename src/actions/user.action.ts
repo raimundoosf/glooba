@@ -56,9 +56,17 @@ export async function getDbUserId() {
   const { userId: clerkId } = await auth();
   if (!clerkId) return null;
 
-  const user = await getUserByClerkId(clerkId);
+  let user = await getUserByClerkId(clerkId);
 
-  if (!user) throw new Error("User not found");
+  if (!user) {
+    console.info(`User with clerkId ${clerkId} not found. Creating new user...`);
+    await syncUser();
+    user = await getUserByClerkId(clerkId);
+    if (!user){
+      console.error(`Could not find user with clerkId ${clerkId}`);
+      throw new Error("User not found");
+    }
+  }
 
   return user.id;
 }
