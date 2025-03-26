@@ -17,14 +17,11 @@ export const ourFileRouter = {
       if (!userId) throw new Error("Unauthorized");
 
       // whatever is returned here is accessible in onUploadComplete as `metadata`
-      console.log("uploadthing middleware: userId:", userId);
       return { userId };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       try {
-        console.log("uploadthing onUploadComplete: metadata:", metadata);
-        console.log("uploadthing onUploadComplete: file:", file);
-        return { fileUrl: file.url };
+        return { fileUrl: file.ufsUrl };
       } catch (error) {
         console.error("Error in onUploadComplete:", error);
         throw error;
