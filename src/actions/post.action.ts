@@ -39,6 +39,7 @@ export async function getPosts() {
             name: true,
             image: true,
             username: true,
+            isCompany: true,
           },
         },
         comments: {
@@ -49,6 +50,7 @@ export async function getPosts() {
                 username: true,
                 image: true,
                 name: true,
+                isCompany: true,
               },
             },
           },
