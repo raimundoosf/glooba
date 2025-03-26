@@ -14,6 +14,7 @@ export async function getProfileByUsername(username: string) {
         name: true,
         username: true,
         bio: true,
+        isCompany: true,
         image: true,
         location: true,
         website: true,
@@ -48,6 +49,7 @@ export async function getUserPosts(userId: string) {
             name: true,
             username: true,
             image: true,
+            isCompany: true,
           },
         },
         comments: {
@@ -58,6 +60,7 @@ export async function getUserPosts(userId: string) {
                 name: true,
                 username: true,
                 image: true,
+                isCompany: true,
               },
             },
           },
@@ -106,6 +109,7 @@ export async function getUserLikedPosts(userId: string) {
             name: true,
             username: true,
             image: true,
+            isCompany: true,
           },
         },
         comments: {
@@ -115,6 +119,7 @@ export async function getUserLikedPosts(userId: string) {
                 id: true,
                 name: true,
                 username: true,
+                isCompany: true,
                 image: true,
               },
             },
@@ -154,6 +159,7 @@ export async function updateProfile(formData: FormData) {
 
     const name = formData.get("name") as string;
     const bio = formData.get("bio") as string;
+    const isCompany = formData.get("isCompany") === "true";
     const location = formData.get("location") as string;
     const website = formData.get("website") as string;
 
@@ -162,6 +168,7 @@ export async function updateProfile(formData: FormData) {
       data: {
         name,
         bio,
+        isCompany,
         location,
         website,
       },

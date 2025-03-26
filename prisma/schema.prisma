@@ -22,6 +22,7 @@ model User {
   bio String?
   image String?
   location String?
+  isCompany Boolean  @default(true) // Is a company, by default true
   website String?
   createdAt DateTime @default(now()) // member since 2020
   updatedAt DateTime @updatedAt
