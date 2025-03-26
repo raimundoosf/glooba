@@ -65,6 +65,7 @@ function CreatePost() {
                 onChange={(url) => {
                   setImageUrl(url);
                   if (!url) setShowImageUpload(false);
+                  console.log("cambiando imagen", url);
                 }}
               />
             </div>
