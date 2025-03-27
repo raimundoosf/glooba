@@ -63,9 +63,11 @@ function ProfilePageClient({
 
   const handleEditSubmit = async () => {
     const formData = new FormData();
-    Object.entries(editForm).forEach(([key, value]) => {
-      formData.append(key, value);
-    });
+    Object.entries(editForm)
+      .filter(([key]) => key !== "isCompany") // Filter out isCompany
+      .forEach(([key, value]) => {
+        formData.append(key, String(value));
+      });
     formData.append("isCompany", editForm.isCompany ? "true" : "false");
     const result = await updateProfile(formData);
     if (result.success) {
