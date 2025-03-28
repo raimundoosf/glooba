@@ -23,6 +23,7 @@ model User {
   image String?
   location String?
   isCompany Boolean  @default(true) // Is a company, by default true
+  categories String[] // Categories of the company, and categories of interest of users
   website String?
   createdAt DateTime @default(now()) // member since 2020
   updatedAt DateTime @updatedAt

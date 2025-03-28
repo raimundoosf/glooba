@@ -19,6 +19,7 @@ export async function getProfileByUsername(username: string) {
         location: true,
         website: true,
         createdAt: true,
+        categories: true,
         _count: {
           select: {
             followers: true,
@@ -162,6 +163,14 @@ export async function updateProfile(formData: FormData) {
     const isCompany = formData.get("isCompany") === "true";
     const location = formData.get("location") as string;
     const website = formData.get("website") as string;
+    const categories: string[] = [];
+
+    // for to see categories
+    for (const [key, value] of Array.from(formData.entries())) {
+      if (key.startsWith("categories[")) {
+        categories.push(value as string);
+      }
+    }
 
     const user = await prisma.user.update({
       where: { clerkId },
@@ -171,6 +180,7 @@ export async function updateProfile(formData: FormData) {
         isCompany,
         location,
         website,
+        categories,
       },
     });
 
