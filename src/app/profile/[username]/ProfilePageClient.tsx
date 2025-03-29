@@ -326,28 +326,29 @@ function ProfilePageClient({
                           className="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mr-2"
                         >
                           <option value="">Selecciona una categoría</option>
-                          <option value="Textil">Textil</option>
-                          <option value="Limpieza">Limpieza</option>
-                          <option value="Deportes">Deportes</option>
-                          <option value="Gestión de residuos">Gestión de residuos</option>
-                          <option value="Tecnología">Tecnología</option>
+                          <option value="Agricultura">Agricultura</option>
                           <option value="Alimentos">Alimentos</option>
-                          <option value="Mascotas">Mascotas</option>
-                          <option value="Muebles y decoración">Muebles y decoración</option>
-                          <option value="Bebidas">Bebidas</option>
-                          <option value="Moda y Accesorios">Moda y Accesorios</option>
-                          <option value="Cosmética e higiene personal">Cosmética e higiene personal</option>
-                          <option value="Neumáticos">Neumáticos</option>
-                          <option value="Repuestos">Repuestos</option>
                           <option value="Arquitectura, construcción y diseño">Arquitectura, construcción y diseño</option>
-                          <option value="Producto sostenible">Producto sostenible</option>
+                          <option value="Bebidas">Bebidas</option>
+                          <option value="Cocina">Cocina</option>
+                          <option value="Cosmética e higiene personal">Cosmética e higiene personal</option>
+                          <option value="Deportes">Deportes</option>
                           <option value="Ferias">Ferias</option>
+                          <option value="Gestión de residuos">Gestión de residuos</option>
+                          <option value="Limpieza">Limpieza</option>
+                          <option value="Moda y Accesorios">Moda y Accesorios</option>
+                          <option value="Muebles y decoración">Muebles y decoración</option>
+                          <option value="Mascotas">Mascotas</option>
+                          <option value="Neumáticos">Neumáticos</option>
                           <option value="Outdoor">Outdoor</option>
                           <option value="Packaging">Packaging</option>
-                          <option value="Paisajismo">Paisajismo</option>
+                          <option value="Paisajismo y jardinería">Paisajismo y jardinería</option>
+                          <option value="Producto sostenible">Producto sostenible</option>
+                          <option value="Repuestos">Repuestos</option>
                           <option value="Solar Fotovoltáica">Solar Fotovoltáica</option>
-                          <option value="Cocina">Cocina</option>
+                          <option value="Tecnología">Tecnología</option>
                           <option value="Terraza y aire libre">Terraza y aire libre</option>
+                          <option value="Textil">Textil</option>
                         </select>
                         <Button
                           type="button"
