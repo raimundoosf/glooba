@@ -5,35 +5,6 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 
 
-export async function syncUser() {
-  try {
-    const { userId: clerkId } = await auth();
-    const clerkUser = await currentUser();
-
-    if (!clerkId || !clerkUser) return;
-
-    // Always update user data when syncing
-    const userData = {
-      email: clerkUser.emailAddresses[0].emailAddress,
-      image: clerkUser.imageUrl,
-      username: clerkUser.username || clerkUser.emailAddresses[0].emailAddress.split('@')[0],
-    };
-
-    const existingUser = await prisma.user.upsert({
-      where: { clerkId },
-      update: userData, // Always update with latest Clerk data
-      create: {
-        clerkId,
-        ...userData,
-      },
-    });
-
-    return existingUser;
-  } catch (error) {
-    console.log("Error in syncUser", error);
-  }
-}
-
 export async function getUserByClerkId(clerkId: string) {
   return prisma.user.findUnique({
     where: {
@@ -58,13 +29,8 @@ export async function getDbUserId() {
   let user = await getUserByClerkId(clerkId);
 
   if (!user) {
-    console.info(`User with clerkId ${clerkId} not found. Creating new user...`);
-    await syncUser();
-    user = await getUserByClerkId(clerkId);
-    if (!user) {
-      console.error(`Could not find user with clerkId ${clerkId}`);
-      throw new Error("User not found");
-    }
+    console.error(`Could not find user with clerkId ${clerkId}`);
+    throw new Error("User not found");
   }
 
   return user.id;
