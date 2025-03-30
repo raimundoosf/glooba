@@ -11,7 +11,6 @@ export async function POST(req: Request) {
   if (!WEBHOOK_SECRET) throw new Error('CLERK_WEBHOOK_SECRET not set')
 
   const headerPayload = headers()
-  // Get headers with correct case
   const svix_id = headerPayload.get('svix-id')
   const svix_timestamp = headerPayload.get('svix-timestamp')
   const svix_signature = headerPayload.get('svix-signature')
@@ -26,7 +25,6 @@ export async function POST(req: Request) {
 
   let evt: WebhookEvent
   try {
-    // Pass headers with correct keys using hyphen-case
     evt = wh.verify(body, {
       'svix-id': svix_id,
       'svix-timestamp': svix_timestamp,
@@ -64,51 +62,71 @@ export async function POST(req: Request) {
 
 // User Creation Handler
 async function handleUserCreated(clerkUser: any) {
-  const userData = {
-    clerkId: clerkUser.id,
-    email: clerkUser.email_addresses[0]?.email_address,
-    username: clerkUser.username || generateUsernameFromEmail(clerkUser),
-    image: clerkUser.image_url,
+  try {
+    const userData = {
+      clerkId: clerkUser.id,
+      email: clerkUser.email_addresses[0]?.email_address,
+      username: clerkUser.username || generateUsernameFromEmail(clerkUser),
+      image: clerkUser.image_url,
+    }
+
+    await prisma.user.create({
+      data: userData
+    })
+
+    revalidatePath('/')
+  } catch (error) {
+    console.error('Error creating user:', error)
+    throw error
   }
-
-  await prisma.user.create({
-    data: userData
-  })
-
-  revalidatePath('/')
 }
 
 // User Update Handler
 async function handleUserUpdated(clerkUser: any) {
-  const updateData = {
-    email: clerkUser.email_addresses[0]?.email_address,
-    username: clerkUser.username,
-    image: clerkUser.image_url,
+  try {
+    const updateData = {
+      email: clerkUser.email_addresses[0]?.email_address,
+      username: clerkUser.username,
+      image: clerkUser.image_url,
+    }
 
+    const updatedUser = await prisma.user.update({
+      where: { clerkId: clerkUser.id },
+      data: updateData,
+      select: { username: true }
+    })
+
+    const pathsToRevalidate = ['/']
+    if (updatedUser.username) {
+      pathsToRevalidate.push(`/profile/${updatedUser.username}`)
+    }
+    
+    await Promise.all(pathsToRevalidate.map(path => revalidatePath(path)))
+  } catch (error) {
+    console.error('Error updating user:', error)
+    throw error
   }
-
-  const updatedUser = await prisma.user.update({
-    where: { clerkId: clerkUser.id },
-    data: updateData,
-    select: { username: true }
-  })
-
-  if (updatedUser.username) {
-    revalidatePath(`/profile/${updatedUser.username}`)
-  }
-  revalidatePath('/')
 }
 
-// User Deletion Handler
+// User Deletion Handler (Fixed)
 async function handleUserDeleted(clerkUser: any) {
-  await prisma.user.delete({
-    where: { clerkId: clerkUser.id }
-  })
+  try {
+    const deleteResult = await prisma.user.deleteMany({
+      where: { clerkId: clerkUser.id }
+    })
 
-  revalidatePath('/')
+    if (deleteResult.count === 0) {
+      console.warn(`User ${clerkUser.id} not found during deletion`)
+      return
+    }
+
+    revalidatePath('/')
+  } catch (error) {
+    console.error('Error deleting user:', error)
+    throw error
+  }
 }
 
-// Helper function
 function generateUsernameFromEmail(clerkUser: any): string {
   return clerkUser.email_addresses[0]?.email_address.split('@')[0] || 'user'
 }
