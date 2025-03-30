@@ -329,13 +329,16 @@ function ProfilePageClient({
                           <option value="Agricultura">Agricultura</option>
                           <option value="Alimentos">Alimentos</option>
                           <option value="Arquitectura, construcción y diseño">Arquitectura, construcción y diseño</option>
+                          <option value="Asesorías medioambientales">Asesorías medioambientales</option>
                           <option value="Bebidas">Bebidas</option>
                           <option value="Cocina">Cocina</option>
                           <option value="Cosmética e higiene personal">Cosmética e higiene personal</option>
                           <option value="Deportes">Deportes</option>
                           <option value="Ferias">Ferias</option>
                           <option value="Gestión de residuos">Gestión de residuos</option>
+                          <option value="Gestión del agua">Gestión del agua</option>
                           <option value="Limpieza">Limpieza</option>
+                          <option value="Marketing">Marketing</option>
                           <option value="Moda y Accesorios">Moda y Accesorios</option>
                           <option value="Muebles y decoración">Muebles y decoración</option>
                           <option value="Mascotas">Mascotas</option>
@@ -344,7 +347,9 @@ function ProfilePageClient({
                           <option value="Packaging">Packaging</option>
                           <option value="Paisajismo y jardinería">Paisajismo y jardinería</option>
                           <option value="Producto sostenible">Producto sostenible</option>
+                          <option value="Regalos corporativos">Regalos corporativos</option>
                           <option value="Repuestos">Repuestos</option>
+                          <option value="Servicios medioambientales">Servicios medioambientales</option>
                           <option value="Solar Fotovoltáica">Solar Fotovoltáica</option>
                           <option value="Tecnología">Tecnología</option>
                           <option value="Terraza y aire libre">Terraza y aire libre</option>
