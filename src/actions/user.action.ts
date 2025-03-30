@@ -36,16 +36,17 @@ export async function getDbUserId() {
   return user.id;
 }
 
-export async function getRandomUsers() {
+export async function getRandomCompanyUsers() {
   try {
     const userId = await getDbUserId();
 
     if (!userId) return [];
 
-    // get 3 random users exclude ourselves & users that we already follow
+    // get 3 random users that are companies, excluding ourselves & users that we already follow
     const randomUsers = await prisma.user.findMany({
       where: {
         AND: [
+          { isCompany: true }, 
           { NOT: { id: userId } },
           {
             NOT: {
