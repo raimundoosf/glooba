@@ -1,14 +1,60 @@
+// src/actions/post.action.ts
 "use server";
 
 import prisma from "@/lib/prisma";
-import { getDbUserId } from "./user.action";
+import { getDbUserId } from "./user.action"; // Import helper to get current user's DB ID
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client"; // Import Prisma types if needed for complex types
 
+// Define the shape of the post data we want, including nested author/comment/like info
+// This helps ensure consistency and type safety
+const postInclude = Prisma.validator<Prisma.PostInclude>()({
+  author: {
+    select: {
+      id: true,
+      name: true,
+      image: true,
+      username: true,
+      isCompany: true,
+    },
+  },
+  comments: {
+    include: {
+      author: {
+        select: {
+          id: true,
+          username: true,
+          image: true,
+          name: true,
+          isCompany: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  },
+  likes: {
+    select: {
+      userId: true,
+    },
+  },
+  _count: {
+    select: {
+      likes: true,
+      comments: true,
+    },
+  },
+});
+
+export type PostWithDetails = Prisma.PostGetPayload<{ include: typeof postInclude }>;
+
+
+// --- CREATE POST (Remains the same) ---
 export async function createPost(content: string, image: string) {
   try {
     const userId = await getDbUserId();
-
-    if (!userId) return;
+    if (!userId) throw new Error("User not authenticated"); // Throw error if not logged in
 
     const post = await prisma.post.create({
       data: {
@@ -18,80 +64,67 @@ export async function createPost(content: string, image: string) {
       },
     });
 
-    revalidatePath("/"); // purge the cache for the home page
+    revalidatePath("/"); // Revalidate feed path
     return { success: true, post };
   } catch (error) {
     console.error("Failed to create post:", error);
-    return { success: false, error: "Failed to create post" };
+    // Return a more specific error message if possible
+    return { success: false, error: error instanceof Error ? error.message : "Failed to create post" };
   }
 }
 
-export async function getPosts() {
+// --- GET POSTS (UPDATED FOR FEED LOGIC) ---
+export async function getPosts(): Promise<PostWithDetails[]> {
   try {
+    const currentUserId = await getDbUserId();
+
+    // If user is not logged in, return empty feed (or handle as needed)
+    if (!currentUserId) {
+        console.log("User not logged in, returning empty feed.");
+        return [];
+    }
+
+    // Find IDs of users the current user follows
+    const following = await prisma.follows.findMany({
+        where: { followerId: currentUserId },
+        select: { followingId: true }, // Select only the ID of the user being followed
+    });
+    // Extract the IDs into an array
+    const followingIds = following.map(f => f.followingId);
+
+    // Fetch posts where the author is the current user OR the author is in the following list
     const posts = await prisma.post.findMany({
+      where: {
+        OR: [
+          { authorId: currentUserId }, // Posts by the current user
+          { authorId: { in: followingIds } } // Posts by users the current user follows
+        ]
+      },
       orderBy: {
-        createdAt: "desc",
+        createdAt: "desc", // Order by most recent
       },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-            username: true,
-            isCompany: true,
-          },
-        },
-        comments: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                username: true,
-                image: true,
-                name: true,
-                isCompany: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
-        },
-        likes: {
-          select: {
-            userId: true,
-          },
-        },
-        _count: {
-          select: {
-            likes: true,
-            comments: true,
-          },
-        },
-      },
+      include: postInclude, // Include author, comments, likes using the defined structure
     });
 
+    console.log(`Fetched ${posts.length} posts for user ${currentUserId}'s feed.`); // Debug log
     return posts;
+
   } catch (error) {
-    console.log("Error in getPosts", error);
-    throw new Error("Failed to fetch posts");
+    console.error("Error fetching feed posts:", error);
+    // In a real app, might want to throw or return a specific error state
+    return []; // Return empty on error for now
   }
 }
 
+
+// --- TOGGLE LIKE (Remains the same) ---
 export async function toggleLike(postId: string) {
   try {
     const userId = await getDbUserId();
-    if (!userId) return;
+    if (!userId) throw new Error("User not authenticated");
 
-    // check if like exists
     const existingLike = await prisma.like.findUnique({
-      where: {
-        userId_postId: {
-          userId,
-          postId,
-        },
-      },
+      where: { userId_postId: { userId, postId } },
     });
 
     const post = await prisma.post.findUnique({
@@ -102,31 +135,21 @@ export async function toggleLike(postId: string) {
     if (!post) throw new Error("Post not found");
 
     if (existingLike) {
-      // unlike
+      // Unlike
       await prisma.like.delete({
-        where: {
-          userId_postId: {
-            userId,
-            postId,
-          },
-        },
+        where: { userId_postId: { userId, postId } },
       });
     } else {
-      // like and create notification (only if liking someone else's post)
+      // Like and potentially notify
       await prisma.$transaction([
-        prisma.like.create({
-          data: {
-            userId,
-            postId,
-          },
-        }),
+        prisma.like.create({ data: { userId, postId } }),
         ...(post.authorId !== userId
           ? [
               prisma.notification.create({
                 data: {
                   type: "LIKE",
-                  userId: post.authorId, // recipient (post author)
-                  creatorId: userId, // person who liked
+                  userId: post.authorId,
+                  creatorId: userId,
                   postId,
                 },
               }),
@@ -135,40 +158,32 @@ export async function toggleLike(postId: string) {
       ]);
     }
 
-    revalidatePath("/");
+    revalidatePath("/"); // Revalidate relevant paths
+    revalidatePath(`/profile/[username]`); // Potentially revalidate profile pages too
     return { success: true };
   } catch (error) {
     console.error("Failed to toggle like:", error);
-    return { success: false, error: "Failed to toggle like" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to toggle like" };
   }
 }
 
+// --- CREATE COMMENT (Remains the same) ---
 export async function createComment(postId: string, content: string) {
-  try {
+ try {
     const userId = await getDbUserId();
-
-    if (!userId) return;
-    if (!content) throw new Error("Content is required");
+    if (!userId) throw new Error("User not authenticated");
+    if (!content?.trim()) throw new Error("Comment content cannot be empty");
 
     const post = await prisma.post.findUnique({
       where: { id: postId },
       select: { authorId: true },
     });
-
     if (!post) throw new Error("Post not found");
 
-    // Create comment and notification in a transaction
     const [comment] = await prisma.$transaction(async (tx) => {
-      // Create comment first
       const newComment = await tx.comment.create({
-        data: {
-          content,
-          authorId: userId,
-          postId,
-        },
+        data: { content, authorId: userId, postId },
       });
-
-      // Create notification if commenting on someone else's post
       if (post.authorId !== userId) {
         await tx.notification.create({
           data: {
@@ -180,21 +195,23 @@ export async function createComment(postId: string, content: string) {
           },
         });
       }
-
       return [newComment];
     });
 
-    revalidatePath(`/`);
+    revalidatePath("/");
+    revalidatePath(`/post/${postId}`); // Revalidate specific post page if exists
     return { success: true, comment };
   } catch (error) {
     console.error("Failed to create comment:", error);
-    return { success: false, error: "Failed to create comment" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to create comment" };
   }
 }
 
+// --- DELETE POST (Remains the same) ---
 export async function deletePost(postId: string) {
   try {
     const userId = await getDbUserId();
+    if (!userId) throw new Error("User not authenticated");
 
     const post = await prisma.post.findUnique({
       where: { id: postId },
@@ -202,16 +219,15 @@ export async function deletePost(postId: string) {
     });
 
     if (!post) throw new Error("Post not found");
-    if (post.authorId !== userId) throw new Error("Unauthorized - no delete permission");
+    if (post.authorId !== userId) throw new Error("Unauthorized to delete this post");
 
-    await prisma.post.delete({
-      where: { id: postId },
-    });
+    await prisma.post.delete({ where: { id: postId } });
 
-    revalidatePath("/"); // purge the cache
+    revalidatePath("/");
+    revalidatePath(`/profile/[username]`); // Revalidate user's profile
     return { success: true };
   } catch (error) {
     console.error("Failed to delete post:", error);
-    return { success: false, error: "Failed to delete post" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to delete post" };
   }
 }
