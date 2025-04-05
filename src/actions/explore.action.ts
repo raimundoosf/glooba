@@ -4,10 +4,10 @@
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
-// Define the structure for filter parameters
+// Define the structure for filter parameters - UPDATED for multi-category
 export interface CompanyFiltersType {
   searchTerm?: string;
-  category?: string;
+  categories?: string[]; // Changed to array
   location?: string;
 }
 
@@ -18,7 +18,7 @@ const companyDataSelect = Prisma.validator<Prisma.UserSelect>()({
   username: true,
   image: true,
   location: true,
-  categories: true, // Keep fetching categories for display on cards
+  categories: true,
   bio: true,
   _count: {
     select: {
@@ -32,10 +32,11 @@ export type CompanyCardData = Prisma.UserGetPayload<{
 }>;
 
 export async function getFilteredCompanies(
-  filters: CompanyFiltersType
+  filters: CompanyFiltersType // Accepts the updated type
 ): Promise<CompanyCardData[]> {
   try {
-    const { searchTerm, category, location } = filters;
+    // Destructure updated 'categories' array
+    const { searchTerm, categories, location } = filters;
 
     const whereClause: Prisma.UserWhereInput = {
       isCompany: true,
@@ -53,9 +54,10 @@ export async function getFilteredCompanies(
       });
     }
 
-    if (category) {
+    // UPDATED: Handle categories array filter using 'hasSome'
+    if (categories && categories.length > 0) {
       (whereClause.AND as Prisma.UserWhereInput[]).push({
-        categories: { has: category },
+        categories: { hasSome: categories }, // Filter if company has ANY of the selected categories
       });
     }
 
@@ -69,13 +71,14 @@ export async function getFilteredCompanies(
       delete whereClause.AND;
     }
 
+    console.log("Prisma Query Where Clause:", JSON.stringify(whereClause, null, 2)); // Debug log
+
     const companies = await prisma.user.findMany({
       where: whereClause,
       select: companyDataSelect,
       orderBy: {
-        createdAt: "desc",
+        name: "asc", // Example ordering
       },
-      // take: 20, // Consider adding pagination later
     });
 
     return companies;
@@ -84,6 +87,3 @@ export async function getFilteredCompanies(
     return [];
   }
 }
-
-// REMOVED the getDistinctCompanyCategories function entirely
-// as we are now using a static list from constants.

@@ -1,12 +1,13 @@
 // src/components/explore/CompanyFilters.tsx
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { CompanyFiltersType } from "@/actions/explore.action";
+import { CompanyFiltersType } from "@/actions/explore.action"; // Uses { categories?: string[] }
 import { X, Loader2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { MultiSelectCategories } from "@/components/MultiSelectCategories"; 
 
 interface CompanyFiltersProps {
   allCategories: string[];
@@ -17,103 +18,115 @@ interface CompanyFiltersProps {
 
 export default function CompanyFilters({
   allCategories,
-  appliedFilters,
+  appliedFilters, // Used only for initial state setting
   onFilterChange,
   isDisabled = false,
 }: CompanyFiltersProps) {
-  // Local state for uncommitted input
+  // --- Local State for Inputs ---
   const [searchInput, setSearchInput] = useState(appliedFilters.searchTerm || "");
   const [locationInput, setLocationInput] = useState(appliedFilters.location || "");
-  const [selectedCategory, setSelectedCategory] = useState(appliedFilters.category || "");
+  // Local state for selected categories (stores strings)
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(appliedFilters.categories || []);
 
-  // Apply filters when Enter is pressed or input is blurred
-  const applyTextFilters = () => {
+  // --- Function to apply all current filters ---
+  // Called explicitly by Enter key for text inputs
+  const applyFilters = useCallback(() => {
     onFilterChange({
       searchTerm: searchInput.trim() || undefined,
-      category: selectedCategory || undefined,
       location: locationInput.trim() || undefined,
+      categories: selectedCategories.length > 0 ? selectedCategories : undefined,
     });
+  }, [searchInput, locationInput, selectedCategories, onFilterChange]);
+
+  // --- Handlers ---
+
+  // Handle Enter key press in text inputs
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      applyFilters(); // Apply filters explicitly
+    }
   };
 
-  // Handle category changes immediately
-  const handleCategoryChange = (value: string) => {
-    const newCategory = value === "all" ? "" : value;
-    setSelectedCategory(newCategory);
-    onFilterChange({
-      searchTerm: searchInput.trim() || undefined,
-      category: newCategory || undefined,
-      location: locationInput.trim() || undefined,
-    });
-  };
+   // Handle category changes immediately from MultiSelectCategories
+   const handleCategoriesChange = (newSelection: string[]) => {
+       setSelectedCategories(newSelection); // Update local state immediately
+
+       // Apply filters immediately when categories change
+       onFilterChange({
+           searchTerm: searchInput.trim() || undefined,
+           location: locationInput.trim() || undefined,
+           categories: newSelection.length > 0 ? newSelection : undefined,
+       });
+   };
 
   // Reset all filters
   const handleReset = () => {
     setSearchInput("");
     setLocationInput("");
-    setSelectedCategory("");
-    onFilterChange({});
+    setSelectedCategories([]); // Reset categories array
+    onFilterChange({}); // Trigger update with empty filters
   };
 
+  // Check if any filter is active (using local state)
   const hasActiveFilters = !!(
-    appliedFilters.searchTerm ||
-    appliedFilters.category ||
-    appliedFilters.location
+    searchInput.trim() ||
+    selectedCategories.length > 0 ||
+    locationInput.trim()
   );
 
   return (
     <div className="p-4 mb-6 bg-card border rounded-lg shadow-sm">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+
         {/* Search Input */}
         <div className="space-y-1">
+          <Label htmlFor="search">Buscar</Label>
           <Input
             id="search"
-            placeholder="Buscar por nombre, usuario, bio..."
+            placeholder="Nombre, usuario, bio..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && applyTextFilters()}
-            onBlur={applyTextFilters}
+            onKeyDown={handleKeyDown} // Trigger on Enter
             disabled={isDisabled}
           />
         </div>
 
-        {/* Category Select */}
+        {/* === ShadCN MultiSelect for Categories === */}
         <div className="space-y-1">
-          <Select
-            value={selectedCategory || "all"}
-            onValueChange={handleCategoryChange}
-            disabled={isDisabled}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona una categoría" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las categorías</SelectItem>
-              {allCategories.map((category) => (
-                <SelectItem key={category} value={category}>{category}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+           <Label>Categorías</Label>
+           <MultiSelectCategories
+               allCategories={allCategories}
+               selectedCategories={selectedCategories}
+               onChange={handleCategoriesChange} // Triggers filter immediately
+               placeholder="Filtrar por categorías..."
+               disabled={isDisabled}
+               className="w-full" // Ensure it takes full width
+               // No maxSelection needed for filtering
+           />
         </div>
+        {/* === End ShadCN MultiSelect === */}
 
         {/* Location Input */}
         <div className="space-y-1">
+          <Label htmlFor="location">Ubicación</Label>
           <Input
             id="location"
             placeholder="Filtrar por ubicación..."
             value={locationInput}
             onChange={(e) => setLocationInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && applyTextFilters()}
-            onBlur={applyTextFilters}
+            onKeyDown={handleKeyDown} // Trigger on Enter
             disabled={isDisabled}
           />
         </div>
 
         {/* Reset Button */}
-        <div className="flex items-end">
+        <div className="flex items-end h-full">
           <Button
             variant="ghost"
             onClick={handleReset}
             disabled={!hasActiveFilters || isDisabled}
+            className="w-full sm:w-auto mt-auto"
           >
             {isDisabled ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
