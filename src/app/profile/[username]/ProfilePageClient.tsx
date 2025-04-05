@@ -11,7 +11,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogFooter, // Import DialogFooter
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -29,14 +29,13 @@ import {
   HeartIcon,
   LinkIcon,
   MapPinIcon,
-  PlusCircleIcon, // Icon for Add button
   X,
 } from "lucide-react";
-import { useState, useEffect, useTransition } from "react"; // Import useTransition
+import { useState, useEffect, useTransition } from "react";
 import toast from "react-hot-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge"; // Import Badge
-import { COMPANY_CATEGORIES } from "@/lib/constants"; // Import the constant
+import { COMPANY_CATEGORIES } from "@/lib/constants";
+import { MultiSelectCategories } from "@/components/MultiSelectCategories"; // Import the new component
 
 // --- Type definitions ---
 type User = Awaited<ReturnType<typeof getProfileByUsername>>;
@@ -47,8 +46,6 @@ interface ProfilePageClientProps {
   posts: Posts;
   likedPosts: Posts;
   isFollowing: boolean;
-  // Pass current logged-in user's DB ID for PostCard interactions if needed elsewhere
-  // dbUserId: string | null;
 }
 
 // --- Component ---
@@ -60,7 +57,7 @@ function ProfilePageClient({
 }: ProfilePageClientProps) {
   // --- Hooks ---
   const { user: currentUser } = useUser();
-  const [isPending, startTransition] = useTransition(); // For form submission
+  const [isPending, startTransition] = useTransition();
 
   // --- State ---
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -75,17 +72,14 @@ function ProfilePageClient({
     website: user.website || "",
     isCompany: user.isCompany || false,
   });
-  // State for categories in the edit dialog
+  // State ONLY for the selected categories
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [newCategory, setNewCategory] = useState(""); // Category selected in the dropdown
 
   // --- Effects ---
-  // Initialize selectedCategories when dialog opens or user data changes
   useEffect(() => {
     if (user?.categories) {
-      setSelectedCategories(user.categories);
+      setSelectedCategories(user.categories.sort()); // Keep sorted
     }
-    // Reset edit form state if user prop changes (e.g., navigating between profiles client-side)
      setEditForm({
         name: user.name || "",
         bio: user.bio || "",
@@ -93,25 +87,25 @@ function ProfilePageClient({
         website: user.website || "",
         isCompany: user.isCompany || false,
      });
-     setIsFollowing(initialIsFollowing); // Reset following state too
-
-  }, [user, initialIsFollowing]); // Rerun when user or initialIsFollowing changes
-
+     setIsFollowing(initialIsFollowing);
+  }, [user, initialIsFollowing]);
 
   // --- Handlers ---
   const handleEditSubmit = async () => {
+    // Ensure category limit is respected if user toggled TO company during edit
+     if (editForm.isCompany && selectedCategories.length > 5) {
+       toast.error("Las cuentas de empresa solo pueden tener hasta 5 categorías. Por favor, ajusta tu selección.");
+       return; // Prevent submission
+     }
+
     startTransition(async () => {
         const formData = new FormData();
-
-        // Append basic fields
         Object.entries(editForm)
           .filter(([key]) => key !== "isCompany")
           .forEach(([key, value]) => {
             formData.append(key, String(value));
           });
         formData.append("isCompany", editForm.isCompany ? "true" : "false");
-
-        // Append selected categories
         selectedCategories.forEach((category, index) => {
           formData.append(`categories[${index}]`, category);
         });
@@ -120,70 +114,52 @@ function ProfilePageClient({
         if (result.success) {
           setShowEditDialog(false);
           toast.success("Perfil actualizado exitosamente");
-          // Optionally trigger a re-fetch or rely on Next.js cache revalidation
         } else {
             toast.error(result.error || "Error al actualizar el perfil");
         }
     });
   };
 
-  // Add the category selected in the dropdown to the list
-  const handleAddCategory = () => {
-    if (!newCategory) {
-      toast.error("Por favor, selecciona una categoría para añadir.");
-      return;
-    }
-    if (selectedCategories.includes(newCategory)) {
-      toast.error("Esa categoría ya ha sido añadida.");
-      setNewCategory(""); // Reset dropdown
-      return;
-    }
-    // Enforce category limit for company accounts
-    if (editForm.isCompany && selectedCategories.length >= 5) {
-      toast.error("Las cuentas de empresa solo pueden tener hasta 5 categorías.");
-      return;
-    }
-
-    setSelectedCategories([...selectedCategories, newCategory]);
-    setNewCategory(""); // Reset dropdown after adding
+  // Handler for the MultiSelect component's change event
+  const handleCategoriesChange = (newSelection: string[]) => {
+      // Check limit when selection changes if it's a company account
+      if (editForm.isCompany && newSelection.length > 5) {
+          toast.error('Las cuentas de empresa solo pueden seleccionar hasta 5 categorías.');
+          // Optionally prevent the state update or slice the array:
+          // setSelectedCategories(newSelection.slice(0, 5));
+          return; // Or simply don't update state if limit exceeded on add
+      }
+      setSelectedCategories(newSelection); // Update state
   };
 
-  // Remove a category from the selected list
-  const handleRemoveCategory = (categoryToRemove: string) => {
-    setSelectedCategories(selectedCategories.filter((category) => category !== categoryToRemove));
-  };
 
-  // Toggle follow status
   const handleFollow = async () => {
-    if (!currentUser) return; // Should ideally be handled by button state, but double-check
-
-    setIsUpdatingFollow(true); // Indicate loading state for follow button
+    if (!currentUser) return;
+    setIsUpdatingFollow(true);
     try {
-      const result = await toggleFollow(user.id); // Assuming toggleFollow handles auth check
+      const result = await toggleFollow(user.id);
       if (result?.success) {
-          setIsFollowing(!isFollowing); // Update local state on success
+          setIsFollowing(!isFollowing);
       } else {
           throw new Error(result?.error || "Failed to toggle follow");
       }
     } catch (error: any) {
       console.error("Error toggling follow:", error);
       toast.error(error.message || "Error al actualizar el estado de seguimiento");
-      // Optionally revert optimistic update if needed: setIsFollowing(isFollowing);
     } finally {
-      setIsUpdatingFollow(false); // Reset loading state
+      setIsUpdatingFollow(false);
     }
   };
 
-  // --- Derived State / Constants ---
   const isOwnProfile =
     currentUser?.username === user.username ||
     currentUser?.emailAddresses[0].emailAddress.split("@")[0] === user.username;
-  const formattedDate = format(new Date(user.createdAt), "MMMM yyyy", { locale: es }); // Corrected format
+  const formattedDate = format(new Date(user.createdAt), "MMMM yyyy", { locale: es });
 
   // --- Render ---
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Profile Header Card */}
+      {/* Profile Header Card - (Assuming no changes needed here) */}
       <div className="grid grid-cols-1 gap-6">
         <div className="w-full max-w-lg mx-auto">
           <Card className="bg-card">
@@ -279,8 +255,9 @@ function ProfilePageClient({
         </div>
       </div>
 
-      {/* Tabs for Posts/Likes */}
-      <Tabs defaultValue="posts" className="w-full mt-6">
+
+      {/* Tabs for Posts/Likes - (Assuming no changes needed here) */}
+       <Tabs defaultValue="posts" className="w-full mt-6">
          <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
              <TabsTrigger
                value="posts"
@@ -301,7 +278,7 @@ function ProfilePageClient({
          <TabsContent value="posts" className="mt-6">
            <div className="space-y-6">
              {posts.length > 0 ? (
-               posts.map((post) => <PostCard key={post.id} post={post} dbUserId={user.id} /* Pass necessary props like current user ID */ />)
+               posts.map((post) => <PostCard key={post.id} post={post} dbUserId={user.id} />)
              ) : (
                <div className="text-center py-8 text-muted-foreground">Aún no hay publicaciones</div>
              )}
@@ -311,7 +288,7 @@ function ProfilePageClient({
          <TabsContent value="likes" className="mt-6">
            <div className="space-y-6">
              {likedPosts.length > 0 ? (
-               likedPosts.map((post) => <PostCard key={post.id} post={post} dbUserId={user.id} /* Pass necessary props */ />)
+               likedPosts.map((post) => <PostCard key={post.id} post={post} dbUserId={user.id} />)
              ) : (
                <div className="text-center py-8 text-muted-foreground">Aún no hay publicaciones que te gusten</div>
              )}
@@ -321,144 +298,78 @@ function ProfilePageClient({
 
       {/* Edit Profile Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="sm:max-w-[550px]"> {/* Slightly wider */}
+        <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
             <DialogTitle>Editar Perfil</DialogTitle>
           </DialogHeader>
-          {/* Use ScrollArea for potentially long content */}
-          <ScrollArea className="h-[60vh] max-h-[600px] pr-6"> {/* Added padding-right */}
-            <div className="space-y-4 py-4 ">
+          <ScrollArea className="h-[60vh] max-h-[600px] pr-6">
+            <div className="space-y-4 py-4">
               {/* Name */}
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Nombre</Label>
-                <Input
-                  id="edit-name"
-                  name="name"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  placeholder="Tu nombre"
-                />
+                <Input id="edit-name" name="name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} placeholder="Tu nombre" disabled={isPending}/>
               </div>
               {/* Bio */}
               <div className="space-y-2">
                 <Label htmlFor="edit-bio">Biografía</Label>
-                <Textarea
-                  id="edit-bio"
-                  name="bio"
-                  value={editForm.bio}
-                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                  className="min-h-[100px]"
-                  placeholder="Cuéntanos sobre ti"
-                />
+                <Textarea id="edit-bio" name="bio" value={editForm.bio} onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })} className="min-h-[100px]" placeholder="Cuéntanos sobre ti" disabled={isPending}/>
               </div>
               {/* Location */}
               <div className="space-y-2">
                 <Label htmlFor="edit-location">Ubicación</Label>
-                <Input
-                  id="edit-location"
-                  name="location"
-                  value={editForm.location}
-                  onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
-                  placeholder="¿Dónde te encuentras?"
-                />
+                <Input id="edit-location" name="location" value={editForm.location} onChange={(e) => setEditForm({ ...editForm, location: e.target.value })} placeholder="¿Dónde te encuentras?" disabled={isPending}/>
               </div>
               {/* Website */}
                <div className="space-y-2">
                  <Label htmlFor="edit-website">Sitio Web</Label>
-                 <Input
-                   id="edit-website"
-                   name="website"
-                   value={editForm.website}
-                   onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
-                   placeholder="tuwebsite.com"
-                 />
+                 <Input id="edit-website" name="website" value={editForm.website} onChange={(e) => setEditForm({ ...editForm, website: e.target.value })} placeholder="tuwebsite.com" disabled={isPending}/>
                </div>
               {/* Is Company Toggle */}
               <div className="flex items-center justify-between space-x-2 pt-2">
                  <Label htmlFor="isCompany" className="flex flex-col space-y-1">
                     <span>Cuenta Empresa</span>
-                    <span className="font-normal leading-snug text-muted-foreground text-xs">
-                        Activa esto si representas a una empresa u organización.
-                    </span>
+                    <span className="font-normal leading-snug text-muted-foreground text-xs">Activa esto si representas a una empresa u organización.</span>
                  </Label>
-                 {/* Simple Checkbox for toggle - replace with ShadCN Switch if preferred */}
                  <input
                    type="checkbox"
                    id="isCompany"
-                   className="form-checkbox h-5 w-5 text-primary rounded shadow-none focus:ring-primary" // Basic styling
+                   className="form-checkbox h-5 w-5 text-primary rounded shadow-none focus:ring-primary"
                    checked={editForm.isCompany}
+                   disabled={isPending}
                    onChange={(e) => {
                      const isCompanyChecked = e.target.checked;
                      setEditForm({ ...editForm, isCompany: isCompanyChecked });
                      // Enforce category limit immediately if switching to company
                      if (isCompanyChecked && selectedCategories.length > 5) {
-                       setSelectedCategories(selectedCategories.slice(0, 5));
+                       // Slice the array AND update state
+                       const limitedCategories = selectedCategories.slice(0, 5);
+                       setSelectedCategories(limitedCategories);
                        toast.error('Las cuentas de empresa solo pueden seleccionar hasta 5 categorías. Se han eliminado las categorías excedentes.');
                      }
                    }}
                  />
               </div>
 
-              {/* Categories Section */}
+              {/* === NEW MultiSelect Component Usage === */}
               <div className="space-y-2 pt-2">
-                <Label>{editForm.isCompany ? 'Categorías de la Empresa (Máx 5)' : 'Categorías de Interés'}</Label>
-                {/* Display selected categories as badges */}
-                <div className="flex flex-wrap gap-2 mb-3 min-h-[24px]">
-                    {selectedCategories.map((category) => (
-                        <Badge key={category} variant="secondary" className="flex items-center gap-1">
-                            {category}
-                            <button
-                                type="button"
-                                onClick={() => handleRemoveCategory(category)}
-                                className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
-                                aria-label={`Quitar ${category}`}
-                            >
-                                <X className="h-3 w-3"/>
-                            </button>
-                        </Badge>
-                    ))}
-                    {selectedCategories.length === 0 && (
-                        <p className="text-xs text-muted-foreground">No hay categorías seleccionadas.</p>
-                    )}
-                </div>
-
-                {/* Add new category dropdown and button */}
-                <div className="flex items-center gap-2">
-                  <select
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    // Use ShadCN styles via className for consistency if desired, or keep basic select
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-grow"
-                    // Disable if category limit reached for companies
-                    disabled={editForm.isCompany && selectedCategories.length >= 5}
-                  >
-                    <option value="">Selecciona una categoría</option>
-                    {/* Map over the imported constant */}
-                    {COMPANY_CATEGORIES.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={handleAddCategory}
-                    // Disable if no category selected or limit reached
-                    disabled={!newCategory || (editForm.isCompany && selectedCategories.length >= 5)}
-                    aria-label="Añadir categoría seleccionada"
-                  >
-                    <PlusCircleIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-                {editForm.isCompany && selectedCategories.length >= 5 && (
-                    <p className="text-xs text-destructive mt-1">Has alcanzado el límite de 5 categorías para empresas.</p>
-                )}
+                <Label>{editForm.isCompany ? 'Categorías de la Empresa' : 'Categorías de Interés'}</Label>
+                <MultiSelectCategories
+                    allCategories={COMPANY_CATEGORIES}
+                    selectedCategories={selectedCategories}
+                    onChange={handleCategoriesChange} // Use the dedicated handler
+                    placeholder="Selecciona categorías..."
+                    maxSelection={editForm.isCompany ? 5 : undefined} // Set max based on company status
+                    disabled={isPending} // Disable while submitting
+                />
+                 {/* Informational text about the limit */}
+                 {editForm.isCompany && (
+                     <p className="text-xs text-muted-foreground pt-1">Puedes seleccionar hasta 5 categorías.</p>
+                 )}
               </div>
+              {/* === End MultiSelect Component Usage === */}
+
             </div>
           </ScrollArea>
-          {/* Dialog Footer */}
           <DialogFooter className="mt-4 pt-4 border-t">
              <DialogClose asChild>
                  <Button type="button" variant="outline" disabled={isPending}>
@@ -475,4 +386,4 @@ function ProfilePageClient({
   );
 }
 
-export default ProfilePageClient; // Ensure component is exported
+export default ProfilePageClient;
