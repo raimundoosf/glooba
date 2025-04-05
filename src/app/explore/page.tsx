@@ -2,12 +2,11 @@
 import { getFilteredCompanies } from "@/actions/explore.action"; // Action import updated
 import ExploreClientWrapper from "@/components/explore/ExploreClientWrapper";
 import { Suspense } from "react";
-import { Loader2 } from "lucide-react";
 import { COMPANY_CATEGORIES } from "@/lib/constants";
 
 export const metadata = {
-    title: "Explore Companies | Glooba",
-    description: "Discover sustainable companies on Glooba.",
+    title: "Explorar Empresas | Glooba",
+    description: "Descubre empresas sostenibles en Glooba.",
 };
 
 function LoadingSkeleton() {

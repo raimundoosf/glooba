@@ -1,13 +1,12 @@
 // src/components/explore/ExploreClientWrapper.tsx
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useTransition, useCallback, useRef, useEffect } from "react"; // Added useRef, useEffect
 import CompanyFilters from "./CompanyFilters";
 import CompanyResults from "./CompanyResults";
-// Import the updated types and action
 import { getFilteredCompanies, CompanyFiltersType, CompanyCardData, PaginatedCompaniesResponse } from "@/actions/explore.action";
-import { Button } from "@/components/ui/button"; // Import Button
-import { Loader2 } from "lucide-react"; // Import Loader
+// Removed Button import as Load More button is gone
+import { Loader2 } from "lucide-react"; // Keep Loader for indicator
 
 interface ExploreClientWrapperProps {
   initialCompanies: CompanyCardData[];
@@ -23,19 +22,21 @@ export default function ExploreClientWrapper({
   allCategories,
 }: ExploreClientWrapperProps) {
   // --- State ---
-  const [companies, setCompanies] = useState<CompanyCardData[]>(initialCompanies); // Accumulates results
+  const [companies, setCompanies] = useState<CompanyCardData[]>(initialCompanies);
   const [appliedFilters, setAppliedFilters] = useState<CompanyFiltersType>({});
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState<number>(1); // Start at page 1
   const [totalCount, setTotalCount] = useState<number>(initialTotalCount);
   const [hasNextPage, setHasNextPage] = useState<boolean>(initialHasNextPage);
-  // Loading state for initial filter/search actions
   const [isFiltering, startFilteringTransition] = useTransition();
-  // Separate loading state for "Load More" button actions
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+
+  // --- Ref for Intersection Observer ---
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null); // Ref for the element to observe
 
   // --- Handlers ---
 
-  // Called when filters change in CompanyFilters
+  // Called when filters change
   const handleFilterChange = useCallback((newFilters: CompanyFiltersType) => {
     const filtersToApply: CompanyFiltersType = {
        searchTerm: newFilters.searchTerm || undefined,
@@ -44,33 +45,34 @@ export default function ExploreClientWrapper({
      };
 
     setAppliedFilters(filtersToApply);
-    setCurrentPage(1); // Reset to page 1 when filters change
-    setCompanies([]); // Clear existing results immediately
-    setHasNextPage(false); // Assume no next page until fetch confirms
+    setCurrentPage(1); // Reset to page 1
+    setCompanies([]); // Clear existing results
+    setHasNextPage(false); // Reset hasNextPage
 
-    startFilteringTransition(async () => { // Use transition for filter loading state
+    startFilteringTransition(async () => {
       try {
         console.log("Applying filters (Page 1):", filtersToApply);
         const results: PaginatedCompaniesResponse = await getFilteredCompanies(
             filtersToApply,
-            { page: 1 } // Fetch page 1
+            { page: 1 }
         );
-        setCompanies(results.companies); // Set results for the first page
+        setCompanies(results.companies);
         setTotalCount(results.totalCount);
         setHasNextPage(results.hasNextPage);
-        setCurrentPage(results.currentPage); // Should be 1
+        setCurrentPage(results.currentPage);
       } catch (error) {
         console.error("Failed to fetch filtered companies:", error);
-        setCompanies([]); // Clear results on error
+        setCompanies([]);
         setTotalCount(0);
         setHasNextPage(false);
       }
     });
-  }, [startFilteringTransition]); // Include transition function in dependencies
+  }, [startFilteringTransition]);
 
-  // Called when "Load More" button is clicked
+  // Function to load the next page of companies
   const loadMoreCompanies = useCallback(async () => {
-    if (!hasNextPage || isLoadingMore || isFiltering) return; // Prevent multiple calls
+    // Prevent fetching if already loading or no more pages
+    if (isLoadingMore || isFiltering || !hasNextPage) return;
 
     setIsLoadingMore(true);
     const nextPage = currentPage + 1;
@@ -81,56 +83,68 @@ export default function ExploreClientWrapper({
           appliedFilters,
           { page: nextPage }
       );
-      // Append new results to existing ones
       setCompanies((prevCompanies) => [...prevCompanies, ...results.companies]);
-      setTotalCount(results.totalCount); // Update total count (might change)
+      setTotalCount(results.totalCount);
       setHasNextPage(results.hasNextPage);
-      setCurrentPage(results.currentPage); // Update current page
+      setCurrentPage(results.currentPage);
     } catch (error) {
       console.error("Failed to load more companies:", error);
-      // Optionally show a toast message to the user
+      // Consider showing an error message to the user
     } finally {
       setIsLoadingMore(false);
     }
-  }, [hasNextPage, isLoadingMore, isFiltering, currentPage, appliedFilters]); // Dependencies for loadMore
+  }, [hasNextPage, isLoadingMore, isFiltering, currentPage, appliedFilters]); // Add loadMoreCompanies itself? No, it causes infinite loop if added.
 
-  // Combined loading state for disabling filters etc.
-  const isCurrentlyLoading = isFiltering || isLoadingMore;
+  // --- Effect for Intersection Observer ---
+  useEffect(() => {
+    // Ensure observer isn't created multiple times unnecessarily
+    if (observerRef.current) observerRef.current.disconnect();
+
+    observerRef.current = new IntersectionObserver((entries) => {
+      // Check if the sentinel element is intersecting (visible)
+      if (entries[0].isIntersecting && hasNextPage && !isLoadingMore && !isFiltering) {
+        console.log("Sentinel intersecting, loading more..."); // Debug log
+        loadMoreCompanies(); // Load next page
+      }
+    });
+
+    // Observe the sentinel element if it exists
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) {
+      observerRef.current.observe(currentSentinel);
+    }
+
+    // Cleanup function to disconnect observer on unmount or dependency change
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+    // Re-run effect if loading states or hasNextPage change, or if loadMoreCompanies function reference changes
+  }, [hasNextPage, isLoadingMore, isFiltering, loadMoreCompanies]);
+
+
+  // Combined loading state for disabling filters
+  const isCurrentlyLoadingFilters = isFiltering || isLoadingMore;
 
   return (
     <div className="space-y-6">
       <CompanyFilters
         allCategories={allCategories}
-        appliedFilters={appliedFilters} // Pass applied filters for potential initialization needs
+        appliedFilters={appliedFilters}
         onFilterChange={handleFilterChange}
-        isDisabled={isCurrentlyLoading} // Disable filters while any loading is happening
+        isDisabled={isCurrentlyLoadingFilters}
       />
 
-      {/* Display results - show spinner only during initial filtering */}
+      {/* Display results - show spinner only during initial filtering when results are empty */}
       <CompanyResults companies={companies} isLoading={isFiltering && companies.length === 0} />
 
-      {/* "Load More" Button */}
-      <div className="flex justify-center pt-4">
-        {hasNextPage && ( // Only show if there are more pages
-          <Button
-            onClick={loadMoreCompanies}
-            disabled={isCurrentlyLoading} // Disable if filtering or loading more
-            variant="outline"
-            size="lg"
-          >
-            {isLoadingMore ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Cargando...
-              </>
-            ) : (
-              "Cargar Más Organizaciones"
-            )}
-          </Button>
-        )}
-        {/* Optional: Show message when loading is done and no more pages */}
-        {!hasNextPage && companies.length > 0 && !isCurrentlyLoading && (
-             <p className="text-sm text-muted-foreground">Has llegado al final.</p>
+      {/* Sentinel Element and Loading Indicator for Infinite Scroll */}
+      <div ref={sentinelRef} style={{ height: '10px' }} /> {/* Invisible sentinel */}
+
+      <div className="flex justify-center py-4">
+        {isLoadingMore && ( // Show loader only when loading more pages
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
         )}
       </div>
     </div>
