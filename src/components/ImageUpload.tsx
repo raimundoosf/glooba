@@ -7,6 +7,7 @@ interface ImageUploadProps {
   onChange: (url: string) => void;
   value: string;
   endpoint: "postImage";
+  disabled: boolean; // Add this line
 }
 
 function ImageUpload({ endpoint, onChange, value }: ImageUploadProps) {
