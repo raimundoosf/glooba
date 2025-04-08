@@ -9,6 +9,13 @@ import { currentUser, User } from "@clerk/nextjs/server"; // Import User type
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+
+export const metadata = {
+    title: "Feed | Glooba",
+    description: "La red social de alternativas sostenibles.",
+    keywords: ["sostenibilidad", "alternativas", "ofertas", "Glooba"],
+}
+
 // --- Loading Skeleton ---
 function FeedLoadingSkeleton() {
     return (

@@ -69,11 +69,11 @@ export default function FeedClient({
         setCurrentPage(result.currentPage);
         setError(null);
       } else {
-        setError(result.error || "Failed to load more posts.");
+        setError(result.error || "Error al cargar más publicaciones.");
         setHasNextPage(false);
       }
     } catch (err) {
-      setError("An unexpected error occurred while loading more posts.");
+      setError("Ocurrió un error inesperado al cargar más publicaciones.");
       setHasNextPage(false);
     } finally {
       setIsLoadingMore(false);
@@ -93,12 +93,12 @@ export default function FeedClient({
                 setHasNextPage(result.hasNextPage);
                 // *** REMOVED: window.scrollTo({ top: 0, behavior: 'smooth' }); ***
             } else {
-                setError(result.error || "Failed to refresh feed.");
+                setError(result.error || "Error al refrescar el feed.");
                 setPosts([]);
                 setHasNextPage(false);
             }
         } catch (err) {
-            setError("An unexpected error occurred during refresh.");
+            setError("Ocurrió un error inesperado al refrescar el feed.");
             setPosts([]);
             setHasNextPage(false);
         }
@@ -138,12 +138,12 @@ export default function FeedClient({
       {error && posts.length === 0 && !isRefreshing && (
         <FeedMessageBox
             icon={<AlertTriangle className="h-10 w-10" />}
-            title="Error Loading Feed"
+            title="Error al cargar el feed"
             message={error}
         >
             <Button onClick={refreshFeed} variant="destructive" size="sm" disabled={isRefreshing}>
                 {isRefreshing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4"/>}
-                Try Again
+                Inténtalo de nuevo
             </Button>
         </FeedMessageBox>
       )}
@@ -152,11 +152,11 @@ export default function FeedClient({
       {!error && posts.length === 0 && !isRefreshing && !isLoadingMore && (
          <FeedMessageBox
             icon={<MessageCircleIcon className="h-10 w-10" />}
-            title="Your Feed is Quiet"
-            message="Posts from people you follow will appear here."
+            title="Tu feed está vacio"
+            message="Las publicaciones de las personas que sigues aparecerán aquí."
         >
-            <Link href="/explore">
-                <Button variant="outline">Explore Companies</Button>
+            <Link href="/">
+                <Button variant="outline">Explora alternativas sostenibles</Button>
             </Link>
         </FeedMessageBox>
       )}
@@ -174,12 +174,13 @@ export default function FeedClient({
       <div className="flex justify-center py-6 mt-4">
         {isLoadingMore && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
         {!hasNextPage && !isLoadingMore && !isRefreshing && posts.length > 0 && (
-          <p className="text-sm text-muted-foreground">You've reached the end!</p>
+          <p className="text-sm text-muted-foreground">Has llegado al final!</p>
         )}
         {error && !isLoadingMore && !isRefreshing && posts.length > 0 && (
-          <p className="text-sm text-destructive">Could not load more posts.</p>
+          <p className="text-sm text-destructive">Error al cargar más publicaciones.</p>
         )}
       </div>
     </FeedContext.Provider>
   );
 }
+
