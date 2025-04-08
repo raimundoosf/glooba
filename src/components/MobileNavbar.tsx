@@ -6,6 +6,7 @@ import {
   LogOutIcon,
   MenuIcon,
   MoonIcon,
+  RssIcon,
   SunIcon,
   UserIcon,
 } from "lucide-react";
@@ -50,6 +51,13 @@ function MobileNavbar() {
               <Link href="/">
                 <HomeIcon className="w-4 h-4" />
                 Inicio
+              </Link>
+            </Button>
+
+            <Button variant="ghost" className="flex items-center gap-3 justify-start" asChild>
+              <Link href="/feed">
+                <RssIcon className="w-4 h-4" />
+                Feed
               </Link>
             </Button>
 
