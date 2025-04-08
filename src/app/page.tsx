@@ -5,9 +5,23 @@ import { Suspense } from "react";
 import { COMPANY_CATEGORIES } from "@/lib/constants";
 
 export const metadata = {
-    title: "Explorar Empresas | Glooba",
-    description: "Descubre empresas sostenibles en Glooba.",
+  title: "Alternativas Sostenibles | Glooba",
+  description: "Descubre alternativas sostenibles en Glooba.",
+  keywords: ["sostenibilidad", "alternativas", "ofertas", "Glooba"],
+  openGraph: {
+    title: "Alternativas Sostenibles | Glooba",
+    description: "Descubre alternativas sostenibles en Glooba.",
+    url: "https://www.glooba.cl",
+    siteName: "Glooba",
+    type: "website",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  authors: [{ name: "Glooba", url: "https://www.glooba.com" }],
 };
+
 
 function LoadingSkeleton() {
     return (
@@ -35,7 +49,6 @@ export default async function ExplorePage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Explorar</h1>
       {/* Suspense useful while initial page data is fetched */}
       <Suspense fallback={<LoadingSkeleton />}>
          <ExploreClientWrapper
