@@ -58,7 +58,7 @@ export default function CompanyCard({ company }: CompanyCardProps) {
   const isOwnProfile = isSignedIn && loggedInUser?.id === company.clerkId;
 
   // Common classes for size and shape
-  const commonButtonClasses = "flex-shrink-0 h-8 w-8 rounded-full";
+  const commonButtonClasses = "flex-shrink-0 h-8 w-8 rounded-full border border-neutral-300";
 
   return (
     <Card className="flex flex-col h-full transition-shadow duration-200 hover:shadow-md">
