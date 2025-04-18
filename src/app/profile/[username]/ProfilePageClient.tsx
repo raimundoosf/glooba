@@ -4,7 +4,7 @@
 import { getProfileByUsername, getUserPosts, updateProfile } from "@/actions/profile.action";
 import { toggleFollow } from "@/actions/user.action";
 import PostCard from "@/components/PostCard";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -35,7 +35,9 @@ import { useState, useEffect, useTransition } from "react";
 import toast from "react-hot-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { COMPANY_CATEGORIES } from "@/lib/constants";
-import { MultiSelectCategories } from "@/components/MultiSelectCategories"; // Import the new component
+// Import the SIMPLIFIED MultiSelectCategories component
+import { MultiSelectCategories } from "@/components/MultiSelectCategories";
+import { Badge } from "@/components/ui/badge"; // Import Badge
 
 // --- Type definitions ---
 type User = Awaited<ReturnType<typeof getProfileByUsername>>;
@@ -77,8 +79,11 @@ function ProfilePageClient({
 
   // --- Effects ---
   useEffect(() => {
+    // Initialize state when user data changes
     if (user?.categories) {
-      setSelectedCategories(user.categories.sort()); // Keep sorted
+      setSelectedCategories(user.categories.sort());
+    } else {
+        setSelectedCategories([]);
     }
      setEditForm({
         name: user.name || "",
@@ -120,18 +125,19 @@ function ProfilePageClient({
     });
   };
 
-  // Handler for the MultiSelect component's change event
+  // Update selected categories state from MultiSelect component
   const handleCategoriesChange = (newSelection: string[]) => {
-      // Check limit when selection changes if it's a company account
-      if (editForm.isCompany && newSelection.length > 5) {
-          toast.error('Las cuentas de empresa solo pueden seleccionar hasta 5 categorías.');
-          // Optionally prevent the state update or slice the array:
-          // setSelectedCategories(newSelection.slice(0, 5));
-          return; // Or simply don't update state if limit exceeded on add
-      }
-      setSelectedCategories(newSelection); // Update state
+     if (editForm.isCompany && newSelection.length > 5) {
+         toast.error('Las cuentas de empresa solo pueden seleccionar hasta 5 categorías.');
+         if (newSelection.length > selectedCategories.length) return; // Prevent adding if over limit
+     }
+     setSelectedCategories(newSelection);
   };
 
+  // Handle removing a category via its badge
+  const handleRemoveCategory = (categoryToRemove: string) => {
+      setSelectedCategories(prev => prev.filter(cat => cat !== categoryToRemove));
+  };
 
   const handleFollow = async () => {
     if (!currentUser) return;
@@ -159,7 +165,7 @@ function ProfilePageClient({
   // --- Render ---
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Profile Header Card - (Assuming no changes needed here) */}
+      {/* Profile Header Card */}
       <div className="grid grid-cols-1 gap-6">
         <div className="w-full max-w-lg mx-auto">
           <Card className="bg-card">
@@ -179,7 +185,7 @@ function ProfilePageClient({
                   )}
                 </p>
                 {/* Bio */}
-                <p className="mt-2 text-sm">{user.bio}</p>
+                 <p className="mt-2 text-sm">{user.bio}</p>
 
                 {/* Profile Stats */}
                 <div className="w-full mt-6">
@@ -223,7 +229,7 @@ function ProfilePageClient({
                 </div>
 
 
-                {/* Location, Website, Joined Date */}
+                 {/* Location, Website, Joined Date */}
                 <div className="w-full mt-6 space-y-2 text-sm text-left"> {/* Align left */}
                   {user.location && (
                     <div className="flex items-center text-muted-foreground">
@@ -255,9 +261,8 @@ function ProfilePageClient({
         </div>
       </div>
 
-
-      {/* Tabs for Posts/Likes - (Assuming no changes needed here) */}
-       <Tabs defaultValue="posts" className="w-full mt-6">
+      {/* Tabs for Posts/Likes */}
+      <Tabs defaultValue="posts" className="w-full mt-6">
          <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
              <TabsTrigger
                value="posts"
@@ -294,7 +299,7 @@ function ProfilePageClient({
              )}
            </div>
          </TabsContent>
-       </Tabs>
+      </Tabs>
 
       {/* Edit Profile Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
@@ -350,23 +355,49 @@ function ProfilePageClient({
                  />
               </div>
 
-              {/* === NEW MultiSelect Component Usage === */}
+              {/* Categories Section */}
               <div className="space-y-2 pt-2">
                 <Label>{editForm.isCompany ? 'Categorías de la Empresa' : 'Categorías de Interés'}</Label>
+                {/* MultiSelect Component (Simplified Version) */}
                 <MultiSelectCategories
                     allCategories={COMPANY_CATEGORIES}
                     selectedCategories={selectedCategories}
-                    onChange={handleCategoriesChange} // Use the dedicated handler
+                    onChange={handleCategoriesChange}
                     placeholder="Selecciona categorías..."
-                    maxSelection={editForm.isCompany ? 5 : undefined} // Set max based on company status
-                    disabled={isPending} // Disable while submitting
+                    maxSelection={editForm.isCompany ? 5 : undefined}
+                    disabled={isPending}
                 />
+
+                {/* === Section for Selected Category Badges === */}
+                {selectedCategories.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-dashed">
+                        {/* Optional Label */}
+                        {/* <Label className="text-xs text-muted-foreground mb-2 block">Seleccionadas:</Label> */}
+                        <div className="flex flex-wrap gap-2">
+                            {selectedCategories.map((category) => (
+                                <Badge key={category} variant="secondary" className="flex items-center gap-1">
+                                    <span>{category}</span> {/* Wrap text in span */}
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveCategory(category)} // Call remove handler
+                                        className="ml-1 rounded-full hover:bg-destructive/20 p-0.5 focus:outline-none focus:ring-1 focus:ring-destructive" // Added focus style
+                                        aria-label={`Quitar ${category}`}
+                                        disabled={isPending} // Disable remove button while submitting
+                                    >
+                                        <X className="h-3 w-3"/>
+                                    </button>
+                                </Badge>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                {/* === End Selected Category Badges Section === */}
+
                  {/* Informational text about the limit */}
                  {editForm.isCompany && (
                      <p className="text-xs text-muted-foreground pt-1">Puedes seleccionar hasta 5 categorías.</p>
                  )}
               </div>
-              {/* === End MultiSelect Component Usage === */}
 
             </div>
           </ScrollArea>
