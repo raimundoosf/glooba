@@ -9,7 +9,9 @@ export default function WelcomeMessage() {
           ¡Bienvenido/a a Glooba!
         </CardTitle>
         <CardDescription className="text-base text-muted-foreground max-w-xl">
-          La red social de la sostenibilidad. Descubre y conecta con empresas eco-amigables, ofertas y descuentos asociados. ¡Únete al cambio!
+          Conectamos personas y organizaciones con iniciativas sostenibles. 
+          Encuentra y valora acciones que generan impacto. 
+          ¡Sé parte del cambio!
         </CardDescription>
       </CardHeader>
     </Card>

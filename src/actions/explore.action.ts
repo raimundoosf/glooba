@@ -3,10 +3,10 @@
 
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-import { getDbUserId } from "./user.action"; // Import getDbUserId
+import { getDbUserId } from "./user.action";
 
 // --- Constants ---
-const DEFAULT_PAGE_SIZE = 6; // Adjusted page size
+const DEFAULT_PAGE_SIZE = 6;
 
 // --- Types ---
 export interface CompanyFiltersType {
@@ -20,43 +20,55 @@ export interface PaginationOptions {
     pageSize?: number;
 }
 
-// Base select for company data - keep this separate
+// Select base fields + relations needed for counts/calcs
 const companyDataSelectBase = Prisma.validator<Prisma.UserSelect>()({
-  id: true, // Need ID for follow action
-  clerkId: true, // Need clerkId to compare against loggedInUser in Card (optional but good)
+  id: true,
+  clerkId: true, // Needed for isOwnProfile check on client
   name: true,
   username: true,
   image: true,
   location: true,
   categories: true,
   bio: true,
+  // Select ratings needed to calculate average
+  reviewsReceived: {
+      select: {
+          rating: true,
+      },
+  },
+  // Select counts directly
   _count: {
     select: {
-      followers: true, // Total follower count
+      followers: true,    // For follower count display
+      reviewsReceived: true, // For review count display
     },
   },
 });
 
-// Define the extended type for company data including follow status check result
-// This type reflects what the Prisma query will return temporarily
-type CompanyDataWithFollowCheck = Prisma.UserGetPayload<{
+// Type reflecting the raw data fetched
+type CompanyDataWithRelations = Prisma.UserGetPayload<{
   select: typeof companyDataSelectBase & {
-      // Include a boolean based on the nested query below
-      followers: { select: { followerId: true } }; // Check if the relation exists
+      // Include followers relation filtered for the current user to check follow status
+      followers: { select: { followerId: true } };
   }
 }>;
 
-// Final type for the CompanyCard component, adding our processed boolean
-export type CompanyCardData = Omit<CompanyDataWithFollowCheck, 'followers'> & {
-    isFollowing: boolean; // Add our custom boolean field
+// Final processed type for the CompanyCard component
+export type CompanyCardData = Omit<
+    Prisma.UserGetPayload<{ select: typeof companyDataSelectBase }>,
+    'reviewsReceived' | '_count' // Remove raw relations/counts
+> & {
+    isFollowing: boolean;
+    averageRating: number | null;
+    reviewCount: number;
+    followerCount: number;
 };
 
 
-// Define the return type including pagination info and success/error status
 export interface PaginatedCompaniesResponse {
-    success: boolean; // Indicate success/failure
-    error?: string; // Optional error message
-    companies: CompanyCardData[]; // Use the final updated type
+    success: boolean;
+    error?: string;
+    companies: CompanyCardData[];
     totalCount: number;
     currentPage: number;
     pageSize: number;
@@ -69,18 +81,15 @@ export async function getFilteredCompanies(
   pagination: PaginationOptions = {}
 ): Promise<PaginatedCompaniesResponse> {
   try {
-    // Get logged-in user's DB ID. Returns null if not logged in.
-    const currentUserId = await getDbUserId();
+    const currentUserId = await getDbUserId(); // Null if not logged in
 
     const { searchTerm, categories, location } = filters;
-    const { page = 1, pageSize = DEFAULT_PAGE_SIZE } = pagination;
-    const currentPage = Math.max(1, Math.floor(page));
-    const currentPageSize = Math.max(1, Math.floor(pageSize));
+    const currentPage = Math.max(1, Math.floor(pagination.page || 1));
+    const currentPageSize = Math.max(1, Math.floor(pagination.pageSize || DEFAULT_PAGE_SIZE));
 
     const whereClause: Prisma.UserWhereInput = {
       isCompany: true,
-      // Exclude the current user from the list of companies if logged in
-      id: currentUserId ? { not: currentUserId } : undefined,
+      id: currentUserId ? { not: currentUserId } : undefined, // Exclude self
       AND: [],
     };
 
@@ -94,7 +103,7 @@ export async function getFilteredCompanies(
         ],
       });
     }
-    if (categories && categories.length > 0) {
+    if (categories?.length) {
       (whereClause.AND as Prisma.UserWhereInput[]).push({
         categories: { hasSome: categories },
       });
@@ -109,58 +118,55 @@ export async function getFilteredCompanies(
     }
     // --- End Apply Filters ---
 
-
     // --- Perform Queries ---
-    // Use transaction for count + findMany
     const [totalCount, companiesRaw] = await prisma.$transaction([
-        // 1. Get total count matching filters
         prisma.user.count({ where: whereClause }),
-        // 2. Get companies for the current page, including follow status check
         prisma.user.findMany({
             where: whereClause,
             select: {
-                ...companyDataSelectBase, // Select base fields
-                // Include 'followers' relation specifically filtered for the current user
-                // If currentUserId is null, this where clause effectively finds nothing
+                ...companyDataSelectBase, // Base fields, ratings, counts
+                // Include followers relation filtered only for the current user
                 followers: {
-                    where: {
-                        followerId: currentUserId ?? undefined
-                    },
-                    select: {
-                        followerId: true // We only need to know if this record exists
-                    }
+                    where: { followerId: currentUserId ?? undefined },
+                    select: { followerId: true } // Only need to know if it exists
                 }
             },
-            orderBy: { name: "asc" }, // Or desired order
+            orderBy: { name: "asc" }, // Example: order by creation date or name: "asc"
             skip: (currentPage - 1) * currentPageSize,
             take: currentPageSize,
         })
     ]);
 
-    // --- Process results to add 'isFollowing' boolean ---
-    // Map over the raw results to transform the nested followers array into the boolean
-    const companies: CompanyCardData[] = companiesRaw.map(company => {
-        // Determine if the current user is following this company
+    // --- Process results ---
+    const companies: CompanyCardData[] = companiesRaw.map((company: CompanyDataWithRelations) => {
         const isFollowing = !!currentUserId && company.followers.length > 0;
-        // Return a new object excluding the temporary 'followers' check array
-        // and adding the 'isFollowing' boolean
-        const { followers, ...restOfCompany } = company; // Destructure to remove 'followers'
+
+        // Calculate average rating from fetched ratings
+        const reviewCount = company._count.reviewsReceived;
+        const sumOfRatings = company.reviewsReceived.reduce((acc, review) => acc + review.rating, 0);
+        const averageRating = reviewCount > 0 ? sumOfRatings / reviewCount : null;
+
+        const followerCount = company._count.followers;
+
+        // Exclude raw relations/counts from the final object
+        const { followers, reviewsReceived, _count, ...restOfCompany } = company;
+
         return {
             ...restOfCompany,
             isFollowing,
+            averageRating,
+            reviewCount,
+            followerCount,
         };
     });
 
-    // --- Calculate Pagination Metadata ---
+    // --- Pagination Metadata ---
     const totalPages = Math.ceil(totalCount / currentPageSize);
     const hasNextPage = currentPage < totalPages;
 
-    console.log(`Fetched Page: ${currentPage}, PageSize: ${currentPageSize}, TotalCount: ${totalCount}, HasNext: ${hasNextPage}`);
-
-    // --- Return Paginated Response ---
     return {
-        success: true, // Indicate success
-        companies, // Return processed companies with isFollowing
+        success: true,
+        companies,
         totalCount,
         currentPage,
         pageSize: currentPageSize,
@@ -170,9 +176,8 @@ export async function getFilteredCompanies(
   } catch (error: unknown) {
     console.error("Error fetching filtered companies:", error);
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-    // Return error state
     return {
-        success: false, // Indicate failure
+        success: false,
         error: `Failed to fetch companies: ${errorMessage}`,
         companies: [],
         totalCount: 0,
