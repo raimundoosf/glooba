@@ -56,11 +56,11 @@ export function ReviewsSection({
         setCurrentPage(result.currentPage);
         setError(null);
       } else {
-        setError(result.error || "Failed to load more reviews.");
+        setError(result.error || "No se pudieron cargar más reseñas.");
         setHasNextPage(false);
       }
     } catch (err) {
-      setError("An unexpected error occurred while loading more reviews.");
+      setError("Ocurrió un error inesperado al cargar más reseñas.");
       setHasNextPage(false);
     } finally {
       setIsLoadingMore(false);
@@ -90,7 +90,7 @@ export function ReviewsSection({
     return (
         <div className="text-center py-10 px-4 bg-card/30 border rounded-lg mt-6">
             <MessageSquareWarning className="mx-auto h-10 w-10 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No reviews yet for this company.</p>
+            <p className="text-muted-foreground">No hay reseñas para esta empresa.</p>
             {/* Optionally add a prompt to leave the first review */}
         </div>
     );
