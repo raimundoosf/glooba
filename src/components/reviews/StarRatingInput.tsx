@@ -64,7 +64,7 @@ export function StarRatingInput({
             onMouseOver={() => handleMouseOver(starValue)}
             onMouseLeave={handleMouseLeave}
             disabled={disabled}
-            aria-label={`Rate ${starValue} out of 5 stars`}
+            aria-label={`Calificar ${starValue} de 5 estrellas`}
           >
             <Star
               height={size}
@@ -82,3 +82,5 @@ export function StarRatingInput({
     </div>
   );
 }
+
+
