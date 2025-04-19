@@ -3,8 +3,9 @@
 
 import { getProfileByUsername, getUserPosts, updateProfile } from "@/actions/profile.action";
 import { toggleFollow } from "@/actions/user.action";
+import { getCompanyReviewsAndStats, ReviewWithAuthor, PaginatedReviewsResponse } from "@/actions/review.action";
 import PostCard from "@/components/PostCard";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -29,24 +30,66 @@ import {
   HeartIcon,
   LinkIcon,
   MapPinIcon,
+  Star,
   X,
 } from "lucide-react";
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, startTransition, useCallback } from "react";
 import toast from "react-hot-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { COMPANY_CATEGORIES } from "@/lib/constants";
-import { MultiSelectCategories } from "@/components/MultiSelectCategories"; // Import the new component
+import { MultiSelectCategories } from "@/components/MultiSelectCategories";
+import { Badge } from "@/components/ui/badge";
+// Import Review Components
+import { LeaveReviewForm } from "@/components/reviews/LeaveReviewForm";
+import { ReviewsSection } from "@/components/reviews/ReviewsSection";
+import { Separator } from "@/components/ui/separator"; // Import Separator
+import { cn } from "@/lib/utils";
 
 // --- Type definitions ---
-type User = Awaited<ReturnType<typeof getProfileByUsername>>;
+type UserProfile = NonNullable<Awaited<ReturnType<typeof getProfileByUsername>>>;
 type Posts = Awaited<ReturnType<typeof getUserPosts>>;
+// Add type for initial review data passed from server
+type InitialReviewData = Omit<PaginatedReviewsResponse, 'reviews' | 'success' | 'error' | 'currentPage' | 'pageSize'> & {
+    reviews: ReviewWithAuthor[];
+    error?: string;
+};
+
 
 interface ProfilePageClientProps {
-  user: NonNullable<User>;
+  user: UserProfile; // Use updated type name
   posts: Posts;
   likedPosts: Posts;
   isFollowing: boolean;
+  initialReviewData: InitialReviewData; // Pass initial reviews/stats
 }
+
+// --- Read-only Star Display Component --- (Moved here or keep in ReviewCard)
+function DisplayStars({ rating, count, size = 16 }: { rating: number | null; count?: number; size?: number }) {
+    if (rating === null || rating === undefined) return <span className="text-sm text-muted-foreground">No reviews yet</span>;
+    const stars = Array(5).fill(0);
+    const roundedRating = Math.round(rating * 2) / 2; // Round to nearest 0.5
+    return (
+        <div className="flex items-center space-x-1">
+            {stars.map((_, index) => {
+                const starValue = index + 1;
+                return (
+                    <Star
+                        key={index}
+                        size={size}
+                        className={cn(
+                            "transition-colors",
+                            starValue <= roundedRating ? "text-yellow-400 fill-yellow-400" : // Full star
+                            starValue - 0.5 === roundedRating ? "text-yellow-400" : // Half star (outline) - needs custom SVG for partial fill
+                            "text-gray-300 dark:text-gray-600" // Empty star
+                        )}
+                    />
+                );
+            })}
+            {count !== undefined && <span className="ml-2 text-sm text-muted-foreground">({count})</span>}
+        </div>
+    );
+}
+
 
 // --- Component ---
 function ProfilePageClient({
@@ -54,15 +97,26 @@ function ProfilePageClient({
   likedPosts,
   posts,
   user,
+  initialReviewData, // Receive initial review data
 }: ProfilePageClientProps) {
   // --- Hooks ---
-  const { user: currentUser } = useUser();
-  const [isPending, startTransition] = useTransition();
+  const { user: currentUser, isSignedIn } = useUser();
+  const [isEditPending, startEditTransition] = useTransition();
+  const [isFollowPending, startFollowTransition] = useTransition(); // Separate transition for follow
+  const [isUpdatingFollow, setIsUpdatingFollow] = useState(false); // State for follow button loading
 
   // --- State ---
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
-  const [isUpdatingFollow, setIsUpdatingFollow] = useState(false);
+  // State for review data - might need update after submission
+  const [reviewStats, setReviewStats] = useState({
+      averageRating: initialReviewData.averageRating,
+      totalCount: initialReviewData.totalCount,
+      userHasReviewed: initialReviewData.userHasReviewed,
+  });
+  // State to trigger refresh of reviews list
+  const [reviewListVersion, setReviewListVersion] = useState(0);
+
 
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -77,8 +131,11 @@ function ProfilePageClient({
 
   // --- Effects ---
   useEffect(() => {
+    // Initialize state when user data changes
     if (user?.categories) {
-      setSelectedCategories(user.categories.sort()); // Keep sorted
+      setSelectedCategories(user.categories.sort());
+    } else {
+        setSelectedCategories([]);
     }
      setEditForm({
         name: user.name || "",
@@ -120,29 +177,30 @@ function ProfilePageClient({
     });
   };
 
-  // Handler for the MultiSelect component's change event
+  // Update selected categories state from MultiSelect component
   const handleCategoriesChange = (newSelection: string[]) => {
-      // Check limit when selection changes if it's a company account
-      if (editForm.isCompany && newSelection.length > 5) {
-          toast.error('Las cuentas de empresa solo pueden seleccionar hasta 5 categorías.');
-          // Optionally prevent the state update or slice the array:
-          // setSelectedCategories(newSelection.slice(0, 5));
-          return; // Or simply don't update state if limit exceeded on add
-      }
-      setSelectedCategories(newSelection); // Update state
+     if (editForm.isCompany && newSelection.length > 5) {
+         toast.error('Las cuentas de empresa solo pueden seleccionar hasta 5 categorías.');
+         if (newSelection.length > selectedCategories.length) return; // Prevent adding if over limit
+     }
+     setSelectedCategories(newSelection);
   };
 
+  // Handle removing a category via its badge
+  const handleRemoveCategory = (categoryToRemove: string) => {
+      setSelectedCategories(prev => prev.filter(cat => cat !== categoryToRemove));
+  };
 
   const handleFollow = async () => {
     if (!currentUser) return;
     setIsUpdatingFollow(true);
-    try {
+      try {
       const result = await toggleFollow(user.id);
       if (result?.success) {
           setIsFollowing(!isFollowing);
       } else {
           throw new Error(result?.error || "Failed to toggle follow");
-      }
+          }
     } catch (error: any) {
       console.error("Error toggling follow:", error);
       toast.error(error.message || "Error al actualizar el estado de seguimiento");
@@ -150,6 +208,25 @@ function ProfilePageClient({
       setIsUpdatingFollow(false);
     }
   };
+
+  // Callback function to refresh reviews after submission
+  const handleReviewSubmitted = useCallback(async () => {
+    console.log("Review submitted, refreshing reviews...");
+    // Option 1: Increment key to force remount/refetch of ReviewsSection
+    setReviewListVersion(prev => prev + 1);
+    // Option 2: Fetch stats again here and update reviewStats state
+    // This avoids remounting the list but requires fetching stats again
+    try {
+        const updatedStats = await getCompanyReviewsAndStats({ companyId: user.id });
+        if (updatedStats.success) {
+            setReviewStats({
+                averageRating: updatedStats.averageRating,
+                totalCount: updatedStats.totalCount,
+                userHasReviewed: updatedStats.userHasReviewed,
+            });
+        }
+    } catch (e) { console.error("Failed to refresh review stats", e); }
+  }, [user.id]); // Dependency on user.id
 
   const isOwnProfile =
     currentUser?.username === user.username ||
@@ -159,7 +236,7 @@ function ProfilePageClient({
   // --- Render ---
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Profile Header Card - (Assuming no changes needed here) */}
+      {/* Profile Header Card */}
       <div className="grid grid-cols-1 gap-6">
         <div className="w-full max-w-lg mx-auto">
           <Card className="bg-card">
@@ -174,12 +251,20 @@ function ProfilePageClient({
                 </h1>
                 <p className="text-muted-foreground">
                   @{user.username}
-                  {user.isCompany && (
+                 {user.isCompany && (
                     <svg className="ml-1.5 inline-flex items-center" width="18px" height="18px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" clipRule="evenodd" d="M9.02975 3.3437C10.9834 2.88543 13.0166 2.88543 14.9703 3.3437C17.7916 4.00549 19.9945 6.20842 20.6563 9.02975C21.1146 10.9834 21.1146 13.0166 20.6563 14.9703C19.9945 17.7916 17.7916 19.9945 14.9703 20.6563C13.0166 21.1146 10.9834 21.1146 9.02975 20.6563C6.20842 19.9945 4.0055 17.7916 3.3437 14.9703C2.88543 13.0166 2.88543 10.9834 3.3437 9.02974C4.0055 6.20841 6.20842 4.00549 9.02975 3.3437ZM15.0524 10.4773C15.2689 10.2454 15.2563 9.88195 15.0244 9.6655C14.7925 9.44906 14.4291 9.46159 14.2126 9.6935L11.2678 12.8487L9.77358 11.3545C9.54927 11.1302 9.1856 11.1302 8.9613 11.3545C8.73699 11.5788 8.73699 11.9425 8.9613 12.1668L10.8759 14.0814C10.986 14.1915 11.1362 14.2522 11.2919 14.2495C11.4477 14.2468 11.5956 14.181 11.7019 14.0671L15.0524 10.4773Z" fill="#1281ff"/></svg>
                   )}
                 </p>
+
+                {/* Display Average Rating for Companies */}
+                {user.isCompany && (
+                    <div className="mt-3 flex items-center gap-2">
+                         <DisplayStars rating={reviewStats.averageRating} count={reviewStats.totalCount} size={18} />
+                    </div>
+                 )}
+
                 {/* Bio */}
-                <p className="mt-2 text-sm">{user.bio}</p>
+                 <p className="mt-2 text-sm">{user.bio}</p>
 
                 {/* Profile Stats */}
                 <div className="w-full mt-6">
@@ -223,7 +308,7 @@ function ProfilePageClient({
                 </div>
 
 
-                {/* Location, Website, Joined Date */}
+                 {/* Location, Website, Joined Date */}
                 <div className="w-full mt-6 space-y-2 text-sm text-left"> {/* Align left */}
                   {user.location && (
                     <div className="flex items-center text-muted-foreground">
@@ -256,25 +341,36 @@ function ProfilePageClient({
       </div>
 
 
-      {/* Tabs for Posts/Likes - (Assuming no changes needed here) */}
-       <Tabs defaultValue="posts" className="w-full mt-6">
-         <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
-             <TabsTrigger
-               value="posts"
-               className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-6 font-semibold text-muted-foreground"
-             >
-               <FileTextIcon className="size-4" />
-               Publicaciones
-             </TabsTrigger>
-             <TabsTrigger
-               value="likes"
-               className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-6 font-semibold text-muted-foreground"
-             >
-               <HeartIcon className="size-4" />
-               Me gusta
-             </TabsTrigger>
+      {/* Tabs for Posts/Likes/Reviews */}
+      <Tabs defaultValue="posts" className="w-full mt-6">
+         <TabsList className="w-full flex justify-center border-b rounded-none h-auto p-0 bg-transparent">
+            <TabsTrigger
+              value="posts"
+              className="flex-1 flex items-center justify-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-6 font-semibold text-muted-foreground"
+            >
+              <FileTextIcon className="size-4" />
+              Publicaciones
+            </TabsTrigger>
+            {!user.isCompany && (
+            <TabsTrigger
+              value="likes"
+              className="flex-1 flex items-center justify-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-6 font-semibold text-muted-foreground"
+            >
+              <HeartIcon className="size-4" />
+              Me gusta
+            </TabsTrigger>
+            )}
+            {/* Reviews Tab (only for companies) */}
+            {user.isCompany && (
+            <TabsTrigger value="reviews" 
+              className="flex-1 flex items-center justify-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-6 font-semibold text-muted-foreground">
+              <Star className="size-4" /> 
+              Reseñas 
+            </TabsTrigger>
+            )}
          </TabsList>
 
+         {/* Posts Content */}
          <TabsContent value="posts" className="mt-6">
            <div className="space-y-6">
              {posts.length > 0 ? (
@@ -285,6 +381,7 @@ function ProfilePageClient({
            </div>
          </TabsContent>
 
+         {/* Likes Content */}
          <TabsContent value="likes" className="mt-6">
            <div className="space-y-6">
              {likedPosts.length > 0 ? (
@@ -294,7 +391,35 @@ function ProfilePageClient({
              )}
            </div>
          </TabsContent>
-       </Tabs>
+
+         {/* Reviews Content (only for companies) */}
+         {user.isCompany && (
+             <TabsContent value="reviews" className="mt-6 space-y-6">
+                 {/* Leave Review Form (Show if logged in, not own profile, maybe haven't reviewed yet) */}
+                 {isSignedIn && !isOwnProfile && (
+                    <LeaveReviewForm
+                        companyId={user.id}
+                        companyUsername={user.username}
+                        onReviewSubmitted={handleReviewSubmitted}
+                        // Pass initial review data if implementing edit
+                        // isEditing={reviewStats.userHasReviewed}
+                        // initialRating={...}
+                        // initialContent={...}
+                    />
+                 )}
+                 <ReviewsSection
+                     key={reviewListVersion} // Force remount/refetch when version changes
+                     companyId={user.id}
+                     initialReviews={initialReviewData.reviews}
+                     initialHasNextPage={initialReviewData.hasNextPage}
+                     initialTotalCount={initialReviewData.totalCount}
+                     initialAverageRating={initialReviewData.averageRating}
+                     initialUserHasReviewed={initialReviewData.userHasReviewed}
+                     initialError={initialReviewData.error}
+                 />
+             </TabsContent>
+         )}
+      </Tabs>
 
       {/* Edit Profile Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
@@ -307,22 +432,22 @@ function ProfilePageClient({
               {/* Name */}
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Nombre</Label>
-                <Input id="edit-name" name="name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} placeholder="Tu nombre" disabled={isPending}/>
+                <Input id="edit-name" name="name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} placeholder="Tu nombre" disabled={isEditPending}/>
               </div>
               {/* Bio */}
               <div className="space-y-2">
                 <Label htmlFor="edit-bio">Biografía</Label>
-                <Textarea id="edit-bio" name="bio" value={editForm.bio} onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })} className="min-h-[100px]" placeholder="Cuéntanos sobre ti" disabled={isPending}/>
+                <Textarea id="edit-bio" name="bio" value={editForm.bio} onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })} className="min-h-[100px]" placeholder="Cuéntanos sobre ti" disabled={isEditPending}/>
               </div>
               {/* Location */}
               <div className="space-y-2">
                 <Label htmlFor="edit-location">Ubicación</Label>
-                <Input id="edit-location" name="location" value={editForm.location} onChange={(e) => setEditForm({ ...editForm, location: e.target.value })} placeholder="¿Dónde te encuentras?" disabled={isPending}/>
+                <Input id="edit-location" name="location" value={editForm.location} onChange={(e) => setEditForm({ ...editForm, location: e.target.value })} placeholder="¿Dónde te encuentras?" disabled={isEditPending}/>
               </div>
               {/* Website */}
                <div className="space-y-2">
                  <Label htmlFor="edit-website">Sitio Web</Label>
-                 <Input id="edit-website" name="website" value={editForm.website} onChange={(e) => setEditForm({ ...editForm, website: e.target.value })} placeholder="tuwebsite.com" disabled={isPending}/>
+                 <Input id="edit-website" name="website" value={editForm.website} onChange={(e) => setEditForm({ ...editForm, website: e.target.value })} placeholder="tuwebsite.com" disabled={isEditPending}/>
                </div>
               {/* Is Company Toggle */}
               <div className="flex items-center justify-between space-x-2 pt-2">
@@ -335,7 +460,7 @@ function ProfilePageClient({
                    id="isCompany"
                    className="form-checkbox h-5 w-5 text-primary rounded shadow-none focus:ring-primary"
                    checked={editForm.isCompany}
-                   disabled={isPending}
+                   disabled={isEditPending}
                    onChange={(e) => {
                      const isCompanyChecked = e.target.checked;
                      setEditForm({ ...editForm, isCompany: isCompanyChecked });
@@ -350,40 +475,68 @@ function ProfilePageClient({
                  />
               </div>
 
-              {/* === NEW MultiSelect Component Usage === */}
+              {/* Categories Section */}
               <div className="space-y-2 pt-2">
                 <Label>{editForm.isCompany ? 'Categorías de la Empresa' : 'Categorías de Interés'}</Label>
+                {/* MultiSelect Component (Simplified Version) */}
                 <MultiSelectCategories
                     allCategories={COMPANY_CATEGORIES}
                     selectedCategories={selectedCategories}
-                    onChange={handleCategoriesChange} // Use the dedicated handler
+                    onChange={handleCategoriesChange}
                     placeholder="Selecciona categorías..."
-                    maxSelection={editForm.isCompany ? 5 : undefined} // Set max based on company status
-                    disabled={isPending} // Disable while submitting
+                    maxSelection={editForm.isCompany ? 5 : undefined}
+                    disabled={isEditPending}
                 />
+
+                {/* === Section for Selected Category Badges === */}
+                {selectedCategories.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-dashed">
+                        {/* Optional Label */}
+                        {/* <Label className="text-xs text-muted-foreground mb-2 block">Seleccionadas:</Label> */}
+                        <div className="flex flex-wrap gap-2">
+                            {selectedCategories.map((category) => (
+                                <Badge key={category} variant="secondary" className="flex items-center gap-1">
+                                    <span>{category}</span> {/* Wrap text in span */}
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveCategory(category)} // Call remove handler
+                                        className="ml-1 rounded-full hover:bg-destructive/20 p-0.5 focus:outline-none focus:ring-1 focus:ring-destructive" // Added focus style
+                                        aria-label={`Quitar ${category}`}
+                                        disabled={isEditPending} // Disable remove button while submitting
+                                    >
+                                        <X className="h-3 w-3"/>
+                                    </button>
+                                </Badge>
+                            ))}
+               </div>
+                    </div>
+                )}
+                {/* === End Selected Category Badges Section === */}
+
                  {/* Informational text about the limit */}
                  {editForm.isCompany && (
                      <p className="text-xs text-muted-foreground pt-1">Puedes seleccionar hasta 5 categorías.</p>
                  )}
               </div>
-              {/* === End MultiSelect Component Usage === */}
 
-            </div>
-          </ScrollArea>
-          <DialogFooter className="mt-4 pt-4 border-t">
+             </div>
+           </ScrollArea>
+           <DialogFooter className="mt-4 pt-4 border-t">
              <DialogClose asChild>
-                 <Button type="button" variant="outline" disabled={isPending}>
+                 <Button type="button" variant="outline" disabled={isEditPending}>
                    Cancelar
                  </Button>
              </DialogClose>
-             <Button type="button" onClick={handleEditSubmit} disabled={isPending}>
-               {isPending ? "Guardando..." : "Guardar Cambios"}
+             <Button type="button" onClick={handleEditSubmit} disabled={isEditPending}>
+               {isEditPending ? "Guardando..." : "Guardar Cambios"}
              </Button>
-          </DialogFooter>
-        </DialogContent>
+           </DialogFooter>
+         </DialogContent>
       </Dialog>
     </div>
   );
 }
 
 export default ProfilePageClient;
+
+

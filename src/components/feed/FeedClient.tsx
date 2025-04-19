@@ -153,7 +153,7 @@ export default function FeedClient({
          <FeedMessageBox
             icon={<MessageCircleIcon className="h-10 w-10" />}
             title="Tu feed está vacio"
-            message="Las publicaciones de las personas que sigues aparecerán aquí."
+            message="Las publicaciones de las organizaciones que sigues aparecerán aquí."
         >
             <Link href="/">
                 <Button variant="outline">Explora alternativas sostenibles</Button>

@@ -1,3 +1,4 @@
+// src/components/Sidebar.tsx
 import { currentUser } from "@clerk/nextjs/server";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { SignInButton, SignUpButton } from "@clerk/nextjs";

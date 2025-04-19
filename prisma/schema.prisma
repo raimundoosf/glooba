@@ -32,6 +32,9 @@ model User {
   posts Post[] // One-to-many
   comments Comment[] // One-to-many
   likes Like[] // One-to-many
+  reviewsWritten  Review[] @relation("ReviewsWritten") // Reviews written by this user
+  reviewsReceived Review[] @relation("ReviewsReceived") // Reviews received by this user (if they are a company)
+
 
   followers Follows[] @relation("following") // users who follow this user
   following Follows[] @relation("follower") // users this user follows
@@ -54,6 +57,26 @@ model Post{
   comments Comment[]
   likes Like[]
   notifications Notification[]
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // Rating from 0 to 5
+  content   String?  // Optional review text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation to the User who wrote the review
+  authorId String
+  author   User   @relation("ReviewsWritten", fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Relation to the Company (User) being reviewed
+  companyId String
+  company   User   @relation("ReviewsReceived", fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Ensure a user can only review a company once (optional constraint)
+  @@unique([authorId, companyId])
+  @@index([companyId, createdAt]) // Index for fetching reviews for a company
 }
 
 
