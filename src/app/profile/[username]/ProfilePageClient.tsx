@@ -7,6 +7,7 @@ import { getCompanyReviewsAndStats, ReviewWithAuthor, PaginatedReviewsResponse }
 import PostCard from "@/components/PostCard";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
@@ -54,7 +55,6 @@ type InitialReviewData = Omit<PaginatedReviewsResponse, 'reviews' | 'success' | 
     error?: string;
 };
 
-
 interface ProfilePageClientProps {
   user: UserProfile; // Use updated type name
   posts: Posts;
@@ -90,7 +90,6 @@ function DisplayStars({ rating, count, size = 16 }: { rating: number | null; cou
     );
 }
 
-
 // --- Component ---
 function ProfilePageClient({
   isFollowing: initialIsFollowing,
@@ -100,14 +99,15 @@ function ProfilePageClient({
   initialReviewData, // Receive initial review data
 }: ProfilePageClientProps) {
   // --- Hooks ---
-  const { user: currentUser, isSignedIn } = useUser();
+
+  const { user: currentUser, isSignedIn, isLoaded: isClerkLoaded } = useUser(); // Make sure isLoaded is destructured
+  const [newProfilePic, setNewProfilePic] = useState<File | null>(null); // State for the new profile picture file
+  const [profilePicPreview, setProfilePicPreview] = useState<string | null>(null); // State for image preview URL
   const [isEditPending, startEditTransition] = useTransition();
   const [isFollowPending, startFollowTransition] = useTransition(); // Separate transition for follow
   const [isUpdatingFollow, setIsUpdatingFollow] = useState(false); // State for follow button loading
-
-  // --- State ---
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // Declare dialog state
   // State for review data - might need update after submission
   const [reviewStats, setReviewStats] = useState({
       averageRating: initialReviewData.averageRating,
@@ -117,19 +117,49 @@ function ProfilePageClient({
   // State to trigger refresh of reviews list
   const [reviewListVersion, setReviewListVersion] = useState(0);
 
-
   // Edit form state
   const [editForm, setEditForm] = useState({
-    name: user.name || "",
-    bio: user.bio || "",
-    location: user.location || "",
-    website: user.website || "",
-    isCompany: user.isCompany || false,
+    name: "",
+    bio: "",
+    location: "",
+    website: "",
+    isCompany: false,
   });
   // State ONLY for the selected categories
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // --- Effects ---
+
+  // Update form when user data changes (e.g., after initial load or update)
+  useEffect(() => {
+    if (user) {
+      setEditForm({
+        name: user.name || "",
+        bio: user.bio || "",
+        location: user.location || "",
+        website: user.website || "",
+        isCompany: user.isCompany || false,
+      });
+      setSelectedCategories(user.categories || []);
+      // Reset profile picture state when dialog opens or user changes
+      setNewProfilePic(null);
+      setProfilePicPreview(null);
+    }
+  }, [user, isEditDialogOpen]); // Rerun when dialog opens
+  
+  // Effect to create blob URL for preview when newProfilePic changes
+  useEffect(() => {
+    if (newProfilePic) {
+      const objectUrl = URL.createObjectURL(newProfilePic);
+      setProfilePicPreview(objectUrl);
+  
+      // Free memory when the component unmounts or file changes
+      return () => URL.revokeObjectURL(objectUrl);
+    } else {
+      setProfilePicPreview(null); // Clear preview if no file selected
+    }
+  }, [newProfilePic]);
+
   useEffect(() => {
     // Initialize state when user data changes
     if (user?.categories) {
@@ -148,33 +178,93 @@ function ProfilePageClient({
   }, [user, initialIsFollowing]);
 
   // --- Handlers ---
-  const handleEditSubmit = async () => {
-    // Ensure category limit is respected if user toggled TO company during edit
-     if (editForm.isCompany && selectedCategories.length > 5) {
-       toast.error("Las cuentas de empresa solo pueden tener hasta 5 categorías. Por favor, ajusta tu selección.");
-       return; // Prevent submission
-     }
+  const handleEditSubmit = () => {
+      if (!isOwner || !isClerkLoaded || !currentUser) return; // Added Clerk checks
 
-    startTransition(async () => {
-        const formData = new FormData();
-        Object.entries(editForm)
-          .filter(([key]) => key !== "isCompany")
-          .forEach(([key, value]) => {
-            formData.append(key, String(value));
-          });
-        formData.append("isCompany", editForm.isCompany ? "true" : "false");
-        selectedCategories.forEach((category, index) => {
-          formData.append(`categories[${index}]`, category);
-        });
+      startEditTransition(async () => {
+          let clerkUpdatePromise: Promise<any> | null = null;
+          let profileUpdatePromise: Promise<any> | null = null;
+          const toastId = toast.loading("Guardando cambios...");
 
-        const result = await updateProfile(formData);
-        if (result.success) {
-          setShowEditDialog(false);
-          toast.success("Perfil actualizado exitosamente");
-        } else {
-            toast.error(result.error || "Error al actualizar el perfil");
-        }
-    });
+          try {
+              // 1. Update profile picture in Clerk if a new one is selected
+              if (newProfilePic) {
+                  clerkUpdatePromise = currentUser.setProfileImage({ file: newProfilePic })
+                      .then(() => {
+                          toast.success("Foto de perfil actualizada.", { id: toastId });
+                          setNewProfilePic(null);
+                          setProfilePicPreview(null);
+                          // Clerk's currentUser object should update automatically,
+                          // making currentUser.imageUrl available below.
+                      })
+                      .catch((error) => {
+                          console.error("Error updating profile picture in Clerk:", error);
+                          toast.error("Error al actualizar la foto de perfil.", { id: toastId });
+                          throw error;
+                      });
+              } else {
+                  clerkUpdatePromise = Promise.resolve();
+              }
+
+              // 2. Wait for Clerk update to finish
+              await clerkUpdatePromise;
+
+              // --- IMPORTANT: currentUser object should now have the updated imageUrl if Clerk update happened ---
+
+              // 3. Prepare data object for database update (no more FormData)
+              const profileDataToUpdate: { // Define type inline or import if defined elsewhere
+                  name?: string;
+                  bio?: string;
+                  isCompany?: boolean;
+                  location?: string;
+                  website?: string;
+                  categories?: string[];
+                  imageUrl?: string | null;
+              } = {
+                  ...editForm,
+                  categories: selectedCategories,
+                  // Include the potentially updated image URL from Clerk's user object
+                  imageUrl: currentUser.imageUrl,
+              };
+
+              // 4. Update profile details in the database via server action
+              profileUpdatePromise = updateProfile(profileDataToUpdate) // Pass the object
+                 .then((result) => {
+                     if (result.error) {
+                         console.error("Database update error:", result.error);
+                         // Use existing toast ID only if Clerk didn't update, otherwise show new toast
+                         if (!newProfilePic) {
+                             toast.error(`Error al guardar: ${result.error}`, { id: toastId });
+                         } else {
+                             toast.error(`Error al guardar detalles del perfil: ${result.error}`); // New toast for DB error
+                         }
+                         throw new Error(result.error); // Throw to indicate failure
+                     } else {
+                         // Success message depends on whether Clerk was also updated
+                         if (!newProfilePic) {
+                             toast.success("Perfil actualizado con éxito.", { id: toastId });
+                         } else {
+                             toast.success("Detalles del perfil guardados."); // Clerk already showed success for image
+                         }
+                         setIsEditDialogOpen(false); // Close dialog on success
+                     }
+                 })
+                 .catch((error) => {
+                     console.error("Error in profile update process:", error);
+                      if (!document.querySelector(`[data-toast-id="${toastId}"]`)) {
+                          toast.error("Ocurrió un error inesperado al guardar.");
+                      }
+                 });
+
+              await profileUpdatePromise; // Wait for the database update to complete
+
+          } catch (error) {
+              console.error("Overall error during profile update:", error);
+               if (document.querySelector(`[data-toast-id="${toastId}"]`)) {
+                    toast.dismiss(toastId);
+               }
+          }
+      });
   };
 
   // Update selected categories state from MultiSelect component
@@ -209,6 +299,30 @@ function ProfilePageClient({
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+          // Basic validation (optional: add size/type checks)
+          if (file.size > 5 * 1024 * 1024) { // Example: 5MB limit
+              toast.error("La imagen no puede superar los 5MB.");
+              setNewProfilePic(null);
+              setProfilePicPreview(null);
+              event.target.value = ''; // Reset file input
+              return;
+          }
+          if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+              toast.error("Tipo de archivo no válido. Sube JPG, PNG, WEBP o GIF.");
+              setNewProfilePic(null);
+              setProfilePicPreview(null);
+               event.target.value = ''; // Reset file input
+              return;
+          }
+          setNewProfilePic(file);
+      } else {
+          setNewProfilePic(null);
+      }
+    };
+
   // Callback function to refresh reviews after submission
   const handleReviewSubmitted = useCallback(async () => {
     console.log("Review submitted, refreshing reviews...");
@@ -228,6 +342,7 @@ function ProfilePageClient({
     } catch (e) { console.error("Failed to refresh review stats", e); }
   }, [user.id]); // Dependency on user.id
 
+  const isOwner = currentUser?.id === user.clerkId; // Declare isOwner variable
   const isOwnProfile =
     currentUser?.username === user.username ||
     currentUser?.emailAddresses[0].emailAddress.split("@")[0] === user.username;
@@ -291,7 +406,7 @@ function ProfilePageClient({
                         <Button className="w-full">Seguir</Button>
                       </SignInButton>
                     ) : isOwnProfile ? (
-                      <Button className="w-full" onClick={() => setShowEditDialog(true)}>
+                      <Button className="w-full" onClick={() => setIsEditDialogOpen(true)}>
                         <EditIcon className="size-4 mr-2" />
                         Editar Perfil
                       </Button>
@@ -422,13 +537,35 @@ function ProfilePageClient({
       </Tabs>
 
       {/* Edit Profile Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
             <DialogTitle>Editar Perfil</DialogTitle>
           </DialogHeader>
           <ScrollArea className="h-[60vh] max-h-[600px] pr-6">
             <div className="space-y-4 py-4">
+               {/* Profile Picture Upload */}
+               <div className="space-y-2">
+                  <Label htmlFor="profile-picture">Foto de Perfil</Label>
+                  {/* Image Preview */}
+                  {(profilePicPreview || currentUser?.imageUrl) && (
+                      <Avatar className="h-20 w-20 mb-2">
+                          <AvatarImage src={profilePicPreview || currentUser?.imageUrl || undefined} alt="Previsualización"/>
+                          <AvatarFallback>{editForm.name ? editForm.name.charAt(0).toUpperCase() : "?"}</AvatarFallback>
+                      </Avatar>
+                  )}
+                  <Input
+                     id="profile-picture"
+                     type="file"
+                     accept="image/png, image/jpeg, image/webp, image/gif" // Specify acceptable types
+                     onChange={handleFileChange}
+                     className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90" // Basic styling
+                     disabled={isEditPending || !isClerkLoaded}
+                   />
+                   <p className="text-xs text-muted-foreground">Sube un archivo JPG, PNG, WEBP o GIF (máx 5MB).</p>
+                </div>
+              
+                {/* Rest of the form fields... */}
               {/* Name */}
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Nombre</Label>
@@ -527,7 +664,7 @@ function ProfilePageClient({
                    Cancelar
                  </Button>
              </DialogClose>
-             <Button type="button" onClick={handleEditSubmit} disabled={isEditPending}>
+             <Button type="button" onClick={handleEditSubmit} disabled={isEditPending || !isClerkLoaded}> {/* Also disable if clerk not loaded */}
                {isEditPending ? "Guardando..." : "Guardar Cambios"}
              </Button>
            </DialogFooter>
@@ -538,5 +675,3 @@ function ProfilePageClient({
 }
 
 export default ProfilePageClient;
-
-

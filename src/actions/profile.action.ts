@@ -5,12 +5,23 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getDbUserId } from "./user.action";
 
+interface ProfileUpdateData {
+  name?: string;
+  bio?: string;
+  isCompany?: boolean;
+  location?: string;
+  website?: string;
+  categories?: string[];
+  imageUrl?: string | null;
+}
+
 export async function getProfileByUsername(username: string) {
   try {
     const user = await prisma.user.findUnique({
       where: { username: username },
       select: {
         id: true,
+        clerkId: true,
         name: true,
         username: true,
         bio: true,
@@ -153,42 +164,47 @@ export async function getUserLikedPosts(userId: string) {
   }
 }
 
-export async function updateProfile(formData: FormData) {
+export async function updateProfile(data: ProfileUpdateData) {
   try {
     const { userId: clerkId } = await auth();
     if (!clerkId) throw new Error("Unauthorized");
 
-    const name = formData.get("name") as string;
-    const bio = formData.get("bio") as string;
-    const isCompany = formData.get("isCompany") === "true";
-    const location = formData.get("location") as string;
-    const website = formData.get("website") as string;
-    const categories: string[] = [];
+    const {
+      name,
+      bio,
+      isCompany,
+      location,
+      website,
+      categories,
+      imageUrl,
+    } = data;
 
-    // for to see categories
-    for (const [key, value] of Array.from(formData.entries())) {
-      if (key.startsWith("categories[")) {
-        categories.push(value as string);
-      }
+    const updateData: Partial<ProfileUpdateData> & { image?: string | null } = {
+      name,
+      bio,
+      isCompany,
+      location,
+      website,
+      categories,
+    };
+
+    if (imageUrl !== undefined) {
+      updateData.image = imageUrl;
     }
 
     const user = await prisma.user.update({
       where: { clerkId },
-      data: {
-        name,
-        bio,
-        isCompany,
-        location,
-        website,
-        categories,
-      },
+      data: updateData,
     });
 
+    revalidatePath(`/profile/${user.username}`);
     revalidatePath("/profile");
+
     return { success: true, user };
   } catch (error) {
     console.error("Error updating profile:", error);
-    return { success: false, error: "Failed to update profile" };
+    const message = error instanceof Error ? error.message : "Failed to update profile";
+    return { success: false, error: message };
   }
 }
 
