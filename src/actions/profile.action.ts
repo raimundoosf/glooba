@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getDbUserId } from "./user.action";
 
 interface ProfileUpdateData {
+  username: string;
   name?: string;
   bio?: string;
   isCompany?: boolean;
@@ -13,29 +14,38 @@ interface ProfileUpdateData {
   website?: string;
   categories?: string[];
   imageUrl?: string | null;
+  backgroundImage?: string | null;
 }
 
 export async function getProfileByUsername(username: string) {
   try {
+    const { userId: currentClerkId } = await auth(); // Get current logged-in user's Clerk ID
+
     const user = await prisma.user.findUnique({
-      where: { username: username },
+      where: { username },
       select: {
         id: true,
         clerkId: true,
-        name: true,
         username: true,
-        bio: true,
-        isCompany: true,
+        name: true,
         image: true,
+        bio: true,
         location: true,
         website: true,
+        isCompany: true,
         createdAt: true,
         categories: true,
+        backgroundImage: true, // Corrected: Select background image
+        followers: {
+          select: {
+            followerId: true,
+          },
+        },
         _count: {
           select: {
+            posts: true,
             followers: true,
             following: true,
-            posts: true,
           },
         },
       },
@@ -170,6 +180,7 @@ export async function updateProfile(data: ProfileUpdateData) {
     if (!clerkId) throw new Error("Unauthorized");
 
     const {
+      username,
       name,
       bio,
       isCompany,
@@ -177,19 +188,31 @@ export async function updateProfile(data: ProfileUpdateData) {
       website,
       categories,
       imageUrl,
+      backgroundImage,
     } = data;
 
-    const updateData: Partial<ProfileUpdateData> & { image?: string | null } = {
-      name,
-      bio,
-      isCompany,
-      location,
-      website,
-      categories,
-    };
+    const updateData: {
+      name?: string;
+      bio?: string;
+      isCompany?: boolean;
+      location?: string;
+      website?: string;
+      categories?: any;
+      image?: string | null;
+      backgroundImage?: string | null;
+    } = {};
 
-    if (imageUrl !== undefined) {
-      updateData.image = imageUrl;
+    if (name !== undefined) updateData.name = name;
+    if (bio !== undefined) updateData.bio = bio;
+    if (isCompany !== undefined) updateData.isCompany = isCompany;
+    if (location !== undefined) updateData.location = location;
+    if (website !== undefined) updateData.website = website;
+    if (categories !== undefined) updateData.categories = categories;
+    if (imageUrl !== undefined) updateData.image = imageUrl;
+    if (backgroundImage !== undefined) updateData.backgroundImage = backgroundImage;
+
+    if (Object.keys(updateData).length === 0) {
+      return { success: true, message: "No changes provided." };
     }
 
     const user = await prisma.user.update({
@@ -197,7 +220,7 @@ export async function updateProfile(data: ProfileUpdateData) {
       data: updateData,
     });
 
-    revalidatePath(`/profile/${user.username}`);
+    revalidatePath(`/profile/${username}`);
     revalidatePath("/profile");
 
     return { success: true, user };
