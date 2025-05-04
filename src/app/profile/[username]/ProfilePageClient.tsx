@@ -178,93 +178,73 @@ function ProfilePageClient({
   }, [user, initialIsFollowing]);
 
   // --- Handlers ---
-  const handleEditSubmit = () => {
-      if (!isOwner || !isClerkLoaded || !currentUser) return; // Added Clerk checks
+  const handleEditSubmit = async () => {
+    if (!currentUser) return;
 
-      startEditTransition(async () => {
-          let clerkUpdatePromise: Promise<any> | null = null;
-          let profileUpdatePromise: Promise<any> | null = null;
-          const toastId = toast.loading("Guardando cambios...");
+    const toastId = toast.loading("Guardando cambios...");
+    let newImageUrl: string | undefined | null = currentUser.imageUrl; // Start with current URL
 
-          try {
-              // 1. Update profile picture in Clerk if a new one is selected
-              if (newProfilePic) {
-                  clerkUpdatePromise = currentUser.setProfileImage({ file: newProfilePic })
-                      .then(() => {
-                          toast.success("Foto de perfil actualizada.", { id: toastId });
-                          setNewProfilePic(null);
-                          setProfilePicPreview(null);
-                          // Clerk's currentUser object should update automatically,
-                          // making currentUser.imageUrl available below.
-                      })
-                      .catch((error) => {
-                          console.error("Error updating profile picture in Clerk:", error);
-                          toast.error("Error al actualizar la foto de perfil.", { id: toastId });
-                          throw error;
-                      });
-              } else {
-                  clerkUpdatePromise = Promise.resolve();
-              }
+    try {
+      // 1. Update profile picture with Clerk if a new one is selected
+      if (newProfilePic) {
+        try {
+          // This updates Clerk's user object internally
+          await currentUser.setProfileImage({
+            file: newProfilePic,
+          });
+          // Refetch or access the updated user object to get the new URL
+          // Assuming Clerk updates the currentUser object in place or provides a new one:
+          // It's safer to potentially refetch the user or rely on the structure
+          // returned by Clerk's methods if they provide the updated user state.
+          // For now, let's assume currentUser object is updated.
+          await currentUser.reload(); // Explicitly reload the user data from Clerk
+          newImageUrl = currentUser.imageUrl; // Get the *new* URL after update
+          setNewProfilePic(null); // Clear the preview state
+          toast.success("Imagen de perfil actualizada.", { id: toastId }); // Immediate feedback for image
+        } catch (clerkError: any) {
+          console.error("Clerk update error:", clerkError);
+          toast.error(`Error al actualizar imagen: ${clerkError.errors?.[0]?.message || clerkError.message || 'Error desconocido'}`, { id: toastId });
+          return; // Stop if Clerk update fails
+        }
+      }
 
-              // 2. Wait for Clerk update to finish
-              await clerkUpdatePromise;
+      // 2. Prepare data for database update (using the potentially new image URL)
+      const profileDataToUpdate: {
+        username: string;
+        bio?: string;
+        website?: string;
+        categories?: string[];
+        imageUrl?: string | null; // Ensure this uses the latest URL
+      } = {
+        username: user.username, // Add username from the user prop
+        ...editForm,
+        categories: selectedCategories,
+        imageUrl: newImageUrl, // Use the URL obtained after potential Clerk update
+      };
 
-              // --- IMPORTANT: currentUser object should now have the updated imageUrl if Clerk update happened ---
+      // 3. Update profile details in the database via server action
+      const result = await updateProfile(profileDataToUpdate);
 
-              // 3. Prepare data object for database update (no more FormData)
-              const profileDataToUpdate: { // Define type inline or import if defined elsewhere
-                  name?: string;
-                  bio?: string;
-                  isCompany?: boolean;
-                  location?: string;
-                  website?: string;
-                  categories?: string[];
-                  imageUrl?: string | null;
-              } = {
-                  ...editForm,
-                  categories: selectedCategories,
-                  // Include the potentially updated image URL from Clerk's user object
-                  imageUrl: currentUser.imageUrl,
-              };
-
-              // 4. Update profile details in the database via server action
-              profileUpdatePromise = updateProfile(profileDataToUpdate) // Pass the object
-                 .then((result) => {
-                     if (result.error) {
-                         console.error("Database update error:", result.error);
-                         // Use existing toast ID only if Clerk didn't update, otherwise show new toast
-                         if (!newProfilePic) {
-                             toast.error(`Error al guardar: ${result.error}`, { id: toastId });
-                         } else {
-                             toast.error(`Error al guardar detalles del perfil: ${result.error}`); // New toast for DB error
-                         }
-                         throw new Error(result.error); // Throw to indicate failure
-                     } else {
-                         // Success message depends on whether Clerk was also updated
-                         if (!newProfilePic) {
-                             toast.success("Perfil actualizado con éxito.", { id: toastId });
-                         } else {
-                             toast.success("Detalles del perfil guardados."); // Clerk already showed success for image
-                         }
-                         setIsEditDialogOpen(false); // Close dialog on success
-                     }
-                 })
-                 .catch((error) => {
-                     console.error("Error in profile update process:", error);
-                      if (!document.querySelector(`[data-toast-id="${toastId}"]`)) {
-                          toast.error("Ocurrió un error inesperado al guardar.");
-                      }
-                 });
-
-              await profileUpdatePromise; // Wait for the database update to complete
-
-          } catch (error) {
-              console.error("Overall error during profile update:", error);
-               if (document.querySelector(`[data-toast-id="${toastId}"]`)) {
-                    toast.dismiss(toastId);
-               }
-          }
-      });
+      if (result.error) {
+        console.error("Database update error:", result.error);
+        toast.error(`Error al guardar detalles: ${result.error}`);
+      } else {
+        toast.success("Perfil actualizado con éxito.", { id: toastId });
+        setIsEditDialogOpen(false); // Close dialog on success
+      }
+    } catch (error: any) {
+      // Catch any unexpected errors during the process
+      console.error("Profile update failed:", error);
+      if (toastId) {
+         toast.error(`Error inesperado: ${error.message || 'Ocurrió un problema'}`, { id: toastId });
+      } else {
+         toast.error(`Error inesperado: ${error.message || 'Ocurrió un problema'}`);
+      }
+    } finally {
+       // Ensure loading toast is dismissed if it wasn't replaced by success/error
+       // Careful not to dismiss specific success/error toasts shown above
+       // This might require more nuanced toast ID management if issues arise.
+    }
   };
 
   // Update selected categories state from MultiSelect component
