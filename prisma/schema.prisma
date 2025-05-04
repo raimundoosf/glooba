@@ -21,6 +21,7 @@ model User {
   name String?
   bio String?
   image String?
+  backgroundImage String? // Added background image field
   location String?
   isCompany Boolean  @default(false) // Is a company, by default false
   categories String[] // Categories of the company, and categories of interest of users
