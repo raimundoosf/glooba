@@ -49,7 +49,7 @@ export default async function AboutPage() {
           </div>
            {/* Key features/pillars presented visually below CTA */}
           <div className="flex flex-wrap justify-center items-center gap-6 text-muted-foreground">
-              <div className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-600" /> Red social de sustentabilidad</div>
+              <div className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-600" /> Comunidad sostenible</div>
               <div className="flex items-center gap-2"><Search className="h-5 w-5 text-blue-600" /> Buscador verificado</div>
               <div className="flex items-center gap-2"><Users className="h-5 w-5 text-purple-600" /> Evaluación colaborativa</div>
           </div>
@@ -76,21 +76,21 @@ export default async function AboutPage() {
              {/* Grid of key user actions/benefits */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                 <Card className="text-center hover:shadow-md transition-shadow p-6"> {/* Added padding to Card */}
-                    <MapPin className="h-10 w-10 text-primary mx-auto mb-4" /> {/* Larger icon, centered */}
+                    <MapPin className="h-10 w-10 text-blue-600 mx-auto mb-4" /> {/* Larger icon, centered */}
                     <CardTitle className="text-xl font-semibold mb-2">Encontrar Fácilmente</CardTitle> {/* Stronger title */}
                     <CardContent className="p-0"> {/* Removed default padding */}
                         <p className="text-muted-foreground text-sm">Alternativas sostenibles verificadas y cercanas a ti con nuestro buscador inteligente.</p>
                     </CardContent>
                 </Card>
                 <Card className="text-center hover:shadow-md transition-shadow p-6">
-                    <TrendingUp className="h-10 w-10 text-primary mx-auto mb-4" /> {/* Larger icon, centered */}
+                    <TrendingUp className="h-10 w-10 text-green-600 mx-auto mb-4" /> {/* Larger icon, centered */}
                      <CardTitle className="text-xl font-semibold mb-2">Impulsar el Cambio</CardTitle>
                      <CardContent className="p-0">
                         <p className="text-muted-foreground text-sm">Apoyando a empresas comprometidas y descubriendo formas de unirte al movimiento sostenible.</p>
                     </CardContent>
                 </Card>
                  <Card className="text-center hover:shadow-md transition-shadow p-6">
-                    <Users className="h-10 w-10 text-primary mx-auto mb-4" /> {/* Larger icon, centered */}
+                    <Users className="h-10 w-10 text-purple-600 mx-auto mb-4" /> {/* Larger icon, centered */}
                     <CardTitle className="text-xl font-semibold mb-2">Conectar y Colaborar</CardTitle>
                     <CardContent className="p-0">
                         <p className="text-muted-foreground text-sm">Interactúa con una comunidad, comparte experiencias y ayuda a verificar iniciativas.</p>
@@ -115,7 +115,7 @@ export default async function AboutPage() {
                 ].map((item) => (
                   // Added padding to Card, improved icon display
                   <Card key={item.title} className="text-center hover:shadow-md transition-shadow p-6 flex flex-col items-center">
-                     <item.icon className="h-8 w-8 text-secondary-foreground mb-3" /> {/* Icon for each pillar */}
+                     <item.icon className="h-8 w-8 text-blue-600 mb-3" /> {/* Icon for each pillar */}
                     <CardTitle className="text-lg font-semibold mb-2">{item.title}</CardTitle> {/* Stronger title */}
                     <CardContent className="p-0 flex-grow"> {/* flex-grow to push description */}
                       <p className="text-sm text-muted-foreground">{item.description}</p>
@@ -171,21 +171,21 @@ export default async function AboutPage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
               <div className="md:col-span-1 space-y-3"> {/* Added space-y */}
-                <Lightbulb className="h-8 w-8 text-primary mb-2" /> {/* Added icon */}
+                <Lightbulb className="h-8 w-8 text-blue-600 mb-2" /> {/* Added icon */}
                 <h3 className="text-xl font-semibold">¿Qué es Glooba?</h3>
                 <p className="text-muted-foreground text-sm"> {/* Reduced text size */}
                   Glooba es una plataforma que conecta a consumidores con iniciativas y ofertas sostenibles en Latam, facilitando el consumo responsable y apoyando a empresas comprometidas.
                 </p>
               </div>
               <div className="md:col-span-1 space-y-3"> {/* Added space-y */}
-                 <Handshake className="h-8 w-8 text-primary mb-2" /> {/* Added icon */}
+                 <Handshake className="h-8 w-8 text-green-600 mb-2" /> {/* Added icon */}
                 <h3 className="text-xl font-semibold">Misión</h3>
                 <p className="text-muted-foreground text-sm"> {/* Reduced text size */}
                   Facilitar la transición global hacia el consumo responsable conectando personas con empresas sostenibles. Empoderamos elecciones conscientes para un futuro mejor.
                 </p>
               </div>
               <div className="md:col-span-1 space-y-3"> {/* Added space-y */}
-                <TrendingUp className="h-8 w-8 text-primary mb-2" /> {/* Added icon */}
+                <TrendingUp className="h-8 w-8 text-purple-600 mb-2" /> {/* Added icon */}
                 <h3 className="text-xl font-semibold">Visión</h3>
                 <p className="text-muted-foreground text-sm"> {/* Reduced text size */}
                   Ser el ecosistema líder donde la sostenibilidad es accesible y la opción preferida para todos, transformando decisiones en impacto positivo.
