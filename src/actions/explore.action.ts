@@ -190,3 +190,56 @@ export async function getFilteredCompanies(
     };
   }
 }
+
+/**
+ * Fetches a limited list of companies to feature (e.g., on the About page).
+ * Selects only necessary fields for display.
+ * @returns {Promise<Array<{ id: string; username: string | null; image: string | null }>>} - A promise that resolves to an array of featured companies.
+ */
+export async function getFeaturedCompanies(): Promise<
+	Array<{
+		id: string;
+		username: string | null;
+		image: string | null;
+	}>
+> {
+	const take = 10;
+	try {
+		// 1. Get the total count of companies
+		const totalCompanies = await prisma.user.count({
+			where: {
+				isCompany: true,
+			},
+		});
+
+		// 2. Calculate a random skip offset
+		const maxSkip = Math.max(0, totalCompanies - take);
+		const randomSkip = Math.floor(Math.random() * (maxSkip + 1));
+
+		// 3. Fetch companies with the random skip
+		const companies = await prisma.user.findMany({
+			where: {
+				isCompany: true,
+			},
+			take: take,
+			skip: randomSkip, // Apply the random offset
+			select: {
+				id: true,
+				username: true,
+				image: true,
+			},
+			// No specific order needed when taking a random slice
+			// orderBy: {
+			// 	createdAt: 'desc',
+			// },
+		});
+
+		// Optional: If fewer than 'take' companies were returned (e.g., near the end of the list),
+		// and you absolutely need 10, you might need a fallback fetch, but this is often sufficient.
+
+		return companies;
+	} catch (error) {
+		console.error('Error fetching featured companies:', error);
+		return []; // Return empty array on error
+	}
+}
