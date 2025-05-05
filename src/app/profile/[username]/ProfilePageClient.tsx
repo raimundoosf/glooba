@@ -677,7 +677,7 @@ function ProfilePageClient({
                   <Input id="edit-website" name="website" value={editForm.website} onChange={(e) => setEditForm({ ...editForm, website: e.target.value })} placeholder="tuwebsite.com" disabled={isEditPending}/>
                 </div>
                 {/* Is Company Toggle */}
-                <div className="flex items-center justify-between space-x-2 pt-2">
+                {/* <div className="flex items-center justify-between space-x-2 pt-2">
                   <Label htmlFor="isCompany" className="flex flex-col space-y-1">
                     <span>Cuenta Empresa</span>
                     <span className="font-normal leading-snug text-muted-foreground text-xs">Activa esto si representas a una empresa u organización.</span>
@@ -699,7 +699,7 @@ function ProfilePageClient({
                       }
                     }}
                   />
-                </div>
+                </div> */}
 
                 {/* Categories Section */}
                 <div className="space-y-2 pt-2">
