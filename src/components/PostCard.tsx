@@ -3,12 +3,12 @@
 
 import { PostWithDetails, createComment, deletePost, toggleLike } from "@/actions/post.action";
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { useState, useTransition, useEffect } from "react"; // Import useEffect
+import { useState, useTransition, useEffect, useRef } from "react"; 
 import toast from "react-hot-toast";
 import { Card, CardContent } from "./ui/card";
 import Link from "next/link";
-import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar"; // Import AvatarFallback
-import { formatDistanceToNowStrict, format, formatDistanceToNow } from "date-fns"; // Import format
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar"; 
+import { formatDistanceToNowStrict, format, formatDistanceToNow } from "date-fns"; 
 import { es } from "date-fns/locale";
 import { DeleteAlertDialog } from "./DeleteAlertDialog";
 import { Button } from "./ui/button";
@@ -24,7 +24,7 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post, dbUserId }: PostCardProps) {
-  const { user } = useUser(); // Clerk user for comments/likes UI
+  const { user } = useUser(); 
   const feedContext = useFeedContext();
   const [newComment, setNewComment] = useState("");
   const [isCommenting, startCommentTransition] = useTransition();
@@ -33,6 +33,7 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
   const [hasLiked, setHasLiked] = useState(post.likes.some((like) => like.userId === dbUserId));
   const [optimisticLikes, setOptmisticLikes] = useState(post._count.likes);
   const [showComments, setShowComments] = useState(false);
+  const commentInputRef = useRef<HTMLTextAreaElement>(null); 
 
   // --- Handlers (Like, Comment, Delete - Keep context calls) ---
    const handleLike = async () => {
@@ -113,9 +114,9 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
                     <TimeAgo date={post.createdAt} />
                   </div>
                 </div>
-                {/* Check if current user is the post author */}
-                {dbUserId === post.author.id && (
-                  <DeleteAlertDialog isDeleting={isDeleting} onDelete={handleDeletePost} />
+                {/* Delete Button (only if author) */}
+                {dbUserId === post.authorId && (
+                  <DeleteAlertDialog onDelete={handleDeletePost} isDeleting={isDeleting} />
                 )}
               </div>
               <p className="mt-2 text-sm text-foreground break-words">{post.content}</p>
@@ -160,7 +161,21 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
               variant="ghost"
               size="sm"
               className="text-muted-foreground gap-2 hover:text-blue-500"
-              onClick={() => setShowComments((prev) => !prev)}
+              onClick={() => {
+                const nextShowComments = !showComments;
+                setShowComments(nextShowComments);
+                // Scroll to input only when opening the comment section
+                if (nextShowComments) {
+                  // Use setTimeout to ensure the textarea is rendered before scrolling
+                  setTimeout(() => {
+                    commentInputRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "center", 
+                    });
+                    commentInputRef.current?.focus(); 
+                  }, 100); 
+                }
+              }}
             >
               <MessageCircleIcon
                 className={`size-5 ${showComments ? "fill-blue-500 text-blue-500" : ""}`}
@@ -208,6 +223,7 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
                   </Avatar>
                   <div className="flex-1">
                     <Textarea
+                      ref={commentInputRef} 
                       placeholder="Escribe un comentario..."
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
