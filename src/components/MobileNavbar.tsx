@@ -10,18 +10,41 @@ import {
   SunIcon,
   UserIcon,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
-import { useAuth, SignInButton, SignOutButton, useUser } from "@clerk/nextjs";
+import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
+import { useAuth, useUser, useClerk, SignInButton } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import Link from "next/link";
 
 function MobileNavbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const { isSignedIn } = useAuth();
-  const { user } = useUser(); 
   const { theme, setTheme } = useTheme();
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
+  const { signOut } = useClerk();
+
+  const handleCloseMenu = () => setShowMobileMenu(false);
+
+  // Cierra el menú cuando el usuario inicia sesión
+  useEffect(() => {
+    if (isSignedIn) handleCloseMenu();
+  }, [isSignedIn]);
+
+  const MenuLink = ({ href, icon: Icon, label }: { href: string; icon: any; label: string }) => (
+    <Button variant="ghost" className="flex items-center gap-3 justify-start" asChild>
+      <Link href={href} onClick={handleCloseMenu}>
+        <Icon className="w-4 h-4" />
+        {label}
+      </Link>
+    </Button>
+  );
 
   return (
     <div className="flex md:hidden items-center space-x-2">
@@ -42,48 +65,35 @@ function MobileNavbar() {
             <MenuIcon className="h-5 w-5" />
           </Button>
         </SheetTrigger>
+
         <SheetContent side="right" className="w-[300px]">
           <SheetHeader>
             <SheetTitle>Menú</SheetTitle>
           </SheetHeader>
-          <nav className="flex flex-col space-y-4 mt-6">
-            <Button variant="ghost" className="flex items-center gap-3 justify-start" asChild>
-              <Link href="/">
-                <HomeIcon className="w-4 h-4" />
-                Inicio
-              </Link>
-            </Button>
 
-            <Button variant="ghost" className="flex items-center gap-3 justify-start" asChild>
-              <Link href="/feed">
-                <RssIcon className="w-4 h-4" />
-                Feed
-              </Link>
-            </Button>
+          <nav className="flex flex-col space-y-4 mt-6">
+            <MenuLink href="/" icon={HomeIcon} label="Inicio" />
+            <MenuLink href="/feed" icon={RssIcon} label="Feed" />
 
             {isSignedIn ? (
               <>
-                <Button variant="ghost" className="flex items-center gap-3 justify-start" asChild>
-                  <Link href="/notifications">
-                    <BellIcon className="w-4 h-4" />
-                    Notificaciones
-                  </Link>
+                <MenuLink href="/notifications" icon={BellIcon} label="Notificaciones" />
+                <MenuLink
+                  href={`/profile/${user?.username}`}
+                  icon={UserIcon}
+                  label="Perfil"
+                />
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-3 justify-start w-full"
+                  onClick={async () => {
+                    handleCloseMenu();
+                    await signOut();
+                  }}
+                >
+                  <LogOutIcon className="w-4 h-4" />
+                  Cerrar sesión
                 </Button>
-                <Button variant="ghost" className="flex items-center gap-3 justify-start" asChild>
-                  {/* Added optional chaining for user */}
-                  <Link
-                    href={`/profile/${user?.username}`}
-                  >
-                    <UserIcon className="w-4 h-4" />
-                    Perfil
-                  </Link>
-                </Button>
-                <SignOutButton>
-                  <Button variant="ghost" className="flex items-center gap-3 justify-start w-full">
-                    <LogOutIcon className="w-4 h-4" />
-                    Cerrar sesión
-                  </Button>
-                </SignOutButton>
               </>
             ) : (
               <SignInButton mode="modal">

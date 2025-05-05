@@ -97,6 +97,7 @@ export function MultiSelectCategories({
              value={searchTerm}
              onValueChange={setSearchTerm}
              disabled={disabled}
+             className="hidden lg:block"
           />
           <CommandList>
              <ScrollArea className="h-[200px]">
@@ -132,7 +133,5 @@ export function MultiSelectCategories({
         </Command>
       </PopoverContent>
     </Popover>
-    // *** REMOVED the badge display section from here ***
-    // *** REMOVED the max selection message display from here ***
   );
 }

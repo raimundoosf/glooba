@@ -5,7 +5,7 @@ import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { Button } from "./ui/button";
 import { getUserByClerkId } from "@/actions/user.action";
 import Link from "next/link";
-import { Avatar, AvatarImage } from "./ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Separator } from "./ui/separator";
 import { LinkIcon, MapPinIcon } from "lucide-react";
 
@@ -18,18 +18,37 @@ async function Sidebar() {
 
   return (
     <div className="sticky top-20">
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center text-center">
+      <Card className="bg-card overflow-hidden">
+        <CardContent className="px-4 py-6 relative">
+          {/* Background Image */}
+          <div className="absolute inset-x-0 top-0 h-32 bg-muted">
+            {user.backgroundImage ? (
+              <img
+                src={user.backgroundImage}
+                alt={`${user.name || user.username}'s background`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="h-12 w-12 text-gray-500" />
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col items-center text-center pt-20">
             <Link
               href={`/profile/${user.username}`}
               className="flex flex-col items-center justify-center"
+              style={{ alignItems: "center" }}
             >
-              <Avatar className="w-20 h-20 border-2 ">
+              <Avatar className="w-24 h-24 border-4 border-card relative z-10 -mt-12">
                 <AvatarImage src={user.image || "/avatar.png"} />
+                <AvatarFallback>
+                  {user.name?.substring(0, 2) || user.username.substring(0, 2)}
+                </AvatarFallback>
               </Avatar>
 
-              <div className="mt-4 space-y-1">
+              <div className="mt-4 space-y-1 flex flex-col items-center">
                 <h3 className="font-semibold">{user.name}</h3>
                 <div className="flex items-center">
                   <p className="text-sm text-muted-foreground">@{user.username}</p>
