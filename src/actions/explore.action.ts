@@ -107,7 +107,9 @@ export async function getFilteredCompanies(
     }
     if (categories?.length) {
       (whereClause.AND as Prisma.UserWhereInput[]).push({
-        categories: { hasSome: categories },
+        categories: { 
+          hasSome: categories
+        }
       });
     }
     if (location) {
