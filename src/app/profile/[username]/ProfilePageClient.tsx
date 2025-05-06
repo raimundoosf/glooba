@@ -529,7 +529,7 @@ function ProfilePageClient({
          <TabsContent value="posts" className="mt-6">
            <div className="space-y-6">
              {posts.length > 0 ? (
-               posts.map((post) => <PostCard key={post.id} post={post} dbUserId={user.id} />)
+               posts.map((post) => <PostCard key={post.id} post={post} dbUserId={currentUser?.id ?? null} />)
              ) : (
                <div className="text-center py-8 text-muted-foreground">Aún no hay publicaciones</div>
              )}
@@ -540,7 +540,7 @@ function ProfilePageClient({
          <TabsContent value="likes" className="mt-6">
            <div className="space-y-6">
              {likedPosts.length > 0 ? (
-               likedPosts.map((post) => <PostCard key={post.id} post={post} dbUserId={user.id} />)
+               likedPosts.map((post) => <PostCard key={post.id} post={post} dbUserId={currentUser?.id ?? null} />)
              ) : (
                <div className="text-center py-8 text-muted-foreground">Aún no hay publicaciones que te gusten</div>
              )}
