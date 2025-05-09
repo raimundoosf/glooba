@@ -1,12 +1,17 @@
 // src/components/explore/ExploreClientWrapper.tsx
-"use client";
+'use client';
 
-import { useState, useTransition, useCallback, useRef, useEffect } from "react"; // Added useRef, useEffect
-import CompanyFilters from "./CompanyFilters";
-import CompanyResults from "./CompanyResults";
-import { getFilteredCompanies, CompanyFiltersType, CompanyCardData, PaginatedCompaniesResponse } from "@/actions/explore.action";
+import { useState, useTransition, useCallback, useRef, useEffect } from 'react'; // Added useRef, useEffect
+import CompanyFilters from './CompanyFilters';
+import CompanyResults from './CompanyResults';
+import {
+  getFilteredCompanies,
+  CompanyFiltersType,
+  CompanyCardData,
+  PaginatedCompaniesResponse,
+} from '@/actions/explore.action';
 // Removed Button import as Load More button is gone
-import { Loader2 } from "lucide-react"; // Keep Loader for indicator
+import { Loader2 } from 'lucide-react'; // Keep Loader for indicator
 
 interface ExploreClientWrapperProps {
   initialCompanies: CompanyCardData[];
@@ -37,37 +42,42 @@ export default function ExploreClientWrapper({
   // --- Handlers ---
 
   // Called when filters change
-  const handleFilterChange = useCallback((newFilters: CompanyFiltersType) => {
-    const filtersToApply: CompanyFiltersType = {
-       searchTerm: newFilters.searchTerm || undefined,
-       categories: newFilters.categories && newFilters.categories.length > 0 ? newFilters.categories : undefined,
-       location: newFilters.location || undefined,
-     };
+  const handleFilterChange = useCallback(
+    (newFilters: CompanyFiltersType) => {
+      const filtersToApply: CompanyFiltersType = {
+        searchTerm: newFilters.searchTerm || undefined,
+        categories:
+          newFilters.categories && newFilters.categories.length > 0
+            ? newFilters.categories
+            : undefined,
+        location: newFilters.location || undefined,
+      };
 
-    setAppliedFilters(filtersToApply);
-    setCurrentPage(1); // Reset to page 1
-    setCompanies([]); // Clear existing results
-    setHasNextPage(false); // Reset hasNextPage
+      setAppliedFilters(filtersToApply);
+      setCurrentPage(1); // Reset to page 1
+      setCompanies([]); // Clear existing results
+      setHasNextPage(false); // Reset hasNextPage
 
-    startFilteringTransition(async () => {
-      try {
-        console.log("Applying filters (Page 1):", filtersToApply);
-        const results: PaginatedCompaniesResponse = await getFilteredCompanies(
-            filtersToApply,
-            { page: 1 }
-        );
-        setCompanies(results.companies);
-        setTotalCount(results.totalCount);
-        setHasNextPage(results.hasNextPage);
-        setCurrentPage(results.currentPage);
-      } catch (error) {
-        console.error("Failed to fetch filtered companies:", error);
-        setCompanies([]);
-        setTotalCount(0);
-        setHasNextPage(false);
-      }
-    });
-  }, [startFilteringTransition]);
+      startFilteringTransition(async () => {
+        try {
+          console.log('Applying filters (Page 1):', filtersToApply);
+          const results: PaginatedCompaniesResponse = await getFilteredCompanies(filtersToApply, {
+            page: 1,
+          });
+          setCompanies(results.companies);
+          setTotalCount(results.totalCount);
+          setHasNextPage(results.hasNextPage);
+          setCurrentPage(results.currentPage);
+        } catch (error) {
+          console.error('Failed to fetch filtered companies:', error);
+          setCompanies([]);
+          setTotalCount(0);
+          setHasNextPage(false);
+        }
+      });
+    },
+    [startFilteringTransition]
+  );
 
   // Function to load the next page of companies
   const loadMoreCompanies = useCallback(async () => {
@@ -79,16 +89,15 @@ export default function ExploreClientWrapper({
 
     try {
       console.log(`Loading more (Page ${nextPage}):`, appliedFilters);
-      const results: PaginatedCompaniesResponse = await getFilteredCompanies(
-          appliedFilters,
-          { page: nextPage }
-      );
+      const results: PaginatedCompaniesResponse = await getFilteredCompanies(appliedFilters, {
+        page: nextPage,
+      });
       setCompanies((prevCompanies) => [...prevCompanies, ...results.companies]);
       setTotalCount(results.totalCount);
       setHasNextPage(results.hasNextPage);
       setCurrentPage(results.currentPage);
     } catch (error) {
-      console.error("Failed to load more companies:", error);
+      console.error('Failed to load more companies:', error);
       // Consider showing an error message to the user
     } finally {
       setIsLoadingMore(false);
@@ -103,7 +112,7 @@ export default function ExploreClientWrapper({
     observerRef.current = new IntersectionObserver((entries) => {
       // Check if the sentinel element is intersecting (visible)
       if (entries[0].isIntersecting && hasNextPage && !isLoadingMore && !isFiltering) {
-        console.log("Sentinel intersecting, loading more..."); // Debug log
+        console.log('Sentinel intersecting, loading more...'); // Debug log
         loadMoreCompanies(); // Load next page
       }
     });
@@ -123,7 +132,6 @@ export default function ExploreClientWrapper({
     // Re-run effect if loading states or hasNextPage change, or if loadMoreCompanies function reference changes
   }, [hasNextPage, isLoadingMore, isFiltering, loadMoreCompanies]);
 
-
   // Combined loading state for disabling filters
   const isCurrentlyLoadingFilters = isFiltering || isLoadingMore;
 
@@ -135,13 +143,10 @@ export default function ExploreClientWrapper({
         onFilterChange={handleFilterChange}
         isDisabled={isCurrentlyLoadingFilters}
       />
-
       {/* Display results - show spinner only during initial filtering when results are empty */}
       <CompanyResults companies={companies} isLoading={isFiltering && companies.length === 0} />
-
       {/* Sentinel Element and Loading Indicator for Infinite Scroll */}
       <div ref={sentinelRef} style={{ height: '10px' }} /> {/* Invisible sentinel */}
-
       <div className="flex justify-center py-4">
         {isLoadingMore && ( // Show loader only when loading more pages
           <Loader2 className="h-6 w-6 animate-spin text-primary" />

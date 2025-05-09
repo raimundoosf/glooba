@@ -1,7 +1,7 @@
-"use server";
+'use server';
 
-import prisma from "@/lib/prisma";
-import { getDbUserId } from "./user.action";
+import prisma from '@/lib/prisma';
+import { getDbUserId } from './user.action';
 
 export async function getNotifications() {
   try {
@@ -37,14 +37,14 @@ export async function getNotifications() {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
     });
 
     return notifications;
   } catch (error) {
-    console.error("Error fetching notifications:", error);
-    throw new Error("Failed to fetch notifications");
+    console.error('Error fetching notifications:', error);
+    throw new Error('Failed to fetch notifications');
   }
 }
 
@@ -63,7 +63,7 @@ export async function markNotificationsAsRead(notificationIds: string[]) {
 
     return { success: true };
   } catch (error) {
-    console.error("Error marking notifications as read:", error);
+    console.error('Error marking notifications as read:', error);
     return { success: false };
   }
 }

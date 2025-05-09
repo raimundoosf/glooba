@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Loader2Icon, Trash2Icon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2Icon, Trash2Icon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 
 interface DeleteAlertDialogProps {
   isDeleting: boolean;
@@ -24,8 +24,8 @@ interface DeleteAlertDialogProps {
 export function DeleteAlertDialog({
   isDeleting,
   onDelete,
-  title = "Eliminar publicación",
-  description = "Esta acción no se puede deshacer.",
+  title = 'Eliminar publicación',
+  description = 'Esta acción no se puede deshacer.',
 }: DeleteAlertDialogProps) {
   return (
     <AlertDialog>
@@ -54,11 +54,10 @@ export function DeleteAlertDialog({
             className="bg-red-500 hover:bg-red-600"
             disabled={isDeleting}
           >
-            {isDeleting ? "Eliminando..." : "Eliminar"}
+            {isDeleting ? 'Eliminando...' : 'Eliminar'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
 }
-

@@ -1,7 +1,7 @@
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Info } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, Info } from 'lucide-react';
 
 export default function WelcomeMessage() {
   return (
@@ -12,8 +12,8 @@ export default function WelcomeMessage() {
           ¡Bienvenido/a a Glooba!
         </CardTitle>
         <CardDescription className="text-base text-muted-foreground max-w-xl">
-        Conectamos personas y organizaciones con iniciativas sostenibles. 
-        ¡Explora, valora y sé parte del cambio!
+          Conectamos personas y organizaciones con iniciativas sostenibles. ¡Explora, valora y sé
+          parte del cambio!
         </CardDescription>
         <div className="pt-2">
           <Link href="/about" passHref>

@@ -1,8 +1,12 @@
 // src/components/reviews/ReviewsSection.tsx
-"use client";
+'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { getCompanyReviewsAndStats, ReviewWithAuthor, PaginatedReviewsResponse } from '@/actions/review.action';
+import {
+  getCompanyReviewsAndStats,
+  ReviewWithAuthor,
+  PaginatedReviewsResponse,
+} from '@/actions/review.action';
 import { ReviewCard } from './ReviewCard';
 import { Loader2, Star, MessageSquareWarning } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -49,18 +53,21 @@ export function ReviewsSection({
     const nextPage = currentPage + 1;
     try {
       // Fetch only reviews for subsequent pages, stats usually don't change often
-      const result = await getCompanyReviewsAndStats({ companyId, pagination: { page: nextPage } });
+      const result = await getCompanyReviewsAndStats({
+        companyId,
+        pagination: { page: nextPage },
+      });
       if (result.success) {
         setReviews((prev) => [...prev, ...result.reviews]);
         setHasNextPage(result.hasNextPage);
         setCurrentPage(result.currentPage);
         setError(null);
       } else {
-        setError(result.error || "No se pudieron cargar más reseñas.");
+        setError(result.error || 'No se pudieron cargar más reseñas.');
         setHasNextPage(false);
       }
     } catch (err) {
-      setError("Ocurrió un error inesperado al cargar más reseñas.");
+      setError('Ocurrió un error inesperado al cargar más reseñas.');
       setHasNextPage(false);
     } finally {
       setIsLoadingMore(false);
@@ -70,16 +77,20 @@ export function ReviewsSection({
   // --- Intersection Observer Effect ---
   useEffect(() => {
     if (observerRef.current) observerRef.current.disconnect();
-    observerRef.current = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasNextPage && !isLoadingMore && !error) {
-        loadMoreReviews();
-      }
-    }, { rootMargin: "200px" });
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isLoadingMore && !error) {
+          loadMoreReviews();
+        }
+      },
+      { rootMargin: '200px' }
+    );
     const currentRef = loadMoreRef.current;
     if (currentRef) observerRef.current.observe(currentRef);
-    return () => { if (observerRef.current) observerRef.current.disconnect() };
+    return () => {
+      if (observerRef.current) observerRef.current.disconnect();
+    };
   }, [hasNextPage, isLoadingMore, loadMoreReviews, error]);
-
 
   // --- Render Logic ---
   if (error && reviews.length === 0) {
@@ -88,11 +99,11 @@ export function ReviewsSection({
 
   if (!error && reviews.length === 0 && !isLoadingMore) {
     return (
-        <div className="text-center py-10 px-4 bg-card/30 border rounded-lg mt-6">
-            <MessageSquareWarning className="mx-auto h-10 w-10 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No hay reseñas para esta empresa.</p>
-            {/* Optionally add a prompt to leave the first review */}
-        </div>
+      <div className="text-center py-10 px-4 bg-card/30 border rounded-lg mt-6">
+        <MessageSquareWarning className="mx-auto h-10 w-10 text-muted-foreground mb-4" />
+        <p className="text-muted-foreground">No hay reseñas para esta empresa.</p>
+        {/* Optionally add a prompt to leave the first review */}
+      </div>
     );
   }
 
@@ -102,7 +113,7 @@ export function ReviewsSection({
         <ReviewCard key={review.id} review={review} />
       ))}
 
-      {hasNextPage && <div ref={loadMoreRef} style={{ height: "50px" }} />}
+      {hasNextPage && <div ref={loadMoreRef} style={{ height: '50px' }} />}
 
       <div className="flex justify-center py-4">
         {isLoadingMore && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
@@ -116,4 +127,3 @@ export function ReviewsSection({
     </div>
   );
 }
-

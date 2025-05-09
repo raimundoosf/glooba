@@ -1,11 +1,11 @@
 // src/components/ui/MultiSelectCategories.tsx
-"use client";
+'use client';
 
-import * as React from "react";
-import { Check, ChevronsUpDown, X } from "lucide-react"; // X is no longer used here
+import * as React from 'react';
+import { Check, ChevronsUpDown, X } from 'lucide-react'; // X is no longer used here
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -13,14 +13,10 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+} from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 // Badge is no longer rendered directly in this component
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface MultiSelectCategoriesProps {
   allCategories: string[];
@@ -36,13 +32,13 @@ export function MultiSelectCategories({
   allCategories,
   selectedCategories,
   onChange,
-  placeholder = "Select categories...",
+  placeholder = 'Select categories...',
   maxSelection,
   disabled = false,
   className, // className is now applied to the Popover root
 }: MultiSelectCategoriesProps) {
   const [open, setOpen] = React.useState(false);
-  const [searchTerm, setSearchTerm] = React.useState("");
+  const [searchTerm, setSearchTerm] = React.useState('');
 
   // Use a Set for efficient checking of selected items
   const selectedSet = React.useMemo(() => new Set(selectedCategories), [selectedCategories]);
@@ -79,7 +75,7 @@ export function MultiSelectCategories({
           role="combobox"
           aria-expanded={open}
           // Apply sizing/layout classes here if needed, or rely on parent div
-          className={cn("w-full justify-between font-normal", className)}
+          className={cn('w-full justify-between font-normal', className)}
           disabled={disabled}
         >
           <span className="truncate">
@@ -93,42 +89,51 @@ export function MultiSelectCategories({
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command>
           <CommandInput
-             placeholder="Buscar categoría..."
-             value={searchTerm}
-             onValueChange={setSearchTerm}
-             disabled={disabled}
-             className="hidden lg:block"
+            placeholder="Buscar categoría..."
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+            disabled={disabled}
+            className="hidden lg:block"
           />
           <CommandList>
-             <ScrollArea className="h-[200px]">
-                 <CommandEmpty>No se encontró categoría.</CommandEmpty>
-                 <CommandGroup>
-                 {filteredCategories.map((category) => {
-                     const isSelected = selectedSet.has(category);
-                     const isDisabledItem = !isSelected && isMaxSelected;
+            <ScrollArea className="h-[200px]">
+              <CommandEmpty>No se encontró categoría.</CommandEmpty>
+              <CommandGroup>
+                {filteredCategories.map((category) => {
+                  const isSelected = selectedSet.has(category);
+                  const isDisabledItem = !isSelected && isMaxSelected;
 
-                     return (
-                     <CommandItem
-                         key={category}
-                         value={category}
-                         onSelect={() => { if (!isDisabledItem) handleSelect(category); }}
-                         disabled={isDisabledItem || disabled}
-                         className={cn("flex items-center justify-between", isDisabledItem && "opacity-50 cursor-not-allowed")}
-                         aria-selected={isSelected}
-                     >
-                         {/* Checkbox visual indicator */}
-                         <span>{category}</span>
-                         <div className={cn(
-                             "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                             isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible"
-                         )}>
-                             <Check className="h-4 w-4" />
-                         </div>
-                     </CommandItem>
-                     );
-                 })}
-                 </CommandGroup>
-             </ScrollArea>
+                  return (
+                    <CommandItem
+                      key={category}
+                      value={category}
+                      onSelect={() => {
+                        if (!isDisabledItem) handleSelect(category);
+                      }}
+                      disabled={isDisabledItem || disabled}
+                      className={cn(
+                        'flex items-center justify-between',
+                        isDisabledItem && 'opacity-50 cursor-not-allowed'
+                      )}
+                      aria-selected={isSelected}
+                    >
+                      {/* Checkbox visual indicator */}
+                      <span>{category}</span>
+                      <div
+                        className={cn(
+                          'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
+                          isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'opacity-50 [&_svg]:invisible'
+                        )}
+                      >
+                        <Check className="h-4 w-4" />
+                      </div>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </ScrollArea>
           </CommandList>
         </Command>
       </PopoverContent>
