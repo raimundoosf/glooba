@@ -94,7 +94,8 @@ export async function getFilteredCompanies(
       AND: [],
     };
 
-    // --- Apply Filters ---
+    // Apply search term filter if provided
+    // Searches across name, username, and bio fields (case-insensitive)
     if (searchTerm) {
       (whereClause.AND as Prisma.UserWhereInput[]).push({
         OR: [
@@ -104,6 +105,9 @@ export async function getFilteredCompanies(
         ],
       });
     }
+
+    // Apply category filter if categories are provided
+    // Ensures company has at least one of the selected categories
     if (categories?.length) {
       (whereClause.AND as Prisma.UserWhereInput[]).push({
         categories: {
@@ -111,15 +115,20 @@ export async function getFilteredCompanies(
         },
       });
     }
+
+    // Apply location filter if provided
+    // Case-insensitive search in company location
     if (location) {
       (whereClause.AND as Prisma.UserWhereInput[]).push({
         location: { contains: location, mode: 'insensitive' },
       });
     }
+
+    // Clean up the where clause by removing empty AND array
+    // This prevents Prisma from throwing errors with empty AND conditions
     if ((whereClause.AND as Prisma.UserWhereInput[]).length === 0) {
       delete whereClause.AND;
     }
-    // --- End Apply Filters ---
 
     // --- Perform Queries ---
     const [totalCount, companiesRaw] = await prisma.$transaction([

@@ -1,12 +1,12 @@
-import type { Metadata } from 'next';
-import localFont from 'next/font/local';
-import './globals.css';
-import { ClerkProvider } from '@clerk/nextjs';
-import { esES } from '@clerk/localizations';
-import { ThemeProvider } from '@/components/ThemeProvider';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import { esES } from '@clerk/localizations';
+import { ClerkProvider } from '@clerk/nextjs';
+import type { Metadata } from 'next';
+import localFont from 'next/font/local';
 import { Toaster } from 'react-hot-toast';
+import './globals.css';
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',

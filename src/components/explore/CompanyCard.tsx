@@ -1,15 +1,15 @@
 'use client';
 
-import Link from 'next/link';
+import { CompanyCardData } from '@/actions/explore.action';
+import { toggleFollow } from '@/actions/user.action';
+import { DisplayStars } from '@/components/reviews/DisplayStars';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
-import { CompanyCardData } from '@/actions/explore.action';
-import { toggleFollow } from '@/actions/user.action';
-import { DisplayStars } from '@/components/reviews/DisplayStars';
-import { useUser, SignInButton } from '@clerk/nextjs';
-import { MapPin, Users, UserPlus, UserCheck, Loader2 } from 'lucide-react';
+import { SignInButton, useUser } from '@clerk/nextjs';
+import { Loader2, MapPin, UserCheck, UserPlus, Users } from 'lucide-react';
+import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import toast from 'react-hot-toast';
 

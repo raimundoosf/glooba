@@ -1,5 +1,8 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { SignInButton, useAuth, useClerk, useUser } from '@clerk/nextjs';
 import {
   BellIcon,
   HomeIcon,
@@ -10,12 +13,9 @@ import {
   SunIcon,
   UserIcon,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { useAuth, useUser, useClerk, SignInButton } from '@clerk/nextjs';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 function MobileNavbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);

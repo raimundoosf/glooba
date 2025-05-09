@@ -1,6 +1,6 @@
 // src/components/reviews/DisplayStars.tsx
-import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Star } from 'lucide-react';
 
 interface DisplayStarsProps {
   rating: number | null | undefined;

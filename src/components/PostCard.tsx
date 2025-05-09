@@ -2,28 +2,20 @@
 'use client';
 
 import { PostWithDetails, createComment, deletePost, toggleLike } from '@/actions/post.action';
-import { SignInButton, useUser } from '@clerk/nextjs';
-import { useState, useTransition, useEffect, useRef } from 'react';
-import toast from 'react-hot-toast';
-import { Card, CardContent } from './ui/card';
-import Link from 'next/link';
-import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
-import { formatDistanceToNowStrict, format, formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { DeleteAlertDialog } from './DeleteAlertDialog';
-import { Button } from './ui/button';
-import {
-  HeartIcon,
-  LogInIcon,
-  MessageCircleIcon,
-  SendIcon,
-  Loader2,
-  Trash2,
-  MoreHorizontal,
-} from 'lucide-react';
-import { Textarea } from './ui/textarea';
-import { useFeedContext } from '@/contexts/FeedContext';
 import TimeAgo from '@/components/TimeAgo';
+import { useFeedContext } from '@/contexts/FeedContext';
+import { SignInButton, useUser } from '@clerk/nextjs';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { HeartIcon, LogInIcon, MessageCircleIcon, SendIcon } from 'lucide-react';
+import Link from 'next/link';
+import { useRef, useState, useTransition } from 'react';
+import toast from 'react-hot-toast';
+import { DeleteAlertDialog } from './DeleteAlertDialog';
+import { Avatar, AvatarImage } from './ui/avatar';
+import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
+import { Textarea } from './ui/textarea';
 
 interface PostCardProps {
   post: PostWithDetails;

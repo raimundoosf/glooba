@@ -1,14 +1,10 @@
 // src/app/page.tsx
 import { getFilteredCompanies, PaginatedCompaniesResponse } from '@/actions/explore.action'; // Import type
 import ExploreClientWrapper from '@/components/explore/ExploreClientWrapper';
-import { Suspense } from 'react';
+import WelcomeMessage from '@/components/WelcomeMessage';
 import { COMPANY_CATEGORIES } from '@/lib/constants';
 import { currentUser } from '@clerk/nextjs/server'; // Import currentUser
-import { Button } from '@/components/ui/button';
-import { SignInButton, SignUpButton } from '@clerk/nextjs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react'; // Import Loader2 for skeleton
-import WelcomeMessage from '@/components/WelcomeMessage';
+import { Suspense } from 'react';
 
 export const metadata = {
   title: 'Explora Alternativas Sostenibles | Glooba',

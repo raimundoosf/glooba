@@ -1,10 +1,10 @@
 // app/api/webhooks/clerk/route.ts
-import { Webhook } from 'svix';
+import prisma from '@/lib/prisma';
+import type { WebhookEvent } from '@clerk/nextjs/server';
+import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import type { WebhookEvent } from '@clerk/nextjs/server';
-import prisma from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
+import { Webhook } from 'svix';
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;

@@ -1,21 +1,20 @@
-import Link from 'next/link';
+import { getFeaturedCompanies } from '@/actions/explore.action'; // Import the new action
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { SignInButton } from '@clerk/nextjs';
 import {
-  ArrowRight,
   CheckCircle,
-  Users,
+  CloudOff,
+  Handshake,
+  Leaf,
+  Lightbulb,
   MapPin,
   Search,
   TrendingUp,
-  Handshake,
-  Lightbulb,
-  Leaf,
-  CloudOff,
+  Users,
 } from 'lucide-react'; // Added Handshake, Lightbulb
-import { SignInButton } from '@clerk/nextjs';
-import { getFeaturedCompanies } from '@/actions/explore.action'; // Import the new action
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
+import Link from 'next/link';
 
 // Metadata for the page (optional but recommended)
 export const metadata = {

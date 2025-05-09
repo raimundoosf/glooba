@@ -1,15 +1,15 @@
 // src/components/reviews/ReviewCard.tsx
 'use client'; // Needs useEffect for time formatting
 
-import React, { useState, useEffect } from 'react';
 import { ReviewWithAuthor } from '@/actions/review.action';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import Link from 'next/link';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Star } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 // Read-only Star Display Component
 function DisplayStars({ rating, size = 16 }: { rating: number; size?: number }) {

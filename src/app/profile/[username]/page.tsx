@@ -6,9 +6,9 @@ import {
   getUserPosts,
   isFollowing,
 } from '@/actions/profile.action';
+import { getCompanyReviewsAndStats } from '@/actions/review.action';
 import { notFound } from 'next/navigation';
 import ProfilePageClient from './ProfilePageClient';
-import { getCompanyReviewsAndStats } from '@/actions/review.action';
 
 export async function generateMetadata({ params }: { params: { username: string } }) {
   const user = await getProfileByUsername(params.username);

@@ -1,7 +1,7 @@
 // src/contexts/FeedContext.tsx
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import { createContext, useContext } from 'react';
 
 interface FeedContextType {
   refreshFeed: () => Promise<void>; // Function to trigger a refresh

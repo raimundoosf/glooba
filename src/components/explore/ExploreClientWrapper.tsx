@@ -1,15 +1,15 @@
 // src/components/explore/ExploreClientWrapper.tsx
 'use client';
 
-import { useState, useTransition, useCallback, useRef, useEffect } from 'react'; // Added useRef, useEffect
-import CompanyFilters from './CompanyFilters';
-import CompanyResults from './CompanyResults';
 import {
-  getFilteredCompanies,
-  CompanyFiltersType,
   CompanyCardData,
+  CompanyFiltersType,
+  getFilteredCompanies,
   PaginatedCompaniesResponse,
 } from '@/actions/explore.action';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react'; // Added useRef, useEffect
+import CompanyFilters from './CompanyFilters';
+import CompanyResults from './CompanyResults';
 // Removed Button import as Load More button is gone
 import { Loader2 } from 'lucide-react'; // Keep Loader for indicator
 

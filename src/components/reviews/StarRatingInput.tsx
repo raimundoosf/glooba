@@ -1,9 +1,9 @@
 // src/components/reviews/StarRatingInput.tsx
 'use client';
 
-import React, { useState } from 'react';
-import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Star } from 'lucide-react';
+import { useState } from 'react';
 
 interface StarRatingInputProps {
   value: number; // Current rating value (0-5)

@@ -1,17 +1,17 @@
 // src/components/CreatePost.tsx
 'use client';
 
-import { useUser } from '@clerk/nextjs';
-import { useState, useTransition } from 'react'; // Added useTransition
-import { Card, CardContent } from './ui/card';
-import { Avatar, AvatarImage } from './ui/avatar';
-import { Textarea } from './ui/textarea';
-import { ImageIcon, Loader2Icon, SendIcon } from 'lucide-react';
-import { Button } from './ui/button';
 import { createPost } from '@/actions/post.action';
+import { useFeedContext } from '@/contexts/FeedContext'; // Import context hook
+import { useUser } from '@clerk/nextjs';
+import { ImageIcon, Loader2Icon, SendIcon } from 'lucide-react';
+import { useState, useTransition } from 'react'; // Added useTransition
 import toast from 'react-hot-toast';
 import ImageUpload from './ImageUpload'; // Assuming this component exists and works
-import { useFeedContext } from '@/contexts/FeedContext'; // Import context hook
+import { Avatar, AvatarImage } from './ui/avatar';
+import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
+import { Textarea } from './ui/textarea';
 
 function CreatePost() {
   const { user } = useUser();

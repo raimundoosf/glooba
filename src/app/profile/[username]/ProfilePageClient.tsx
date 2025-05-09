@@ -1,17 +1,14 @@
 // src/app/profile/[username]/ProfilePageClient.tsx
 'use client';
 
-import { getProfileByUsername, getUserPosts, updateProfile } from '@/actions/profile.action';
+import { getUserPosts, updateProfile } from '@/actions/profile.action';
+import { getCompanyReviewsAndStats, ReviewWithAuthor } from '@/actions/review.action';
 import { toggleFollow } from '@/actions/user.action';
-import {
-  getCompanyReviewsAndStats,
-  ReviewWithAuthor,
-  PaginatedReviewsResponse,
-} from '@/actions/review.action';
+import { MultiSelectCategories } from '@/components/MultiSelectCategories';
 import PostCard from '@/components/PostCard';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
@@ -23,8 +20,10 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { COMPANY_CATEGORIES } from '@/lib/constants';
 import { SignInButton, useUser } from '@clerk/nextjs';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -39,20 +38,14 @@ import {
   Star,
   X,
 } from 'lucide-react';
-import { useState, useEffect, useTransition, startTransition, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import toast from 'react-hot-toast';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { COMPANY_CATEGORIES } from '@/lib/constants';
-import { MultiSelectCategories } from '@/components/MultiSelectCategories';
-import { Badge } from '@/components/ui/badge';
 // Import Review Components
-import { LeaveReviewForm } from '@/components/reviews/LeaveReviewForm';
-import { ReviewsSection } from '@/components/reviews/ReviewsSection';
-import { Separator } from '@/components/ui/separator'; // Import Separator
-import { cn } from '@/lib/utils';
-import { generateReactHelpers } from '@uploadthing/react'; // Keep for useUploadThing
 import type { OurFileRouter } from '@/app/api/uploadthing/core'; // Import router type
 import { DisplayStars } from '@/components/reviews/DisplayStars';
+import { LeaveReviewForm } from '@/components/reviews/LeaveReviewForm';
+import { ReviewsSection } from '@/components/reviews/ReviewsSection';
+import { generateReactHelpers } from '@uploadthing/react'; // Keep for useUploadThing
 
 // --- Type definitions ---
 interface UserProfile {
