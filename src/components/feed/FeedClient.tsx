@@ -1,14 +1,14 @@
 // src/components/feed/FeedClient.tsx
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, useTransition, ReactNode } from 'react';
-import { getPosts, PostWithDetails, PaginatedPostsResponse } from '@/actions/post.action';
-import PostCard from '@/components/PostCard';
+import { getPosts, PostWithDetails } from '@/actions/post.action';
 import CreatePost from '@/components/CreatePost';
-import { Loader2, AlertTriangle, RefreshCw, MessageCircleIcon } from 'lucide-react';
-import Link from 'next/link';
+import PostCard from '@/components/PostCard';
 import { Button } from '@/components/ui/button';
 import { FeedContext } from '@/contexts/FeedContext';
+import { AlertTriangle, Loader2, MessageCircleIcon, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
+import { ReactNode, useCallback, useEffect, useRef, useState, useTransition } from 'react';
 
 // Define a simple type for the necessary Clerk user fields passed down
 interface ClerkUserInfo {

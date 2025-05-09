@@ -2,8 +2,8 @@
 'use client';
 
 import { CompanyCardData } from '@/actions/explore.action';
-import CompanyCard from './CompanyCard';
 import { Loader2 } from 'lucide-react'; // ShadCN loader icon
+import CompanyCard from './CompanyCard';
 
 interface CompanyResultsProps {
   companies: CompanyCardData[];

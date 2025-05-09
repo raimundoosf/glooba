@@ -1,15 +1,10 @@
 // src/components/reviews/ReviewsSection.tsx
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  getCompanyReviewsAndStats,
-  ReviewWithAuthor,
-  PaginatedReviewsResponse,
-} from '@/actions/review.action';
+import { getCompanyReviewsAndStats, ReviewWithAuthor } from '@/actions/review.action';
+import { Loader2, MessageSquareWarning } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ReviewCard } from './ReviewCard';
-import { Loader2, Star, MessageSquareWarning } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface ReviewsSectionProps {
   companyId: string;

@@ -1,13 +1,13 @@
 // src/components/Sidebar.tsx
-import { currentUser } from '@clerk/nextjs/server';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { SignInButton, SignUpButton } from '@clerk/nextjs';
-import { Button } from './ui/button';
 import { getUserByClerkId } from '@/actions/user.action';
-import Link from 'next/link';
-import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
-import { Separator } from './ui/separator';
+import { SignInButton, SignUpButton } from '@clerk/nextjs';
+import { currentUser } from '@clerk/nextjs/server';
 import { LinkIcon, MapPinIcon } from 'lucide-react';
+import Link from 'next/link';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Separator } from './ui/separator';
 
 async function Sidebar() {
   const authUser = await currentUser();

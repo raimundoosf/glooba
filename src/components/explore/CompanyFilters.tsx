@@ -1,14 +1,14 @@
 // src/components/explore/CompanyFilters.tsx
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { CompanyFiltersType } from '@/actions/explore.action';
-import { X, Loader2 } from 'lucide-react';
-import { Label } from '@/components/ui/label';
 import { MultiSelectCategories } from '@/components/MultiSelectCategories'; // Import the updated component
 import { Badge } from '@/components/ui/badge'; // Import Badge for rendering
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Loader2, X } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
 
 interface CompanyFiltersProps {
   allCategories: string[];

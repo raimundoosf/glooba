@@ -1,7 +1,5 @@
 'use client';
 
-import { Loader2Icon, Trash2Icon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,6 +11,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Loader2Icon, Trash2Icon } from 'lucide-react';
 
 interface DeleteAlertDialogProps {
   isDeleting: boolean;

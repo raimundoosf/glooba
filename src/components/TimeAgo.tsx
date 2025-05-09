@@ -1,7 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useEffect, useState } from 'react';
 
 interface TimeAgoProps {
   date: Date;

@@ -2,9 +2,9 @@
 'use server';
 
 import prisma from '@/lib/prisma';
-import { getDbUserId } from './user.action';
-import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
+import { getDbUserId } from './user.action';
 
 // --- Constants ---
 const FEED_PAGE_SIZE = 2; // Number of posts per page for the feed

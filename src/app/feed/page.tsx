@@ -1,13 +1,12 @@
 // src/app/feed/page.tsx
-import { Suspense } from 'react';
 import { getPosts, PaginatedPostsResponse } from '@/actions/post.action';
 import { getDbUserId } from '@/actions/user.action';
+import { Suspense } from 'react';
 // Remove CreatePost import here, it will be rendered inside FeedClient
 import WhoToFollow from '@/components/WhoToFollow';
 import FeedClient from '@/components/feed/FeedClient';
-import { currentUser, User } from '@clerk/nextjs/server'; // Import User type
-import { Loader2, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { currentUser } from '@clerk/nextjs/server'; // Import User type
+import { Loader2 } from 'lucide-react';
 
 export const metadata = {
   title: 'Feed | Glooba',

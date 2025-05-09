@@ -1,10 +1,9 @@
 // src/components/ui/MultiSelectCategories.tsx
 'use client';
 
+import { Check, ChevronsUpDown } from 'lucide-react'; // X is no longer used here
 import * as React from 'react';
-import { Check, ChevronsUpDown, X } from 'lucide-react'; // X is no longer used here
 
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -15,6 +14,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 // Badge is no longer rendered directly in this component
 import { ScrollArea } from '@/components/ui/scroll-area';
 

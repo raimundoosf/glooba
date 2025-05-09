@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from './ui/button';
-import { Loader2Icon } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { toggleFollow } from '@/actions/user.action';
+import { Loader2Icon } from 'lucide-react';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import { Button } from './ui/button';
 
 function FollowButton({ userId }: { userId: string }) {
   const [isLoading, setIsLoading] = useState(false);
