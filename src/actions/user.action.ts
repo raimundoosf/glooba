@@ -1,9 +1,8 @@
-"use server";
+'use server';
 
-import prisma from "@/lib/prisma";
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { revalidatePath } from "next/cache";
-
+import prisma from '@/lib/prisma';
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { revalidatePath } from 'next/cache';
 
 export async function getUserByClerkId(clerkId: string) {
   return prisma.user.findUnique({
@@ -30,7 +29,7 @@ export async function getDbUserId() {
 
   if (!user) {
     console.error(`Could not find user with clerkId ${clerkId}`);
-    throw new Error("User not found");
+    throw new Error('User not found');
   }
 
   return user.id;
@@ -46,7 +45,7 @@ export async function getRandomCompanyUsers() {
     const randomUsers = await prisma.user.findMany({
       where: {
         AND: [
-          { isCompany: true }, 
+          { isCompany: true },
           { NOT: { id: userId } },
           {
             NOT: {
@@ -75,7 +74,7 @@ export async function getRandomCompanyUsers() {
 
     return randomUsers;
   } catch (error) {
-    console.log("Error fetching random users", error);
+    console.log('Error fetching random users', error);
     return [];
   }
 }
@@ -86,7 +85,7 @@ export async function toggleFollow(targetUserId: string) {
 
     if (!userId) return;
 
-    if (userId === targetUserId) throw new Error("You cannot follow yourself");
+    if (userId === targetUserId) throw new Error('You cannot follow yourself');
 
     const existingFollow = await prisma.follows.findUnique({
       where: {
@@ -119,7 +118,7 @@ export async function toggleFollow(targetUserId: string) {
 
         prisma.notification.create({
           data: {
-            type: "FOLLOW",
+            type: 'FOLLOW',
             userId: targetUserId, // user being followed
             creatorId: userId, // user following
           },
@@ -127,10 +126,10 @@ export async function toggleFollow(targetUserId: string) {
       ]);
     }
 
-    revalidatePath("/");
+    revalidatePath('/');
     return { success: true };
   } catch (error) {
-    console.log("Error in toggleFollow", error);
-    return { success: false, error: "Error toggling follow" };
+    console.log('Error in toggleFollow', error);
+    return { success: false, error: 'Error toggling follow' };
   }
 }

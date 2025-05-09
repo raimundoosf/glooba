@@ -1,5 +1,5 @@
 // src/contexts/FeedContext.tsx
-"use client";
+'use client';
 
 import React, { createContext, useContext } from 'react';
 

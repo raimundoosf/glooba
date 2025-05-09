@@ -1,7 +1,7 @@
 // src/components/Navbar.tsx
-import Link from "next/link";
-import DesktopNavbar from "./DesktopNavbar";
-import MobileNavbar from "./MobileNavbar";
+import Link from 'next/link';
+import DesktopNavbar from './DesktopNavbar';
+import MobileNavbar from './MobileNavbar';
 
 async function Navbar() {
   return (
@@ -11,7 +11,10 @@ async function Navbar() {
           {/* Logo/Title Section */}
           <div className="flex items-center">
             {/* Wrap icon and text in a flex container */}
-            <Link href="/" className="flex items-center gap-2 text-xl font-bold text-primary font-mono tracking-wider">
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-xl font-bold text-primary font-mono tracking-wider"
+            >
               <img src="/favicon.ico" alt="Glooba icon" className="h-6 w-6" />
               <span>Glooba</span> {/* Keep the text */}
             </Link>

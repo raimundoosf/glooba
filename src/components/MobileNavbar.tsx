@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   BellIcon,
@@ -9,19 +9,13 @@ import {
   RssIcon,
   SunIcon,
   UserIcon,
-} from "lucide-react";
-import { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
-import { useAuth, useUser, useClerk, SignInButton } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import Link from "next/link";
+} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
+import { useAuth, useUser, useClerk, SignInButton } from '@clerk/nextjs';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import Link from 'next/link';
 
 function MobileNavbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -51,7 +45,7 @@ function MobileNavbar() {
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
         className="mr-2"
       >
         <SunIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -78,11 +72,7 @@ function MobileNavbar() {
             {isSignedIn ? (
               <>
                 <MenuLink href="/notifications" icon={BellIcon} label="Notificaciones" />
-                <MenuLink
-                  href={`/profile/${user?.username}`}
-                  icon={UserIcon}
-                  label="Perfil"
-                />
+                <MenuLink href={`/profile/${user?.username}`} icon={UserIcon} label="Perfil" />
                 <Button
                   variant="ghost"
                   className="flex items-center gap-3 justify-start w-full"

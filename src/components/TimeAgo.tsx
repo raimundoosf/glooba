@@ -1,14 +1,14 @@
-"use client";
-import { useState, useEffect } from "react";
-import { formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
+'use client';
+import { useState, useEffect } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface TimeAgoProps {
-  date: Date ;
+  date: Date;
 }
 
 export default function TimeAgo({ date }: TimeAgoProps) {
-  const [timeAgo, setTimeAgo] = useState("");
+  const [timeAgo, setTimeAgo] = useState('');
 
   useEffect(() => {
     setTimeAgo(formatDistanceToNow(new Date(date), { locale: es }));

@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { UploadDropzone } from "@/lib/uploadthing";
-import { XIcon } from "lucide-react";
+import { UploadDropzone } from '@/lib/uploadthing';
+import { XIcon } from 'lucide-react';
 
 interface ImageUploadProps {
   onChange: (url: string) => void;
   value: string;
-  endpoint: "postImage";
+  endpoint: 'postImage';
   disabled: boolean; // Add this line
 }
 
@@ -16,7 +16,7 @@ function ImageUpload({ endpoint, onChange, value }: ImageUploadProps) {
       <div className="relative size-40">
         <img src={value} alt="Imagen cargada" className="rounded-md size-40 object-cover" />
         <button
-          onClick={() => onChange("")}
+          onClick={() => onChange('')}
           className="absolute top-0 right-0 p-1 bg-red-500 rounded-full shadow-sm"
           type="button"
         >
