@@ -2,7 +2,7 @@
 
 ## Overview
 
-Glooba's API is built using Next.js API routes and server actions. The API provides endpoints for managing companies, users, and interactions between them.
+Glooba's API is built using Next.js API routes and server actions. The API provides endpoints for managing companies, users, posts, and interactions between them.
 
 ## Authentication
 
@@ -106,6 +106,130 @@ Response:
 }
 ```
 
+### Posts
+
+#### Create Post
+```typescript
+POST /api/posts
+```
+
+Request body:
+```typescript
+{
+  content: string;
+  images?: string[];
+  companyId?: string;  // Optional: if post is associated with a company
+  tags?: string[];     // Optional: for categorizing posts
+}
+```
+
+Response:
+```typescript
+{
+  id: string;
+  content: string;
+  images: string[];
+  authorId: string;
+  companyId?: string;
+  tags: string[];
+  likes: number;
+  comments: number;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+#### Get Posts
+```typescript
+GET /api/posts
+```
+
+Query parameters:
+```typescript
+{
+  page?: number;      // Default: 1
+  limit?: number;     // Default: 10
+  companyId?: string; // Optional: filter by company
+  userId?: string;    // Optional: filter by user
+  tag?: string;       // Optional: filter by tag
+}
+```
+
+#### Get Post Details
+```typescript
+GET /api/posts/[postId]
+```
+
+#### Update Post
+```typescript
+PATCH /api/posts/[postId]
+```
+
+Request body:
+```typescript
+{
+  content?: string;
+  images?: string[];
+  tags?: string[];
+}
+```
+
+#### Delete Post
+```typescript
+DELETE /api/posts/[postId]
+```
+
+#### Like/Unlike Post
+```typescript
+POST /api/posts/[postId]/like
+```
+
+Request body:
+```typescript
+{
+  action: 'like' | 'unlike'
+}
+```
+
+#### Comment on Post
+```typescript
+POST /api/posts/[postId]/comments
+```
+
+Request body:
+```typescript
+{
+  content: string;
+  images?: string[];
+}
+```
+
+Response:
+```typescript
+{
+  id: string;
+  content: string;
+  images: string[];
+  authorId: string;
+  postId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+#### Get Post Comments
+```typescript
+GET /api/posts/[postId]/comments
+```
+
+Query parameters:
+```typescript
+{
+  page?: number;  // Default: 1
+  limit?: number; // Default: 10
+}
+```
+
 ## Server Actions
 
 ### Company Actions
@@ -129,6 +253,28 @@ updateUserProfile(data: UserProfileUpdateInput)
 
 // Follow/unfollow company
 toggleCompanyFollow(companyId: string, action: 'follow' | 'unfollow')
+```
+
+### Post Actions
+
+```typescript
+// Create new post
+createPost(data: PostCreateInput)
+
+// Update post
+updatePost(id: string, data: PostUpdateInput)
+
+// Delete post
+deletePost(id: string)
+
+// Like/unlike post
+togglePostLike(postId: string, action: 'like' | 'unlike')
+
+// Add comment
+addComment(postId: string, data: CommentCreateInput)
+
+// Delete comment
+deleteComment(commentId: string)
 ```
 
 ## Error Handling
@@ -177,4 +323,4 @@ To set up webhooks, configure the webhook URL in your environment variables:
 ```env
 WEBHOOK_URL=your_webhook_url
 WEBHOOK_SECRET=your_webhook_secret
-``` 
+```

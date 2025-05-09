@@ -130,4 +130,4 @@ npm start
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Prisma Documentation](https://www.prisma.io/docs)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [Clerk Documentation](https://clerk.com/docs) 
+- [Clerk Documentation](https://clerk.com/docs)

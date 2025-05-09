@@ -1,14 +1,13 @@
-<h1 align="center">✨ Glooba, la Red Social de la sustentabilidad ✨</h1>
-
-# Glooba - Professional Network Platform
+<h1 align="center">✨ Glooba, the social platform that connects users with sustainable companies and initiatives in Latin America ✨</h1>
 
 ## Overview
-Glooba is a professional networking platform built with Next.js 14, TypeScript, and modern web technologies. It provides features for company discovery, user profiles, and professional networking.
+Glooba is a social platform built with Next.js 14, TypeScript, and modern web technologies. It provides features for company discovery, user profiles, and social interactions.
 
 ## Documentation
 
 For detailed documentation, please refer to the following guides:
 
+- [Main Guide](https://deepwiki.com/raimundoosf/glooba) - Overview and features
 - [Development Guide](docs/DEVELOPMENT.md) - Setup and development workflow
 - [API Documentation](docs/API.md) - API endpoints and usage
 - [Component Documentation](docs/COMPONENTS.md) - UI components and guidelines
@@ -45,21 +44,6 @@ src/
 ├── lib/             # Utility functions and configurations
 └── actions/         # Server actions
 ```
-
-## Key Features
-
-### Company Features
-- Company profiles with detailed information
-- Company cards with background images and avatars
-- Follow/unfollow functionality with optimistic updates
-- Company categories and badges
-- Location and rating display
-
-### User Features
-- User profiles with custom avatars
-- Follow/unfollow companies
-- Professional networking
-- Profile customization
 
 ## Quick Start
 

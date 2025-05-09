@@ -88,6 +88,99 @@ import { CompanyGrid } from '@/components/explore/company-grid'
 />
 ```
 
+### Post Components
+
+#### PostCard
+```typescript
+import { PostCard } from '@/components/posts/post-card'
+
+// Usage
+<PostCard
+  post={postData}
+  onLike={handleLike}
+  onComment={handleComment}
+  onShare={handleShare}
+/>
+
+// Props
+interface PostCardProps {
+  post: {
+    id: string;
+    content: string;
+    images: string[];
+    author: User;
+    company?: Company;
+    likes: number;
+    comments: number;
+    createdAt: string;
+    tags: string[];
+  };
+  onLike: (postId: string) => void;
+  onComment: (postId: string) => void;
+  onShare: (postId: string) => void;
+}
+```
+
+#### PostForm
+```typescript
+import { PostForm } from '@/components/posts/post-form'
+
+// Usage
+<PostForm
+  onSubmit={handleSubmit}
+  companyId?: string
+/>
+
+// Props
+interface PostFormProps {
+  onSubmit: (data: PostFormData) => void;
+  companyId?: string;
+  initialData?: Partial<PostFormData>;
+}
+```
+
+#### PostFeed
+```typescript
+import { PostFeed } from '@/components/posts/post-feed'
+
+// Usage
+<PostFeed
+  posts={postsData}
+  onLoadMore={handleLoadMore}
+  filters={filters}
+/>
+
+// Props
+interface PostFeedProps {
+  posts: Post[];
+  onLoadMore: () => void;
+  filters?: {
+    companyId?: string;
+    userId?: string;
+    tag?: string;
+  };
+}
+```
+
+#### CommentSection
+```typescript
+import { CommentSection } from '@/components/posts/comment-section'
+
+// Usage
+<CommentSection
+  postId={postId}
+  comments={commentsData}
+  onAddComment={handleAddComment}
+/>
+
+// Props
+interface CommentSectionProps {
+  postId: string;
+  comments: Comment[];
+  onAddComment: (data: CommentFormData) => void;
+}
+```
+
 ## Component Guidelines
 
 ### Styling
@@ -163,4 +256,4 @@ describe('Button', () => {
    - Include usage examples
    - Document props and types
    - Add comments for complex logic
-   - Keep documentation up to date 
+   - Keep documentation up to date
