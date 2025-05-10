@@ -64,8 +64,14 @@ Use Prisma for database access.
 - Use readonly for immutable properties.
 - Use as const for literals that never change.
 
+# Comments & Documentation
+- Use JSDoc for documentation.
+- Use comments for complex logic.
+- Avoid using console logs.
+
 # Best approach
 - Optimize code, performance, user experience and security.
 
 # Other
 - Do not delete lines of code unless it's necessary. Provide the complete code.
+

@@ -1,4 +1,7 @@
-// src/app/profile/[username]/ProfilePageClient.tsx
+/**
+ * Client-side component for the profile page
+ * @module ProfilePageClient
+ */
 'use client';
 
 import { getUserPosts, updateProfile } from '@/actions/profile.action';
@@ -32,7 +35,7 @@ import {
   EditIcon,
   FileTextIcon,
   HeartIcon,
-  ImageIcon, // Add ImageIcon
+  ImageIcon,
   LinkIcon,
   MapPinIcon,
   Star,
@@ -40,14 +43,16 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import toast from 'react-hot-toast';
-// Import Review Components
-import type { OurFileRouter } from '@/app/api/uploadthing/core'; // Import router type
+import type { OurFileRouter } from '@/app/api/uploadthing/core';
 import { DisplayStars } from '@/components/reviews/DisplayStars';
 import { LeaveReviewForm } from '@/components/reviews/LeaveReviewForm';
 import { ReviewsSection } from '@/components/reviews/ReviewsSection';
-import { generateReactHelpers } from '@uploadthing/react'; // Keep for useUploadThing
+import { generateReactHelpers } from '@uploadthing/react';
 
-// --- Type definitions ---
+/**
+ * Interface defining the user profile type
+ * @interface UserProfile
+ */
 interface UserProfile {
   id: string;
   clerkId: string;
@@ -60,18 +65,25 @@ interface UserProfile {
   isCompany: boolean;
   createdAt: Date;
   categories: string[];
-  backgroundImage: string | null; // Explicitly add backgroundImage
-  followers: { followerId: string }[]; // The select returns the list, not just count
+  backgroundImage: string | null;
+  followers: { followerId: string }[];
   _count: {
-    // Explicitly add _count
     posts: number;
     followers: number;
     following: number;
   };
 }
 
+/**
+ * Type for posts data
+ * @type {Posts}
+ */
 type Posts = Awaited<ReturnType<typeof getUserPosts>>;
-// Add type for initial review data passed from server
+
+/**
+ * Interface for initial review data
+ * @interface InitialReviewData
+ */
 interface InitialReviewData {
   reviews: ReviewWithAuthor[];
   error?: string;
@@ -81,15 +93,22 @@ interface InitialReviewData {
   userHasReviewed: boolean;
 }
 
+/**
+ * Props interface for ProfilePageClient component
+ * @interface ProfilePageClientProps
+ */
 interface ProfilePageClientProps {
-  user: UserProfile; // Use updated type name
+  user: UserProfile;
   posts: Posts;
   likedPosts: Posts;
   isFollowing: boolean;
-  initialReviewData: InitialReviewData; // Pass initial reviews/stats
+  initialReviewData: InitialReviewData;
 }
 
-// Define the type for the edit form data
+/**
+ * Interface for profile edit form data
+ * @interface ProfileEditFormData
+ */
 interface ProfileEditFormData {
   name: string;
   bio: string;
@@ -98,29 +117,34 @@ interface ProfileEditFormData {
   isCompany: boolean;
 }
 
-// --- Uploadthing Setup ---
+/**
+ * Uploadthing setup for file uploads
+ */
 const { useUploadThing } = generateReactHelpers<OurFileRouter>();
 
-// --- Component ---
+/**
+ * Main profile page client component
+ * @param {ProfilePageClientProps} props - Component props
+ * @returns {JSX.Element} The profile page component with tabs for posts, likes, and reviews
+ */
 function ProfilePageClient({
   isFollowing: initialIsFollowing,
   likedPosts,
   posts,
   user,
-  initialReviewData, // Receive initial review data
+  initialReviewData,
 }: ProfilePageClientProps) {
-  // --- Hooks ---
-  const { user: currentUser, isLoaded: isClerkLoaded } = useUser(); // Make sure isLoaded is destructured
-  const { startUpload, isUploading } = useUploadThing('profileBackground'); // Hook for background uploads
-  const fileInputRef = useRef<HTMLInputElement>(null); // Ref for profile pic input
-  const backgroundInputRef = useRef<HTMLInputElement>(null); // Ref for background input
+  const { user: currentUser, isLoaded: isClerkLoaded } = useUser();
+  const { startUpload, isUploading } = useUploadThing('profileBackground');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const backgroundInputRef = useRef<HTMLInputElement>(null);
   const [isEditPending, startEditTransition] = useTransition();
   const [isFollowingState, setIsFollowingState] = useState<boolean>(initialIsFollowing);
   const [isFollowPending, startFollowTransition] = useTransition();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
-  const [newProfilePic, setNewProfilePic] = useState<File | null>(null); // State for the new profile picture file
-  const [newBackgroundUrl, setNewBackgroundUrl] = useState<string | null>(user.backgroundImage); // State for background image URL
-  const [profilePicPreview, setProfilePicPreview] = useState<string | null>(user.image); // Initialize with current image
+  const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
+  const [newBackgroundUrl, setNewBackgroundUrl] = useState<string | null>(user.backgroundImage);
+  const [profilePicPreview, setProfilePicPreview] = useState<string | null>(user.image);
 
   const [editForm, setEditForm] = useState<ProfileEditFormData>({
     name: user.name ?? '',
@@ -129,11 +153,9 @@ function ProfilePageClient({
     website: user.website ?? '',
     isCompany: user.isCompany ?? false,
   });
-  // State ONLY for the selected categories
   const [selectedCategories, setSelectedCategories] = useState<string[]>(user.categories ?? []);
 
-  // --- Effects ---
-  // Update form when user data changes (e.g., after initial load or update)
+  // Update form when user data changes
   useEffect(() => {
     if (user) {
       setEditForm({
@@ -144,28 +166,25 @@ function ProfilePageClient({
         isCompany: user.isCompany ?? false,
       });
       setSelectedCategories(user.categories ?? []);
-      // Reset profile picture state when dialog opens or user changes
       setNewProfilePic(null);
-      setProfilePicPreview(user.image); // Reset preview to current user image
-      setNewBackgroundUrl(user.backgroundImage); // Reset background preview as well
+      setProfilePicPreview(user.image);
+      setNewBackgroundUrl(user.backgroundImage);
     }
-  }, [user, isEditDialogOpen]); // Rerun when dialog opens
+  }, [user, isEditDialogOpen]);
 
-  // Effect to create blob URL for preview when newProfilePic changes
+  // Create blob URL for preview when newProfilePic changes
   useEffect(() => {
     if (newProfilePic) {
       const objectUrl = URL.createObjectURL(newProfilePic);
       setProfilePicPreview(objectUrl);
-
-      // Free memory when the component unmounts or file changes
       return () => URL.revokeObjectURL(objectUrl);
     } else {
-      setProfilePicPreview(null); // Clear preview if no file selected
+      setProfilePicPreview(null);
     }
   }, [newProfilePic]);
 
+  // Initialize state when user data changes
   useEffect(() => {
-    // Initialize state when user data changes
     if (user?.categories) {
       setSelectedCategories(user.categories.sort());
     } else {
@@ -181,20 +200,16 @@ function ProfilePageClient({
     setIsFollowingState(initialIsFollowing);
   }, [user, initialIsFollowing]);
 
-  // --- Handlers ---
   const handleEditSubmit = async () => {
     if (!currentUser) return;
 
     const toastId = toast.loading('Guardando cambios...');
-    let newImageUrl: string | undefined | null = currentUser.imageUrl; // Start with current URL
+    let newImageUrl: string | undefined | null = currentUser.imageUrl;
 
     startEditTransition(async () => {
-      // Wrap in transition
       try {
-        // 1. Update profile picture with Clerk if a new one is selected
         if (newProfilePic) {
           try {
-            // This updates Clerk's user object internally
             await currentUser.setProfileImage({
               file: newProfilePic,
             });

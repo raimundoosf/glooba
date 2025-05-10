@@ -1,4 +1,7 @@
-// src/components/reviews/LeaveReviewForm.tsx
+/**
+ * Form component for leaving or editing reviews.
+ * @module LeaveReviewForm
+ */
 'use client';
 
 import { createReview } from '@/actions/review.action';
@@ -8,17 +11,26 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import React, { useState, useTransition } from 'react';
 import toast from 'react-hot-toast';
-import { StarRatingInput } from './StarRatingInput'; // Import star input
+import { StarRatingInput } from './StarRatingInput';
 
+/**
+ * Props interface for the LeaveReviewForm component
+ * @interface LeaveReviewFormProps
+ */
 interface LeaveReviewFormProps {
   companyId: string;
-  companyUsername: string; // Needed for revalidation path
-  onReviewSubmitted: () => Promise<void>; // Callback after successful submission
-  initialRating?: number; // For potential edit functionality later
-  initialContent?: string; // For potential edit functionality later
-  isEditing?: boolean; // Flag if editing existing review
+  companyUsername: string;
+  onReviewSubmitted: () => Promise<void>;
+  initialRating?: number;
+  initialContent?: string;
+  isEditing?: boolean;
 }
 
+/**
+ * Main component for leaving or editing reviews.
+ * @param {LeaveReviewFormProps} props - Component props
+ * @returns {JSX.Element} The review form component
+ */
 export function LeaveReviewForm({
   companyId,
   companyUsername,
@@ -31,10 +43,12 @@ export function LeaveReviewForm({
   const [content, setContent] = useState<string>(initialContent);
   const [isPending, startTransition] = useTransition();
 
+  /**
+   * Handles form submission and review creation/update.
+   */
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
-    // Basic validation (rating is required, 0 is allowed)
     if (rating < 0 || rating > 5) {
       toast.error('Por favor selecciona una calificación entre 0 y 5 estrellas.');
       return;
@@ -51,9 +65,9 @@ export function LeaveReviewForm({
 
         if (result.success) {
           toast.success(isEditing ? '¡Reseña actualizada!' : '¡Reseña enviada!');
-          setContent(''); // Clear form
+          setContent('');
           setRating(0);
-          await onReviewSubmitted(); // Call the refresh callback
+          await onReviewSubmitted();
         } else {
           throw new Error(result.error || 'No se pudo enviar la reseña.');
         }

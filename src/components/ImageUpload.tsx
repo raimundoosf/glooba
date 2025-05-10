@@ -1,15 +1,30 @@
+/**
+ * Component for handling image uploads with preview and removal.
+ * @module ImageUpload
+ */
 'use client';
 
 import { UploadDropzone } from '@/lib/uploadthing';
 import { XIcon } from 'lucide-react';
 
+/**
+ * Props interface for the ImageUpload component
+ * @interface ImageUploadProps
+ */
 interface ImageUploadProps {
   onChange: (url: string) => void;
   value: string;
   endpoint: 'postImage';
-  disabled: boolean; // Add this line
+  disabled: boolean;
 }
 
+/**
+ * Image upload component that displays:
+ * - Upload dropzone when no image is selected
+ * - Image preview with delete button when an image is selected
+ * @param {ImageUploadProps} props - Component props
+ * @returns {JSX.Element} The image upload component
+ */
 function ImageUpload({ endpoint, onChange, value }: ImageUploadProps) {
   if (value) {
     return (
@@ -37,4 +52,5 @@ function ImageUpload({ endpoint, onChange, value }: ImageUploadProps) {
     />
   );
 }
+
 export default ImageUpload;

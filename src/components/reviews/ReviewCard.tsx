@@ -1,5 +1,8 @@
-// src/components/reviews/ReviewCard.tsx
-'use client'; // Needs useEffect for time formatting
+/**
+ * Component for displaying individual reviews.
+ * @module ReviewCard
+ */
+'use client';
 
 import { ReviewWithAuthor } from '@/actions/review.action';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,7 +14,12 @@ import { Star } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-// Read-only Star Display Component
+/**
+ * Reusable component for displaying star ratings.
+ * @param {number} rating - The rating value (0-5)
+ * @param {number} [size=16] - Size of the stars
+ * @returns {JSX.Element} The star display component
+ */
 function DisplayStars({ rating, size = 16 }: { rating: number; size?: number }) {
   const stars = Array(5).fill(0);
   return (
@@ -35,7 +43,11 @@ function DisplayStars({ rating, size = 16 }: { rating: number; size?: number }) 
   );
 }
 
-// Helper for Relative Time (avoids hydration errors)
+/**
+ * Component for displaying relative time with proper hydration.
+ * @param {Date} date - The date to format
+ * @returns {JSX.Element} The formatted time element
+ */
 function RelativeTime({ date }: { date: Date }) {
   const [relativeTime, setRelativeTime] = useState<string | null>(null);
   useEffect(() => {
@@ -55,11 +67,19 @@ function RelativeTime({ date }: { date: Date }) {
   );
 }
 
+/**
+ * Props interface for the ReviewCard component
+ * @interface ReviewCardProps
+ */
 interface ReviewCardProps {
   review: ReviewWithAuthor;
-  // Add props for delete/edit functionality later if needed
 }
 
+/**
+ * Main component for displaying a single review.
+ * @param {ReviewCardProps} props - Component props
+ * @returns {JSX.Element} The review card component
+ */
 export function ReviewCard({ review }: ReviewCardProps) {
   return (
     <Card className="bg-card/50 dark:bg-card/30 shadow-sm border">
@@ -85,7 +105,6 @@ export function ReviewCard({ review }: ReviewCardProps) {
             </span>
           </div>
         </div>
-        {/* Display Star Rating */}
         <DisplayStars rating={review.rating} size={16} />
       </CardHeader>
       {review.content && (
@@ -95,8 +114,6 @@ export function ReviewCard({ review }: ReviewCardProps) {
           </p>
         </CardContent>
       )}
-      {/* Optional Footer for actions like 'Helpful?' */}
-      {/* <CardFooter className="px-4 pb-3 pt-1"> ... </CardFooter> */}
     </Card>
   );
 }

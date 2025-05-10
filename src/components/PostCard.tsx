@@ -1,4 +1,7 @@
-// src/components/PostCard.tsx
+/**
+ * Component for displaying individual posts with interactions.
+ * @module PostCard
+ */
 'use client';
 
 import { PostWithDetails, createComment, deletePost, toggleLike } from '@/actions/post.action';
@@ -17,11 +20,25 @@ import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Textarea } from './ui/textarea';
 
+/**
+ * Props interface for the PostCard component
+ * @interface PostCardProps
+ */
 interface PostCardProps {
   post: PostWithDetails;
   dbUserId: string | null;
 }
 
+/**
+ * Component that displays a post with:
+ * - Author information (avatar, name, username)
+ * - Post content and image (if any)
+ * - Like functionality
+ * - Comment functionality
+ * - Delete functionality (for post author)
+ * @param {PostCardProps} props - Component props
+ * @returns {JSX.Element} The post card component
+ */
 export default function PostCard({ post, dbUserId }: PostCardProps) {
   const { user } = useUser();
   const feedContext = useFeedContext();
@@ -34,7 +51,9 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
 
-  // --- Handlers (Like, Comment, Delete - Keep context calls) ---
+  /**
+   * Handles post like/unlike with optimistic updates.
+   */
   const handleLike = async () => {
     if (isLiking || !dbUserId) return;
     setIsLiking(true);
@@ -53,6 +72,9 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
     }
   };
 
+  /**
+   * Handles comment creation with optimistic updates.
+   */
   const handleAddComment = async () => {
     if (!newComment.trim() || !dbUserId) return;
     startCommentTransition(async () => {
@@ -74,6 +96,9 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
     });
   };
 
+  /**
+   * Handles post deletion with optimistic updates.
+   */
   const handleDeletePost = async () => {
     startDeleteTransition(async () => {
       try {

@@ -1,24 +1,38 @@
-// src/contexts/FeedContext.tsx
+/**
+ * Context for managing feed refresh functionality
+ * @module FeedContext
+ */
 'use client';
 
 import { createContext, useContext } from 'react';
 
+/**
+ * Interface defining the feed context type
+ * @interface FeedContextType
+ * @property {() => Promise<void>} refreshFeed - Function to trigger feed refresh
+ */
 interface FeedContextType {
-  refreshFeed: () => Promise<void>; // Function to trigger a refresh
+  refreshFeed: () => Promise<void>;
 }
 
+/**
+ * Context object for managing feed refresh functionality
+ */
 const FeedContext = createContext<FeedContextType | undefined>(undefined);
 
+/**
+ * Hook to access the feed context
+ * @returns {FeedContextType | null} The feed context or null if not available
+ */
 export const useFeedContext = () => {
   const context = useContext(FeedContext);
   if (context === undefined) {
-    // This error is expected if used outside the provider, which is fine for CreatePost/PostCard
-    // as they might be rendered elsewhere too. We'll handle the null case in those components.
-    // console.warn("useFeedContext must be used within a FeedProvider");
-    return null; // Return null instead of throwing error
+    return null;
   }
   return context;
 };
 
-// Provider component will be part of FeedClient
-export { FeedContext }; // Export context directly for Provider usage
+/**
+ * Feed context provider and consumer
+ */
+export { FeedContext };

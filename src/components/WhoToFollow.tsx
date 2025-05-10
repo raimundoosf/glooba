@@ -1,9 +1,24 @@
+/**
+ * Component that displays suggested users to follow.
+ * @module WhoToFollow
+ */
 import { getRandomCompanyUsers } from '@/actions/user.action';
 import Link from 'next/link';
 import FollowButton from './FollowButton';
 import { Avatar, AvatarImage } from './ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
+/**
+ * Component that displays a card with suggested users to follow:
+ * - Shows a list of random company users
+ * - Each suggestion includes:
+ *   - Profile avatar
+ *   - Name and username
+ *   - Company badge
+ *   - Follower count
+ *   - Follow button
+ * @returns {JSX.Element | null} The who to follow component or null if no users are found
+ */
 async function WhoToFollow() {
   const users = await getRandomCompanyUsers();
 
@@ -17,7 +32,7 @@ async function WhoToFollow() {
       <CardContent>
         <div className="space-y-4">
           {users.map((user) => (
-            <div key={user.id} className="flex gap-2 items-center justify-between ">
+            <div key={user.id} className="flex gap-2 items-center justify-between">
               <div className="flex items-center gap-1">
                 <Link href={`/profile/${user.username}`}>
                   <Avatar>

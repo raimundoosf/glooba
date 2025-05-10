@@ -1,5 +1,5 @@
-import { getFeaturedCompanies } from '@/actions/explore.action'; // Import the new action
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
+import { getFeaturedCompanies } from '@/actions/explore.action';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { SignInButton } from '@clerk/nextjs';
@@ -13,19 +13,20 @@ import {
   Search,
   TrendingUp,
   Users,
-} from 'lucide-react'; // Added Handshake, Lightbulb
+} from 'lucide-react';
 import Link from 'next/link';
 
-// Metadata for the page (optional but recommended)
 export const metadata = {
   title: 'Sobre Glooba | Conectando Sostenibilidad',
   description:
     'Descubre la misión, visión y beneficios de Glooba, la plataforma que conecta personas con iniciativas sostenibles en Latam.',
 };
 
-// Make the component async to fetch data
+/**
+ * About page component that showcases the platform's mission and features
+ * @returns {JSX.Element} The about page component with sections about the platform's purpose and benefits
+ */
 export default async function AboutPage() {
-  // Fetch featured companies
   const featuredCompanies = await getFeaturedCompanies();
 
   return (

@@ -8,13 +8,18 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { HeartIcon, MessageCircleIcon, UserPlusIcon } from 'lucide-react';
-
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
+// Type definitions for notifications
 type Notifications = Awaited<ReturnType<typeof getNotifications>>;
 type Notification = Notifications[number];
 
+/**
+ * Returns the appropriate icon for a notification type
+ * @param type The notification type (LIKE, COMMENT, FOLLOW)
+ * @returns JSX.Element with the corresponding icon component
+ */
 const getNotificationIcon = (type: string) => {
   switch (type) {
     case 'LIKE':
@@ -28,6 +33,10 @@ const getNotificationIcon = (type: string) => {
   }
 };
 
+/**
+ * Main notifications page component that displays user notifications
+ * @returns {JSX.Element} The notifications page component with scrollable list
+ */
 function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,7 +50,7 @@ function NotificationsPage() {
 
         const unreadIds = data.filter((n) => !n.read).map((n) => n.id);
         if (unreadIds.length > 0) await markNotificationsAsRead(unreadIds);
-      } catch (error) {
+      } catch {
         toast.error('Error al obtener notificaciones');
       } finally {
         setIsLoading(false);

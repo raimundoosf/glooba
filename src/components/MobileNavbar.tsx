@@ -1,3 +1,7 @@
+/**
+ * Mobile navigation bar component with responsive design.
+ * @module MobileNavbar
+ */
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -17,6 +21,19 @@ import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
+/**
+ * Mobile navigation bar component that displays:
+ * - Theme toggle button
+ * - Menu button that opens a sidebar with navigation links
+ * - Navigation links include:
+ *   - Home
+ *   - Feed
+ *   - Notifications (for authenticated users)
+ *   - Profile (for authenticated users)
+ *   - Sign in button (for non-authenticated users)
+ *   - Sign out button (for authenticated users)
+ * @returns {JSX.Element} The mobile navigation bar component
+ */
 function MobileNavbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -26,7 +43,6 @@ function MobileNavbar() {
 
   const handleCloseMenu = () => setShowMobileMenu(false);
 
-  // Cierra el menú cuando el usuario inicia sesión
   useEffect(() => {
     if (isSignedIn) handleCloseMenu();
   }, [isSignedIn]);

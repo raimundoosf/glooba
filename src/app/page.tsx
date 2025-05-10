@@ -1,29 +1,47 @@
-// src/app/page.tsx
-import { getFilteredCompanies, PaginatedCompaniesResponse } from '@/actions/explore.action'; // Import type
+/**
+ * Homepage component that serves as the main entry point for the Glooba application.
+ * Provides a company exploration interface with filtering capabilities and a welcome message for new users.
+ * 
+ * @fileoverview Main application page that handles initial data fetching and user authentication.
+ */
+
+/**
+ * Imports and type definitions for the homepage component.
+ */
+import { getFilteredCompanies, PaginatedCompaniesResponse } from '@/actions/explore.action';
 import ExploreClientWrapper from '@/components/explore/ExploreClientWrapper';
 import WelcomeMessage from '@/components/WelcomeMessage';
 import { COMPANY_CATEGORIES } from '@/lib/constants';
-import { currentUser } from '@clerk/nextjs/server'; // Import currentUser
+import { currentUser } from '@clerk/nextjs/server';
 import { Suspense } from 'react';
+
+/**
+ * Metadata configuration for the homepage.
+ * Provides SEO and OpenGraph information for better search engine visibility and social sharing.
+ */
 
 export const metadata = {
   title: 'Explora Alternativas Sostenibles | Glooba',
   description:
-    'Descubre y conecta con empresas sostenibles en Glooba, la red social de la sostenibilidad.', // Enhanced description
+    'Descubre y conecta con empresas sostenibles en Glooba, la red social de la sostenibilidad.',
   keywords: ['sostenibilidad', 'empresas sostenibles', 'red social', 'ecológico', 'Glooba'],
   openGraph: {
     title: 'Explora Alternativas Sostenibles | Glooba',
     description: 'Descubre y conecta con empresas sostenibles en Glooba.',
-    url: 'https://www.glooba.cl', // Replace with your actual URL
+    url: 'https://www.glooba.cl',
     siteName: 'Glooba',
-    // Add an image URL for social sharing previews
-    // images: [ { url: 'https://www.glooba.cl/og-image.png' } ],
     type: 'website',
   },
   robots: { index: true, follow: true },
-  authors: [{ name: 'Glooba', url: 'https://www.glooba.cl' }], // Replace with your actual URL
+  authors: [{ name: 'Glooba', url: 'https://www.glooba.cl' }],
 };
 
+/**
+ * Loading skeleton component that provides a smooth user experience during data fetching.
+ * Displays animated placeholders for filters and company cards while the actual content loads.
+ * 
+ * @returns A responsive skeleton UI that matches the final layout structure.
+ */
 function LoadingSkeleton() {
   return (
     <div className="space-y-6">
@@ -42,12 +60,23 @@ function LoadingSkeleton() {
   );
 }
 
+/**
+ * Main homepage component that handles initial data fetching and user authentication.
+ * Conditionally renders either a welcome message or the company exploration interface based on user authentication status.
+ * 
+ * @returns A server component that renders either a welcome message or the company exploration interface.
+ * @async
+ * @throws {Error} If there's an issue fetching company data or user authentication fails.
+ */
 export default async function HomePage() {
-  // Fetch user status
+  // Fetch authenticated user data (if logged in)
   const user = await currentUser();
 
-  // Fetch initial company data for the explore section
-  // Wrapped in try/catch for better error handling on initial load
+  /**
+   * Fetch initial company data for the explore section.
+   * Uses try/catch for robust error handling on initial server load.
+   * Provides fallback values if data fetching fails.
+   */
   let initialData: PaginatedCompaniesResponse;
   try {
     initialData = await getFilteredCompanies(

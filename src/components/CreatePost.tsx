@@ -1,51 +1,54 @@
-// src/components/CreatePost.tsx
+/**
+ * Component for creating new posts with text and optional image upload.
+ * @module CreatePost
+ */
 'use client';
 
 import { createPost } from '@/actions/post.action';
-import { useFeedContext } from '@/contexts/FeedContext'; // Import context hook
+import { useFeedContext } from '@/contexts/FeedContext';
 import { useUser } from '@clerk/nextjs';
 import { ImageIcon, Loader2Icon, SendIcon } from 'lucide-react';
-import { useState, useTransition } from 'react'; // Added useTransition
+import { useState, useTransition } from 'react';
 import toast from 'react-hot-toast';
-import ImageUpload from './ImageUpload'; // Assuming this component exists and works
+import ImageUpload from './ImageUpload';
 import { Avatar, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Textarea } from './ui/textarea';
 
+/**
+ * Main component for creating new posts.
+ * @returns {JSX.Element} The create post form component
+ */
 function CreatePost() {
   const { user } = useUser();
-  const feedContext = useFeedContext(); // Get context
+  const feedContext = useFeedContext();
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  // Use useTransition for the posting state for better pending UI management
   const [isPosting, startPostingTransition] = useTransition();
   const [showImageUpload, setShowImageUpload] = useState(false);
 
+  /**
+   * Handles form submission and post creation.
+   */
   const handleSubmit = async () => {
     if (!content.trim() && !imageUrl) return;
 
     startPostingTransition(async () => {
-      // Wrap action call in transition
       try {
         const result = await createPost(content, imageUrl);
         if (result?.success) {
-          // reset the form
           setContent('');
           setImageUrl('');
           setShowImageUpload(false);
           toast.success('Publicación creada con éxito');
 
-          // *** Trigger feed refresh using context ***
           if (feedContext) {
-            await feedContext.refreshFeed(); // Await the refresh
-            console.log('Feed refresh triggered from CreatePost');
+            await feedContext.refreshFeed();
           } else {
             console.warn('FeedContext not found, cannot refresh feed automatically.');
-            // Consider fallback: window.location.reload(); or router.refresh() if available
           }
         } else {
-          // Handle specific error from action result
           throw new Error(result.error || 'Unknown error creating post');
         }
       } catch (error) {
@@ -54,7 +57,6 @@ function CreatePost() {
           `Error al crear publicación: ${error instanceof Error ? error.message : String(error)}`
         );
       }
-      // isPosting state is automatically handled by useTransition
     });
   };
 
