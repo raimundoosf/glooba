@@ -58,7 +58,16 @@ export interface PaginatedPostsResponse {
   hasNextPage: boolean;
 }
 
-// --- GET POSTS (UPDATED FOR PAGINATION, FEED LOGIC, ERROR HANDLING) ---
+
+/**
+ * Fetches the feed posts for the current user, taking into account
+ * posts from the user themselves and those they follow.
+ *
+ * @param pagination - Optional pagination options
+ * @returns A promise resolving to a PaginatedPostsResponse object
+ *          containing the posts, total count, current page, page size,
+ *          and a boolean indicating whether there are more pages
+ */
 export async function getPosts(
   pagination: PaginationOptions = {}
 ): Promise<PaginatedPostsResponse> {
@@ -129,8 +138,16 @@ export async function getPosts(
   }
 }
 
-// --- CREATE POST ---
-// Keep revalidatePath, return created post data
+
+/**
+ * Create a new post and return the newly created post data.
+ *
+ * Requires the user to be authenticated.
+ *
+ * @param content - The content of the post (text).
+ * @param image - The image URL of the post (optional).
+ * @returns An object with `success` and `post` keys or `error` key.
+ */
 export async function createPost(content: string, image: string) {
   try {
     const userId = await getDbUserId();
@@ -151,8 +168,15 @@ export async function createPost(content: string, image: string) {
   }
 }
 
-// --- DELETE POST ---
-// Keep revalidatePath
+
+/**
+ * Delete a post by its ID.
+ *
+ * Requires the user to be authenticated and the owner of the post.
+ *
+ * @param postId - The ID of the post to delete.
+ * @returns An object with `success` and `error` keys.
+ */
 export async function deletePost(postId: string) {
   try {
     const userId = await getDbUserId();
@@ -175,8 +199,17 @@ export async function deletePost(postId: string) {
   }
 }
 
-// --- TOGGLE LIKE ---
-// Keep revalidatePath
+
+/**
+ * Toggles the like status for a given post by the current user.
+ * If the post is already liked by the user, it removes the like.
+ * If not liked, it adds a like and sends a notification to the post author
+ * if the author is not the user performing the action.
+ *
+ * @param postId - The ID of the post to like or unlike.
+ * @returns An object indicating the success status and any error message.
+ * @throws Error if the user is not authenticated or the post is not found.
+ */
 export async function toggleLike(postId: string) {
   try {
     const userId = await getDbUserId();
@@ -199,15 +232,15 @@ export async function toggleLike(postId: string) {
         prisma.like.create({ data: { userId, postId } }),
         ...(post.authorId !== userId
           ? [
-              prisma.notification.create({
-                data: {
-                  type: 'LIKE',
-                  userId: post.authorId,
-                  creatorId: userId,
-                  postId,
-                },
-              }),
-            ]
+            prisma.notification.create({
+              data: {
+                type: 'LIKE',
+                userId: post.authorId,
+                creatorId: userId,
+                postId,
+              },
+            }),
+          ]
           : []),
       ]);
     }
@@ -223,8 +256,19 @@ export async function toggleLike(postId: string) {
   }
 }
 
-// --- CREATE COMMENT ---
-// Keep revalidatePath
+
+/**
+ * Create a new comment on a post and return the newly created comment data.
+ *
+ * Requires the user to be authenticated.
+ *
+ * @param postId - The ID of the post to comment on.
+ * @param content - The content of the comment.
+ * @returns An object with `success` and `comment` keys or `error` key.
+ * @throws Error if the user is not authenticated, if the post is not found,
+ * or if the comment content is empty.
+ */
+
 export async function createComment(postId: string, content: string) {
   try {
     const userId = await getDbUserId();

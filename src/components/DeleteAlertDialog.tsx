@@ -1,3 +1,7 @@
+/**
+ * Reusable delete confirmation dialog component.
+ * @module DeleteAlertDialog
+ */
 'use client';
 
 import {
@@ -14,6 +18,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Loader2Icon, Trash2Icon } from 'lucide-react';
 
+/**
+ * Props interface for the DeleteAlertDialog component
+ * @interface DeleteAlertDialogProps
+ */
 interface DeleteAlertDialogProps {
   isDeleting: boolean;
   onDelete: () => Promise<void>;
@@ -21,6 +29,11 @@ interface DeleteAlertDialogProps {
   description?: string;
 }
 
+/**
+ * Delete confirmation dialog component with loading state.
+ * @param {DeleteAlertDialogProps} props - Component props
+ * @returns {JSX.Element} The delete confirmation dialog component
+ */
 export function DeleteAlertDialog({
   isDeleting,
   onDelete,

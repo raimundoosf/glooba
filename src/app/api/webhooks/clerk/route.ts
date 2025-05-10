@@ -1,4 +1,7 @@
-// app/api/webhooks/clerk/route.ts
+/**
+ * Clerk webhook handler for user events.
+ * @module clerk/webhook
+ */
 import prisma from '@/lib/prisma';
 import type { WebhookEvent } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
@@ -6,6 +9,11 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { Webhook } from 'svix';
 
+/**
+ * Main webhook handler for Clerk user events.
+ * @param {Request} req - The incoming webhook request
+ * @returns {Promise<NextResponse>} Response with success status or error
+ */
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
   if (!WEBHOOK_SECRET) throw new Error('CLERK_WEBHOOK_SECRET not set');
@@ -57,7 +65,16 @@ export async function POST(req: Request) {
   }
 }
 
-// User Creation Handler
+/**
+ * Handles user creation events from Clerk.
+ * Creates a new user record in the database with:
+ * - Clerk ID
+ * - Email address
+ * - Username (generated if not provided)
+ * - Profile image URL
+ * @param {any} clerkUser - The Clerk user data
+ * @throws {Error} If user creation fails
+ */
 async function handleUserCreated(clerkUser: any) {
   try {
     const userData = {
@@ -78,7 +95,15 @@ async function handleUserCreated(clerkUser: any) {
   }
 }
 
-// User Update Handler
+/**
+ * Handles user update events from Clerk.
+ * Updates user record in the database with:
+ * - Email address
+ * - Username
+ * - Profile image URL
+ * @param {any} clerkUser - The Clerk user data
+ * @throws {Error} If user update fails
+ */
 async function handleUserUpdated(clerkUser: any) {
   try {
     const updateData = {

@@ -1,4 +1,7 @@
-// src/components/explore/ExploreClientWrapper.tsx
+/**
+ * @module ExploreClientWrapper
+ * Main wrapper component for company exploration with filtering and infinite scrolling.
+ */
 'use client';
 
 import {
@@ -7,12 +10,15 @@ import {
   getFilteredCompanies,
   PaginatedCompaniesResponse,
 } from '@/actions/explore.action';
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react'; // Added useRef, useEffect
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import CompanyFilters from './CompanyFilters';
 import CompanyResults from './CompanyResults';
-// Removed Button import as Load More button is gone
-import { Loader2 } from 'lucide-react'; // Keep Loader for indicator
+import { Loader2 } from 'lucide-react';
 
+/**
+ * Props interface for the ExploreClientWrapper component
+ * @interface ExploreClientWrapperProps
+ */
 interface ExploreClientWrapperProps {
   initialCompanies: CompanyCardData[];
   initialTotalCount: number;
@@ -20,28 +26,31 @@ interface ExploreClientWrapperProps {
   allCategories: string[];
 }
 
+/**
+ * Main wrapper component for company exploration with filtering and infinite scrolling.
+ * @param {ExploreClientWrapperProps} props - Component props
+ * @returns {JSX.Element} The explore wrapper with filters and results
+ */
 export default function ExploreClientWrapper({
   initialCompanies,
   initialTotalCount,
   initialHasNextPage,
   allCategories,
 }: ExploreClientWrapperProps) {
-  // --- State ---
   const [companies, setCompanies] = useState<CompanyCardData[]>(initialCompanies);
   const [appliedFilters, setAppliedFilters] = useState<CompanyFiltersType>({});
-  const [currentPage, setCurrentPage] = useState<number>(1); // Start at page 1
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(initialTotalCount);
   const [hasNextPage, setHasNextPage] = useState<boolean>(initialHasNextPage);
   const [isFiltering, startFilteringTransition] = useTransition();
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
 
-  // --- Ref for Intersection Observer ---
   const observerRef = useRef<IntersectionObserver | null>(null);
-  const sentinelRef = useRef<HTMLDivElement | null>(null); // Ref for the element to observe
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  // --- Handlers ---
-
-  // Called when filters change
+  /**
+   * Handles filter changes and triggers refetching of filtered data.
+   */
   const handleFilterChange = useCallback(
     (newFilters: CompanyFiltersType) => {
       const filtersToApply: CompanyFiltersType = {
@@ -54,16 +63,13 @@ export default function ExploreClientWrapper({
       };
 
       setAppliedFilters(filtersToApply);
-      setCurrentPage(1); // Reset to page 1
-      setCompanies([]); // Clear existing results
-      setHasNextPage(false); // Reset hasNextPage
+      setCurrentPage(1);
+      setCompanies([]);
+      setHasNextPage(false);
 
       startFilteringTransition(async () => {
         try {
-          console.log('Applying filters (Page 1):', filtersToApply);
-          const results: PaginatedCompaniesResponse = await getFilteredCompanies(filtersToApply, {
-            page: 1,
-          });
+          const results = await getFilteredCompanies(filtersToApply, { page: 1 });
           setCompanies(results.companies);
           setTotalCount(results.totalCount);
           setHasNextPage(results.hasNextPage);
@@ -79,7 +85,10 @@ export default function ExploreClientWrapper({
     [startFilteringTransition]
   );
 
-  // Function to load the next page of companies
+  /**
+   * Fetches and appends the next page of companies when triggered by infinite scroll.
+   * Handles loading states, error handling, and data appending.
+   */
   const loadMoreCompanies = useCallback(async () => {
     // Prevent fetching if already loading or no more pages
     if (isLoadingMore || isFiltering || !hasNextPage) return;
@@ -104,6 +113,10 @@ export default function ExploreClientWrapper({
     }
   }, [hasNextPage, isLoadingMore, isFiltering, currentPage, appliedFilters]); // Add loadMoreCompanies itself? No, it causes infinite loop if added.
 
+  /**
+   * Effect that sets up and manages the Intersection Observer for infinite scrolling.
+   * When the sentinel element becomes visible, it triggers loading of more companies.
+   */
   // --- Effect for Intersection Observer ---
   useEffect(() => {
     // Ensure observer isn't created multiple times unnecessarily
@@ -132,8 +145,10 @@ export default function ExploreClientWrapper({
     // Re-run effect if loading states or hasNextPage change, or if loadMoreCompanies function reference changes
   }, [hasNextPage, isLoadingMore, isFiltering, loadMoreCompanies]);
 
-  // Combined loading state for disabling filters
+  // Combined loading state for disabling filters during any loading operation
   const isCurrentlyLoadingFilters = isFiltering || isLoadingMore;
+  
+  // NOTE: Consider extracting intersection observer logic to a custom hook for reusability
 
   return (
     <div className="space-y-6">

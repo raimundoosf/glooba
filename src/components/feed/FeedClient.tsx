@@ -1,4 +1,7 @@
-// src/components/feed/FeedClient.tsx
+/**
+ * Client-side component for managing the feed of posts
+ * @module FeedClient
+ */
 'use client';
 
 import { getPosts, PostWithDetails } from '@/actions/post.action';
@@ -10,7 +13,10 @@ import { AlertTriangle, Loader2, MessageCircleIcon, RefreshCw } from 'lucide-rea
 import Link from 'next/link';
 import { ReactNode, useCallback, useEffect, useRef, useState, useTransition } from 'react';
 
-// Define a simple type for the necessary Clerk user fields passed down
+/**
+ * Interface for Clerk user information
+ * @interface ClerkUserInfo
+ */
 interface ClerkUserInfo {
   id: string;
   imageUrl: string;
@@ -18,6 +24,10 @@ interface ClerkUserInfo {
   lastName?: string | null;
 }
 
+/**
+ * Props interface for FeedClient component
+ * @interface FeedClientProps
+ */
 interface FeedClientProps {
   initialPosts: PostWithDetails[];
   initialHasNextPage: boolean;
@@ -26,7 +36,15 @@ interface FeedClientProps {
   clerkUser: ClerkUserInfo | null;
 }
 
-// --- Helper Component for Message Boxes --- (Keep as before)
+/**
+ * Helper component for displaying feed message boxes
+ * @param {Object} props - Component props
+ * @param {ReactNode} props.icon - Icon to display
+ * @param {string} props.title - Title of the message
+ * @param {string} props.message - Message content
+ * @param {ReactNode} [props.children] - Optional child elements
+ * @returns {JSX.Element} The message box component
+ */
 function FeedMessageBox({
   icon,
   title,
@@ -55,7 +73,6 @@ export default function FeedClient({
   initialError,
   clerkUser,
 }: FeedClientProps) {
-  // --- State & Refs (Keep as before) ---
   const [posts, setPosts] = useState<PostWithDetails[]>(initialPosts);
   const [hasNextPage, setHasNextPage] = useState<boolean>(initialHasNextPage);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -65,7 +82,6 @@ export default function FeedClient({
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  // --- Load More Function (Keep as before) ---
   const loadMorePosts = useCallback(async () => {
     if (isLoadingMore || isRefreshing || !hasNextPage || error) return;
     setIsLoadingMore(true);
@@ -81,7 +97,7 @@ export default function FeedClient({
         setError(result.error || 'Error al cargar más publicaciones.');
         setHasNextPage(false);
       }
-    } catch (err) {
+    } catch {
       setError('Ocurrió un error inesperado al cargar más publicaciones.');
       setHasNextPage(false);
     } finally {
@@ -89,9 +105,7 @@ export default function FeedClient({
     }
   }, [isLoadingMore, isRefreshing, hasNextPage, currentPage, error]);
 
-  // --- Refresh Feed Function (MODIFIED: Removed scrollTo) ---
   const refreshFeed = useCallback(async () => {
-    console.log('FeedClient: Refresh triggered');
     startRefreshTransition(async () => {
       setError(null);
       try {
@@ -100,13 +114,12 @@ export default function FeedClient({
           setPosts(result.posts);
           setCurrentPage(1);
           setHasNextPage(result.hasNextPage);
-          // *** REMOVED: window.scrollTo({ top: 0, behavior: 'smooth' }); ***
         } else {
           setError(result.error || 'Error al refrescar el feed.');
           setPosts([]);
           setHasNextPage(false);
         }
-      } catch (err) {
+      } catch {
         setError('Ocurrió un error inesperado al refrescar el feed.');
         setPosts([]);
         setHasNextPage(false);
@@ -114,7 +127,6 @@ export default function FeedClient({
     });
   }, [startRefreshTransition]);
 
-  // --- Intersection Observer Effect (Keep as before) ---
   useEffect(() => {
     if (observerRef.current) observerRef.current.disconnect();
     observerRef.current = new IntersectionObserver(
@@ -132,7 +144,6 @@ export default function FeedClient({
     };
   }, [hasNextPage, isLoadingMore, isRefreshing, loadMorePosts, error]);
 
-  // --- Context Value ---
   const contextValue = { refreshFeed };
 
   // --- Render Logic ---

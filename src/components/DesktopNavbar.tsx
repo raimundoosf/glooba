@@ -1,3 +1,7 @@
+/**
+ * Desktop navigation bar component with responsive design.
+ * @module DesktopNavbar
+ */
 import { Button } from '@/components/ui/button';
 import { SignInButton, UserButton } from '@clerk/nextjs';
 import { currentUser } from '@clerk/nextjs/server';
@@ -5,6 +9,16 @@ import { BellIcon, HomeIcon, RssIcon, UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import ModeToggle from './ModeToggle';
 
+/**
+ * Desktop navigation bar component that displays:
+ * - Mode toggle (light/dark theme)
+ * - Home button
+ * - Feed button
+ * - Notifications button (for authenticated users)
+ * - Profile button (for authenticated users)
+ * - Sign in button (for non-authenticated users)
+ * @returns {JSX.Element} The desktop navigation bar component
+ */
 async function DesktopNavbar() {
   const user = await currentUser();
 
@@ -50,4 +64,5 @@ async function DesktopNavbar() {
     </div>
   );
 }
+
 export default DesktopNavbar;

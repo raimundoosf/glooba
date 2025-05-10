@@ -1,5 +1,12 @@
+/**
+ * Component that displays company information in a card format with interactive follow functionality.
+ * @module CompanyCard
+ */
 'use client';
 
+/**
+ * Imports and dependencies for the CompanyCard component.
+ */
 import { CompanyCardData } from '@/actions/explore.action';
 import { toggleFollow } from '@/actions/user.action';
 import { DisplayStars } from '@/components/reviews/DisplayStars';
@@ -13,52 +20,50 @@ import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import toast from 'react-hot-toast';
 
+/**
+ * Props interface for the CompanyCard component.
+ * @interface CompanyCardProps
+ */
 interface CompanyCardProps {
   company: CompanyCardData;
 }
 
 /**
- * Renders a card displaying company information, including name, stats, bio,
- * and options to follow/unfollow.
- * @param {CompanyCardProps} props - The component props.
- * @param {CompanyCardData} props.company - The company data to display.
- * @returns {JSX.Element} The rendered company card component.
+ * Main component that renders a company information card with follow/unfollow functionality.
+ * @param {CompanyCardProps} props - Component props
+ * @returns {JSX.Element} The company card component
  */
 export default function CompanyCard({ company }: CompanyCardProps) {
   const { user: loggedInUser, isSignedIn } = useUser();
   const [isFollowingOptimistic, setIsFollowingOptimistic] = useState(company.isFollowing);
   const [isPending, startTransition] = useTransition();
 
-  // Get the first letter for the avatar fallback
+  /**
+   * Generates a fallback name for the company avatar.
+   * @returns {string} First letter of company name or username
+   */
   const fallbackName = (company.name || company.username || '?').charAt(0).toUpperCase();
 
-  // Handler for toggling follow status
+  /**
+   * Handles follow/unfollow toggling with optimistic updates.
+   */
   const handleFollowToggle = () => {
-    // Prevent action if not signed in or if a transition is already pending
     if (!isSignedIn || isPending) return;
 
-    // Optimistically update the UI
     const originalState = isFollowingOptimistic;
     setIsFollowingOptimistic(!originalState);
 
-    // Start the background transition for the API call
     startTransition(async () => {
       try {
         const result = await toggleFollow(company.id);
-        // Handle potential authentication errors or invalid responses
-        if (result === undefined) {
-          throw new Error('Authentication error or invalid response.');
-        }
-        // If the API call failed, revert the optimistic update and show an error
+        if (result === undefined) throw new Error('Authentication error or invalid response.');
         if (!result.success) {
-          setIsFollowingOptimistic(originalState); // Revert on error
+          setIsFollowingOptimistic(originalState);
           toast.error(result.error || 'Failed to update follow status.');
         }
-        // Success is handled by the refetching mechanism elsewhere if applicable,
-        // or the optimistic update remains if the API call was successful.
       } catch (error) {
         console.error('Follow toggle error:', error);
-        setIsFollowingOptimistic(originalState); // Revert on error
+        setIsFollowingOptimistic(originalState);
         toast.error('An error occurred. Please try again.');
       }
     });
@@ -66,13 +71,26 @@ export default function CompanyCard({ company }: CompanyCardProps) {
 
   // Determine if the logged-in user is viewing their own profile card
   const isOwnProfile = isSignedIn && loggedInUser?.publicMetadata?.dbId === company.id;
+  
+  // TODO: Consider disabling follow/unfollow for own profile in the UI
+  // Currently, the backend handles this, but we might want to prevent the UI interaction as well
 
-  // Tooltip text for the follow button
+  /**
+   * Generates dynamic tooltip text for the follow button based on follow state.
+   * Shows appropriate action text for the button hover state.
+   * 
+   * @returns {string} Tooltip text indicating follow/unfollow action
+   */
   const followButtonTooltip = isFollowingOptimistic
     ? `Dejar de seguir a @${company.username}`
     : `Seguir a @${company.username}`;
 
-  // Icon displayed in the follow button based on state
+  /**
+   * Generates dynamic icon for the follow button based on interaction state.
+   * Shows loading spinner during API calls, or appropriate follow/unfollow icon.
+   * 
+   * @returns {JSX.Element} The appropriate icon element based on current state
+   */
   const followButtonIcon = isPending ? (
     <Loader2 className="h-4 w-4 animate-spin" /> // Loading spinner
   ) : isFollowingOptimistic ? (
@@ -81,7 +99,12 @@ export default function CompanyCard({ company }: CompanyCardProps) {
     <UserPlus className="h-4 w-4" /> // Icon for "Not Following"
   );
 
-  // Use company background image or a default fallback (handled by bg-muted class)
+  /**
+   * Uses the company's custom background image if available.
+   * Falls back to a default background handled by the bg-muted class if not provided.
+   * 
+   * @see Default is specified in the CSS class applied to the background container
+   */
   const backgroundImage = company.backgroundImage;
 
   return (

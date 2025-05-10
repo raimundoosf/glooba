@@ -1,48 +1,51 @@
-// src/actions/review.actions.ts
 'use server';
 
-import prisma from '@/lib/prisma'; // Assuming prisma client setup at lib/prisma
-import { Prisma } from '@prisma/client'; // Import Prisma types
-import { revalidatePath } from 'next/cache'; // For cache invalidation
-import { getDbUserId } from './user.action'; // Action to get current user's DB ID
+import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
+import { getDbUserId } from './user.action';
 
-// --- Constants ---
-const REVIEW_PAGE_SIZE = 10; // Number of reviews per page
+const REVIEW_PAGE_SIZE = 10;
 
-// --- Types ---
-
-// Prisma validator to ensure consistent author data selection for reviews
 const reviewIncludeAuthor = Prisma.validator<Prisma.ReviewInclude>()({
   author: {
-    select: { id: true, username: true, name: true, image: true }, // Select desired author fields
+    select: { id: true, username: true, name: true, image: true },
   },
 });
 
-// Type representing a Review object with the included Author data
 export type ReviewWithAuthor = Prisma.ReviewGetPayload<{
   include: typeof reviewIncludeAuthor;
 }>;
 
-// Type for pagination options passed to actions
 export interface PaginationOptions {
   page?: number;
   pageSize?: number;
 }
 
-// Type for the structured response when fetching paginated reviews and stats
 export interface PaginatedReviewsResponse {
-  success: boolean; // Indicates if the operation was successful
-  error?: string; // Optional error message
-  reviews: ReviewWithAuthor[]; // Array of reviews for the current page
-  totalCount: number; // Total number of reviews matching the criteria
-  averageRating: number | null; // Average rating (null if no reviews)
-  userHasReviewed: boolean; // Flag indicating if the current logged-in user has reviewed this company
-  currentPage: number; // The current page number returned
-  pageSize: number; // The number of items per page used
-  hasNextPage: boolean; // Flag indicating if more pages are available
+  success: boolean;
+  error?: string;
+  reviews: ReviewWithAuthor[];
+  totalCount: number;
+  averageRating: number | null;
+  userHasReviewed: boolean;
+  currentPage: number;
+  pageSize: number;
+  hasNextPage: boolean;
 }
 
-// --- Action: Create or Update a Review ---
+
+/**
+ * Create a new review or update an existing one for a company.
+ *
+ * The function takes the ID of the company being reviewed, the rating, optional review text, and the company's username (for cache revalidation).
+ * It returns a simple success/error status object with an optional error message.
+ *
+ * It first checks if the user is authenticated and if they are trying to review themselves (both are invalid).
+ * Then it validates the rating value and checks if a review from the same user for the same company already exists.
+ * If it does, it updates the existing review. If not, it creates a new one.
+ * Finally, it invalidates the cache for the company's profile page so it refetches data.
+ */
 export async function createReview({
   companyId, // ID of the company (User) being reviewed
   rating, // Star rating (0-5)
@@ -56,17 +59,15 @@ export async function createReview({
 }): Promise<{ success: boolean; error?: string }> {
   // Return simple success/error status
 
-  const authorId = await getDbUserId(); // Get the ID of the user writing the review
+  const authorId = await getDbUserId();
   if (!authorId) {
     return { success: false, error: 'User not authenticated.' };
   }
 
-  // Prevent users from reviewing themselves
   if (authorId === companyId) {
     return { success: false, error: 'You cannot review your own profile.' };
   }
 
-  // Validate the rating value
   if (rating < 0 || rating > 5 || !Number.isInteger(rating)) {
     return {
       success: false,
@@ -75,28 +76,24 @@ export async function createReview({
   }
 
   try {
-    // Check if a review from this author for this company already exists
     const existingReview = await prisma.review.findUnique({
-      where: { authorId_companyId: { authorId, companyId } }, // Uses the @@unique constraint
+      where: { authorId_companyId: { authorId, companyId } },
     });
 
     const reviewData = {
       rating,
-      content: content?.trim() || null, // Store null if content is empty/whitespace
+      content: content?.trim() || null,
     };
 
     if (existingReview) {
-      // If review exists, update it
       await prisma.review.update({
         where: { id: existingReview.id },
         data: {
           ...reviewData,
-          updatedAt: new Date(), // Explicitly update the timestamp
+          updatedAt: new Date(),
         },
       });
-      console.log(`Review updated by user ${authorId} for company ${companyId}`);
     } else {
-      // If review doesn't exist, create a new one
       await prisma.review.create({
         data: {
           ...reviewData,
@@ -104,18 +101,14 @@ export async function createReview({
           companyId,
         },
       });
-      console.log(`Review created by user ${authorId} for company ${companyId}`);
     }
 
-    // Invalidate the cache for the company's profile page so it refetches data
     revalidatePath(`/profile/${companyUsername}`);
 
     return { success: true }; // Indicate success
   } catch (error: unknown) {
-    console.error('Error creating/updating review:', error);
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
 
-    // Handle potential unique constraint violation during create (race condition?)
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return {
         success: false,
@@ -126,7 +119,29 @@ export async function createReview({
   }
 }
 
-// --- Action: Get Company Reviews (Paginated) & Stats ---
+
+/**
+ * Fetches a paginated list of reviews for a company (User) and the associated metadata.
+ *
+ * @param {Object} options - Options object with parameters
+ * @param {string} options.companyId - ID of the company (User) whose reviews to fetch
+ * @param {Object} [options.pagination={}] - Optional pagination parameters
+ * @param {number} [options.pagination.page=1] - Page number to fetch
+ * @param {number} [options.pagination.pageSize=REVIEW_PAGE_SIZE] - Number of reviews to fetch per page
+ *
+ * @returns {Promise<PaginatedReviewsResponse>} - A promise that resolves to a structured response containing the reviews and metadata
+ *
+ * @typedef {Object} PaginatedReviewsResponse
+ * @property {boolean} success - Indicates if the request was successful
+ * @property {string} error - Error message if the request failed
+ * @property {ReviewWithAuthor[]} reviews - Array of reviews with author details
+ * @property {number} totalCount - Total count of reviews for the company
+ * @property {number | null} averageRating - Average rating of reviews, or null if no reviews
+ * @property {boolean} userHasReviewed - Indicates if the current user has reviewed the company
+ * @property {number} currentPage - Page number of the fetched reviews
+ * @property {number} pageSize - Number of reviews per page
+ * @property {boolean} hasNextPage - Indicates if there are more reviews to fetch
+ */
 export async function getCompanyReviewsAndStats({
   companyId, // ID of the company (User) whose reviews to fetch
   pagination = {}, // Optional pagination parameters
@@ -134,19 +149,15 @@ export async function getCompanyReviewsAndStats({
   companyId: string;
   pagination?: PaginationOptions;
 }): Promise<PaginatedReviewsResponse> {
-  // Get current user's ID to check if they have submitted a review for this company
   const currentUserId = await getDbUserId();
 
   try {
-    // Set defaults and validate pagination parameters
     const { page = 1, pageSize = REVIEW_PAGE_SIZE } = pagination;
     const currentPage = Math.max(1, Math.floor(page));
     const currentPageSize = Math.max(1, Math.floor(pageSize));
 
-    // Define the filter for reviews belonging to the specified company
     const whereClause: Prisma.ReviewWhereInput = { companyId };
 
-    // --- Use Promise.all for concurrent read operations ---
     const countPromise = prisma.review.count({ where: whereClause });
 
     const reviewsPromise = prisma.review.findMany({
@@ -167,9 +178,9 @@ export async function getCompanyReviewsAndStats({
     // If user is not logged in (currentUserId is null), resolve immediately to null
     const userReviewPromise: Promise<{ id: string } | null> = currentUserId
       ? prisma.review.findUnique({
-          where: { authorId_companyId: { authorId: currentUserId, companyId } },
-          select: { id: true }, // Only need to know if it exists
-        })
+        where: { authorId_companyId: { authorId: currentUserId, companyId } },
+        select: { id: true }, // Only need to know if it exists
+      })
       : Promise.resolve(null);
 
     // Await all promises concurrently

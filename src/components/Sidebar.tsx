@@ -1,4 +1,7 @@
-// src/components/Sidebar.tsx
+/**
+ * Sidebar component that displays user profile information.
+ * @module Sidebar
+ */
 import { getUserByClerkId } from '@/actions/user.action';
 import { SignInButton, SignUpButton } from '@clerk/nextjs';
 import { currentUser } from '@clerk/nextjs/server';
@@ -9,6 +12,17 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Separator } from './ui/separator';
 
+/**
+ * Main sidebar component that displays:
+ * - User profile card with:
+ *   - Profile background image
+ *   - Avatar with username
+ *   - Bio (if available)
+ *   - Following/followers counts
+ *   - Location
+ *   - Website link (if available)
+ * @returns {JSX.Element} The authenticated sidebar component
+ */
 async function Sidebar() {
   const authUser = await currentUser();
   if (!authUser) return <UnAuthenticatedSidebar />;
@@ -20,7 +34,6 @@ async function Sidebar() {
     <div className="sticky top-20">
       <Card className="bg-card overflow-hidden">
         <CardContent className="px-4 py-6 relative">
-          {/* Background Image */}
           <div className="absolute inset-x-0 top-0 h-32 bg-muted">
             {user.backgroundImage ? (
               <img
@@ -114,8 +127,13 @@ async function Sidebar() {
   );
 }
 
-export default Sidebar;
-
+/**
+ * Unauthenticated sidebar component that displays:
+ * - Welcome message
+ * - Sign in button
+ * - Sign up button
+ * @returns {JSX.Element} The unauthenticated sidebar component
+ */
 const UnAuthenticatedSidebar = () => (
   <div className="sticky top-20">
     <Card>
@@ -140,3 +158,5 @@ const UnAuthenticatedSidebar = () => (
     </Card>
   </div>
 );
+
+export default Sidebar;

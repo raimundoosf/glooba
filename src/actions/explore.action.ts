@@ -1,4 +1,6 @@
-// src/actions/explore.action.ts
+/**
+ * @file Server actions for company exploration features including filtering and pagination
+ */
 'use server';
 
 import prisma from '@/lib/prisma';
@@ -9,12 +11,18 @@ import { getDbUserId } from './user.action';
 const DEFAULT_PAGE_SIZE = 6;
 
 // --- Types ---
+/**
+ * Represents filter criteria for company search and filtering
+ */
 export interface CompanyFiltersType {
   searchTerm?: string;
   categories?: string[];
   location?: string;
 }
 
+/**
+ * Options for paginating company results
+ */
 export interface PaginationOptions {
   page?: number;
   pageSize?: number;
@@ -46,7 +54,10 @@ const companyDataSelectBase = Prisma.validator<Prisma.UserSelect>()({
   },
 });
 
-// Type reflecting the raw data fetched
+/**
+ * Raw data structure returned from Prisma query including relations
+ * Used internally for processing before sending to client
+ */
 type CompanyDataWithRelations = Prisma.UserGetPayload<{
   select: typeof companyDataSelectBase & {
     // Include followers relation filtered for the current user to check follow status
@@ -54,7 +65,10 @@ type CompanyDataWithRelations = Prisma.UserGetPayload<{
   };
 }>;
 
-// Final processed type for the CompanyCard component
+/**
+ * Processed company data ready for client consumption
+ * Contains calculated fields like averageRating and follower status
+ */
 export type CompanyCardData = Omit<
   Prisma.UserGetPayload<{ select: typeof companyDataSelectBase }>,
   'reviewsReceived' | '_count' // Remove raw relations/counts
@@ -66,6 +80,10 @@ export type CompanyCardData = Omit<
   backgroundImage: string | null;
 };
 
+/**
+ * Response structure for paginated company queries
+ * Contains companies data and pagination metadata
+ */
 export interface PaginatedCompaniesResponse {
   success: boolean;
   error?: string;
@@ -76,7 +94,18 @@ export interface PaginatedCompaniesResponse {
   hasNextPage: boolean;
 }
 
-// --- Action Function ---
+/**
+ * Fetches companies based on filter criteria with pagination
+ * 
+ * Applies search filtering across multiple fields (name, username, bio)
+ * Filters by categories and location if specified
+ * Handles pagination and includes follow status for the current user
+ * Calculates derived fields like average rating from raw data
+ * 
+ * @param filters - Filter criteria for companies (search term, categories, location)
+ * @param pagination - Pagination options (page number, page size)
+ * @returns Promise resolving to paginated companies with metadata
+ */
 export async function getFilteredCompanies(
   filters: CompanyFiltersType,
   pagination: PaginationOptions = {}

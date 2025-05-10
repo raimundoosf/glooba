@@ -1,11 +1,9 @@
-// src/app/feed/page.tsx
 import { getPosts, PaginatedPostsResponse } from '@/actions/post.action';
 import { getDbUserId } from '@/actions/user.action';
 import { Suspense } from 'react';
-// Remove CreatePost import here, it will be rendered inside FeedClient
 import WhoToFollow from '@/components/WhoToFollow';
 import FeedClient from '@/components/feed/FeedClient';
-import { currentUser } from '@clerk/nextjs/server'; // Import User type
+import { currentUser } from '@clerk/nextjs/server';
 import { Loader2 } from 'lucide-react';
 
 export const metadata = {
@@ -14,7 +12,10 @@ export const metadata = {
   keywords: ['sostenibilidad', 'alternativas', 'ofertas', 'Glooba'],
 };
 
-// --- Loading Skeleton ---
+/**
+ * Loading skeleton component that shows a placeholder while feed data is being fetched
+ * @returns {JSX.Element} The loading skeleton component
+ */
 function FeedLoadingSkeleton() {
   return (
     <div className="space-y-6">
@@ -31,17 +32,17 @@ function FeedLoadingSkeleton() {
   );
 }
 
-// --- Server Component Logic for Initial Data ---
+/**
+ * Server component that fetches initial feed data and renders the FeedClient component
+ * @returns {JSX.Element} The feed content component with initial data
+ */
 async function FeedContent() {
-  // Fetch Clerk user and DB user ID in parallel
   const [user, dbUserId] = await Promise.all([currentUser(), getDbUserId()]);
 
-  // Fetch initial page data server-side
   let initialFeedData: PaginatedPostsResponse;
   try {
     initialFeedData = await getPosts({ page: 1 });
-  } catch (e) {
-    console.error('Critical error fetching initial feed:', e);
+  } catch {
     initialFeedData = {
       success: false,
       error: 'Could not connect to fetch feed data.',
@@ -77,7 +78,10 @@ async function FeedContent() {
   );
 }
 
-// --- Page Component ---
+/**
+ * Main feed page component that organizes the layout with feed content and sidebar
+ * @returns {JSX.Element} The feed page component with grid layout
+ */
 export default function FeedPage() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">

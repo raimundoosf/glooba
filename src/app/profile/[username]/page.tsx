@@ -1,5 +1,3 @@
-// src/app/profile/[username]/page.tsx
-
 import {
   getProfileByUsername,
   getUserLikedPosts,
@@ -10,6 +8,11 @@ import { getCompanyReviewsAndStats } from '@/actions/review.action';
 import { notFound } from 'next/navigation';
 import ProfilePageClient from './ProfilePageClient';
 
+/**
+ * Generates metadata for the profile page based on user data
+ * @param params The route parameters containing the username
+ * @returns Object with title and description for the page
+ */
 export async function generateMetadata({ params }: { params: { username: string } }) {
   const user = await getProfileByUsername(params.username);
   if (!user) return;
@@ -20,6 +23,11 @@ export async function generateMetadata({ params }: { params: { username: string 
   };
 }
 
+/**
+ * Server component that fetches all necessary data for the profile page
+ * @param params The route parameters containing the username
+ * @returns {JSX.Element} The profile page component with all necessary data
+ */
 async function ProfilePageServer({ params }: { params: { username: string } }) {
   const user = await getProfileByUsername(params.username);
 
@@ -29,7 +37,7 @@ async function ProfilePageServer({ params }: { params: { username: string } }) {
     getUserPosts(user.id),
     getUserLikedPosts(user.id),
     isFollowing(user.id),
-    getCompanyReviewsAndStats({ companyId: user.id }), // Fetch reviews and stats
+    getCompanyReviewsAndStats({ companyId: user.id }),
   ]);
 
   return (

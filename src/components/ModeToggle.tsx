@@ -1,8 +1,20 @@
+/**
+ * Theme toggle button component that switches between light and dark modes.
+ * @module ModeToggle
+ */
 'use client';
 import { Button } from '@/components/ui/button';
 import { MoonIcon, SunIcon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
+/**
+ * Theme toggle button that:
+ * - Displays a sun icon in dark mode
+ * - Displays a moon icon in light mode
+ * - Animates the transition between modes
+ * - Provides accessibility with screen reader text
+ * @returns {JSX.Element} The theme toggle button component
+ */
 export default function ModeToggle() {
   const { theme, setTheme } = useTheme();
 

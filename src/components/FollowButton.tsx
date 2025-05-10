@@ -1,3 +1,7 @@
+/**
+ * Follow button component for following/unfollowing users.
+ * @module FollowButton
+ */
 'use client';
 
 import { toggleFollow } from '@/actions/user.action';
@@ -6,9 +10,25 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Button } from './ui/button';
 
-function FollowButton({ userId }: { userId: string }) {
+/**
+ * Props interface for the FollowButton component
+ * @interface FollowButtonProps
+ */
+interface FollowButtonProps {
+  userId: string;
+}
+
+/**
+ * Follow button component that handles follow/unfollow actions.
+ * @param {FollowButtonProps} props - Component props
+ * @returns {JSX.Element} The follow button component
+ */
+function FollowButton({ userId }: FollowButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
+  /**
+   * Handles follow/unfollow action with loading state and toast notifications.
+   */
   const handleFollow = async () => {
     setIsLoading(true);
 
@@ -34,4 +54,5 @@ function FollowButton({ userId }: { userId: string }) {
     </Button>
   );
 }
+
 export default FollowButton;
