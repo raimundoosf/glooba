@@ -1,71 +1,114 @@
-// src/app/page.tsx
-import { getFilteredCompanies, PaginatedCompaniesResponse } from "@/actions/explore.action"; // Import type
-import ExploreClientWrapper from "@/components/explore/ExploreClientWrapper";
-import { Suspense } from "react";
-import { COMPANY_CATEGORIES } from "@/lib/constants";
-import { currentUser } from "@clerk/nextjs/server"; // Import currentUser
-import { Button } from "@/components/ui/button";
-import { SignInButton, SignUpButton } from "@clerk/nextjs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react"; // Import Loader2 for skeleton
-import WelcomeMessage from "@/components/WelcomeMessage";
+/**
+ * Homepage component that serves as the main entry point for the Glooba application.
+ * Provides a company exploration interface with filtering capabilities and a welcome message for new users.
+ * 
+ * @fileoverview Main application page that handles initial data fetching and user authentication.
+ */
+
+/**
+ * Imports and type definitions for the homepage component.
+ */
+import { getFilteredCompanies, PaginatedCompaniesResponse } from '@/actions/explore.action';
+import ExploreClientWrapper from '@/components/explore/ExploreClientWrapper';
+import WelcomeMessage from '@/components/WelcomeMessage';
+import { COMPANY_CATEGORIES } from '@/lib/constants';
+import { currentUser } from '@clerk/nextjs/server';
+import { Suspense } from 'react';
+
+/**
+ * Metadata configuration for the homepage.
+ * Provides SEO and OpenGraph information for better search engine visibility and social sharing.
+ */
 
 export const metadata = {
-  title: "Explora Alternativas Sostenibles | Glooba",
-  description: "Descubre y conecta con empresas sostenibles en Glooba, la red social de la sostenibilidad.", // Enhanced description
-  keywords: ["sostenibilidad", "empresas sostenibles", "red social", "ecológico", "Glooba"],
+  title: 'Explora Alternativas Sostenibles | Glooba',
+  description:
+    'Descubre y conecta con empresas sostenibles en Glooba, la red social de la sostenibilidad.',
+  keywords: ['sostenibilidad', 'empresas sostenibles', 'red social', 'ecológico', 'Glooba'],
   openGraph: {
-    title: "Explora Alternativas Sostenibles | Glooba",
-    description: "Descubre y conecta con empresas sostenibles en Glooba.",
-    url: "https://www.glooba.cl", // Replace with your actual URL
-    siteName: "Glooba",
-    // Add an image URL for social sharing previews
-    // images: [ { url: 'https://www.glooba.cl/og-image.png' } ],
-    type: "website",
+    title: 'Explora Alternativas Sostenibles | Glooba',
+    description: 'Descubre y conecta con empresas sostenibles en Glooba.',
+    url: 'https://www.glooba.cl',
+    siteName: 'Glooba',
+    type: 'website',
   },
   robots: { index: true, follow: true },
-  authors: [{ name: "Glooba", url: "https://www.glooba.cl" }], // Replace with your actual URL
+  authors: [{ name: 'Glooba', url: 'https://www.glooba.cl' }],
 };
 
-
+/**
+ * Loading skeleton component that provides a smooth user experience during data fetching.
+ * Displays animated placeholders for filters and company cards while the actual content loads.
+ * 
+ * @returns A responsive skeleton UI that matches the final layout structure.
+ */
 function LoadingSkeleton() {
-    return (
-      <div className="space-y-6">
-        {/* Skeleton for Filters */}
-        <div className="p-4 mb-6 bg-card border rounded-lg shadow-sm h-[100px] animate-pulse"></div>
-        {/* Skeleton for Results Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-card border rounded-lg shadow-sm h-[250px] animate-pulse"></div>
-          ))}
-        </div>
+  return (
+    <div className="space-y-6">
+      {/* Skeleton for Filters */}
+      <div className="p-4 mb-6 bg-card border rounded-lg shadow-sm h-[100px] animate-pulse"></div>
+      {/* Skeleton for Results Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="bg-card border rounded-lg shadow-sm h-[250px] animate-pulse"
+          ></div>
+        ))}
       </div>
-    );
+    </div>
+  );
 }
 
+/**
+ * Main homepage component that handles initial data fetching and user authentication.
+ * Conditionally renders either a welcome message or the company exploration interface based on user authentication status.
+ * 
+ * @returns A server component that renders either a welcome message or the company exploration interface.
+ * @async
+ * @throws {Error} If there's an issue fetching company data or user authentication fails.
+ */
 export default async function HomePage() {
-  // Fetch user status
+  // Fetch authenticated user data (if logged in)
   const user = await currentUser();
 
-  // Fetch initial company data for the explore section
-  // Wrapped in try/catch for better error handling on initial load
+  /**
+   * Fetch initial company data for the explore section.
+   * Uses try/catch for robust error handling on initial server load.
+   * Provides fallback values if data fetching fails.
+   */
   let initialData: PaginatedCompaniesResponse;
   try {
-      initialData = await getFilteredCompanies(
-          {}, // No initial filters
-          { page: 1 } // Fetch page 1
-      );
-       // Handle potential error returned from the action itself
-      if (!initialData.success) {
-          console.error("Error fetching initial companies:", initialData.error);
-          // Set defaults or throw error depending on desired behavior
-          initialData = { success: false, error: initialData.error, companies: [], totalCount: 0, currentPage: 1, pageSize: 12, hasNextPage: false };
-      }
+    initialData = await getFilteredCompanies(
+      {}, // No initial filters
+      { page: 1 } // Fetch page 1
+    );
+    // Handle potential error returned from the action itself
+    if (!initialData.success) {
+      console.error('Error fetching initial companies:', initialData.error);
+      // Set defaults or throw error depending on desired behavior
+      initialData = {
+        success: false,
+        error: initialData.error,
+        companies: [],
+        totalCount: 0,
+        currentPage: 1,
+        pageSize: 12,
+        hasNextPage: false,
+      };
+    }
   } catch (error) {
-       console.error("Critical error fetching initial companies:", error);
-       initialData = { success: false, error: "Could not load companies.", companies: [], totalCount: 0, currentPage: 1, pageSize: 12, hasNextPage: false };
+    console.error('Critical error fetching initial companies:', error);
+    initialData = {
+      success: false,
+      error: 'Could not load companies.',
+      companies: [],
+      totalCount: 0,
+      currentPage: 1,
+      pageSize: 12,
+      hasNextPage: false,
+    };
   }
-
 
   const allCategories = COMPANY_CATEGORIES;
 
@@ -74,12 +117,12 @@ export default async function HomePage() {
       {!user && <WelcomeMessage />}
 
       <Suspense fallback={<LoadingSkeleton />}>
-         <ExploreClientWrapper
-            initialCompanies={initialData.companies} // Pass first page results
-            initialTotalCount={initialData.totalCount} // Pass total count
-            initialHasNextPage={initialData.hasNextPage} // Pass hasNextPage
-            allCategories={allCategories}
-         />
+        <ExploreClientWrapper
+          initialCompanies={initialData.companies} // Pass first page results
+          initialTotalCount={initialData.totalCount} // Pass total count
+          initialHasNextPage={initialData.hasNextPage} // Pass hasNextPage
+          allCategories={allCategories}
+        />
       </Suspense>
     </div>
   );

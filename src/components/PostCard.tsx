@@ -1,42 +1,60 @@
-// src/components/PostCard.tsx
-"use client";
+/**
+ * Component for displaying individual posts with interactions.
+ * @module PostCard
+ */
+'use client';
 
-import { PostWithDetails, createComment, deletePost, toggleLike } from "@/actions/post.action";
-import { SignInButton, useUser } from "@clerk/nextjs";
-import { useState, useTransition, useEffect, useRef } from "react"; 
-import toast from "react-hot-toast";
-import { Card, CardContent } from "./ui/card";
-import Link from "next/link";
-import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar"; 
-import { formatDistanceToNowStrict, format, formatDistanceToNow } from "date-fns"; 
-import { es } from "date-fns/locale";
-import { DeleteAlertDialog } from "./DeleteAlertDialog";
-import { Button } from "./ui/button";
-import { HeartIcon, LogInIcon, MessageCircleIcon, SendIcon, Loader2, Trash2, MoreHorizontal } from "lucide-react";
-import { Textarea } from "./ui/textarea";
-import { useFeedContext } from "@/contexts/FeedContext";
-import TimeAgo from "@/components/TimeAgo";
+import { PostWithDetails, createComment, deletePost, toggleLike } from '@/actions/post.action';
+import TimeAgo from '@/components/TimeAgo';
+import { useFeedContext } from '@/contexts/FeedContext';
+import { SignInButton, useUser } from '@clerk/nextjs';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { HeartIcon, LogInIcon, MessageCircleIcon, SendIcon } from 'lucide-react';
+import Link from 'next/link';
+import { useRef, useState, useTransition } from 'react';
+import toast from 'react-hot-toast';
+import { DeleteAlertDialog } from './DeleteAlertDialog';
+import { Avatar, AvatarImage } from './ui/avatar';
+import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
+import { Textarea } from './ui/textarea';
 
-
+/**
+ * Props interface for the PostCard component
+ * @interface PostCardProps
+ */
 interface PostCardProps {
   post: PostWithDetails;
   dbUserId: string | null;
 }
 
+/**
+ * Component that displays a post with:
+ * - Author information (avatar, name, username)
+ * - Post content and image (if any)
+ * - Like functionality
+ * - Comment functionality
+ * - Delete functionality (for post author)
+ * @param {PostCardProps} props - Component props
+ * @returns {JSX.Element} The post card component
+ */
 export default function PostCard({ post, dbUserId }: PostCardProps) {
-  const { user } = useUser(); 
+  const { user } = useUser();
   const feedContext = useFeedContext();
-  const [newComment, setNewComment] = useState("");
+  const [newComment, setNewComment] = useState('');
   const [isCommenting, startCommentTransition] = useTransition();
   const [isLiking, setIsLiking] = useState(false);
   const [isDeleting, startDeleteTransition] = useTransition();
   const [hasLiked, setHasLiked] = useState(post.likes.some((like) => like.userId === dbUserId));
   const [optimisticLikes, setOptmisticLikes] = useState(post._count.likes);
   const [showComments, setShowComments] = useState(false);
-  const commentInputRef = useRef<HTMLTextAreaElement>(null); 
+  const commentInputRef = useRef<HTMLTextAreaElement>(null);
 
-  // --- Handlers (Like, Comment, Delete - Keep context calls) ---
-   const handleLike = async () => {
+  /**
+   * Handles post like/unlike with optimistic updates.
+   */
+  const handleLike = async () => {
     if (isLiking || !dbUserId) return;
     setIsLiking(true);
     const originalLiked = hasLiked;
@@ -46,7 +64,7 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
     try {
       await toggleLike(post.id);
     } catch (error) {
-      toast.error("Failed to update like status.");
+      toast.error('Failed to update like status.');
       setHasLiked(originalLiked);
       setOptmisticLikes(originalCount);
     } finally {
@@ -54,31 +72,49 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
     }
   };
 
+  /**
+   * Handles comment creation with optimistic updates.
+   */
   const handleAddComment = async () => {
     if (!newComment.trim() || !dbUserId) return;
     startCommentTransition(async () => {
-        try {
-            const result = await createComment(post.id, newComment);
-            if (result?.success) {
-                toast.success("Comentario publicado exitosamente");
-                setNewComment("");
-                if (feedContext) await feedContext.refreshFeed();
-                else console.warn("FeedContext not found after comment.");
-            } else { throw new Error(result.error || "Unknown error adding comment"); }
-        } catch (error) { toast.error(`Falló al agregar comentario: ${error instanceof Error ? error.message : String(error)}`); }
+      try {
+        const result = await createComment(post.id, newComment);
+        if (result?.success) {
+          toast.success('Comentario publicado exitosamente');
+          setNewComment('');
+          if (feedContext) await feedContext.refreshFeed();
+          else console.warn('FeedContext not found after comment.');
+        } else {
+          throw new Error(result.error || 'Unknown error adding comment');
+        }
+      } catch (error) {
+        toast.error(
+          `Falló al agregar comentario: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
     });
   };
 
+  /**
+   * Handles post deletion with optimistic updates.
+   */
   const handleDeletePost = async () => {
     startDeleteTransition(async () => {
-        try {
-            const result = await deletePost(post.id);
-            if (result.success) {
-                toast.success("Publicación eliminada exitosamente");
-                if (feedContext) await feedContext.refreshFeed();
-                else console.warn("FeedContext not found after delete.");
-            } else { throw new Error(result.error || "Unknown error deleting post"); }
-        } catch (error) { toast.error(`Falló al eliminar publicación: ${error instanceof Error ? error.message : String(error)}`); }
+      try {
+        const result = await deletePost(post.id);
+        if (result.success) {
+          toast.success('Publicación eliminada exitosamente');
+          if (feedContext) await feedContext.refreshFeed();
+          else console.warn('FeedContext not found after delete.');
+        } else {
+          throw new Error(result.error || 'Unknown error deleting post');
+        }
+      } catch (error) {
+        toast.error(
+          `Falló al eliminar publicación: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
     });
   };
 
@@ -89,7 +125,7 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
           <div className="flex space-x-3 sm:space-x-4">
             <Link href={`/profile/${post.author.username}`}>
               <Avatar className="size-8 sm:w-10 sm:h-10 flex-shrink-0">
-                <AvatarImage src={post.author.image ?? "/avatar.png"} />
+                <AvatarImage src={post.author.image ?? '/avatar.png'} />
               </Avatar>
             </Link>
 
@@ -106,8 +142,19 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                     <Link href={`/profile/${post.author.username}`}>@{post.author.username}</Link>
                     {post.author.isCompany && (
-                      <svg width="18px" height="18px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" clip-rule="evenodd" d="M9.02975 3.3437C10.9834 2.88543 13.0166 2.88543 14.9703 3.3437C17.7916 4.00549 19.9945 6.20842 20.6563 9.02975C21.1146 10.9834 21.1146 13.0166 20.6563 14.9703C19.9945 17.7916 17.7916 19.9945 14.9703 20.6563C13.0166 21.1146 10.9834 21.1146 9.02975 20.6563C6.20842 19.9945 4.0055 17.7916 3.3437 14.9703C2.88543 13.0166 2.88543 10.9834 3.3437 9.02974C4.0055 6.20841 6.20842 4.00549 9.02975 3.3437ZM15.0524 10.4773C15.2689 10.2454 15.2563 9.88195 15.0244 9.6655C14.7925 9.44906 14.4291 9.46159 14.2126 9.6935L11.2678 12.8487L9.77358 11.3545C9.54927 11.1302 9.1856 11.1302 8.9613 11.3545C8.73699 11.5788 8.73699 11.9425 8.9613 12.1668L10.8759 14.0814C10.986 14.1915 11.1362 14.2522 11.2919 14.2495C11.4477 14.2468 11.5956 14.181 11.7019 14.0671L15.0524 10.4773Z" fill="#1281ff"/>
+                      <svg
+                        width="18px"
+                        height="18px"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          clip-rule="evenodd"
+                          d="M9.02975 3.3437C10.9834 2.88543 13.0166 2.88543 14.9703 3.3437C17.7916 4.00549 19.9945 6.20842 20.6563 9.02975C21.1146 10.9834 21.1146 13.0166 20.6563 14.9703C19.9945 17.7916 17.7916 19.9945 14.9703 20.6563C13.0166 21.1146 10.9834 21.1146 9.02975 20.6563C6.20842 19.9945 4.0055 17.7916 3.3437 14.9703C2.88543 13.0166 2.88543 10.9834 3.3437 9.02974C4.0055 6.20841 6.20842 4.00549 9.02975 3.3437ZM15.0524 10.4773C15.2689 10.2454 15.2563 9.88195 15.0244 9.6655C14.7925 9.44906 14.4291 9.46159 14.2126 9.6935L11.2678 12.8487L9.77358 11.3545C9.54927 11.1302 9.1856 11.1302 8.9613 11.3545C8.73699 11.5788 8.73699 11.9425 8.9613 12.1668L10.8759 14.0814C10.986 14.1915 11.1362 14.2522 11.2919 14.2495C11.4477 14.2468 11.5956 14.181 11.7019 14.0671L15.0524 10.4773Z"
+                          fill="#1281ff"
+                        />
                       </svg>
                     )}
                     <span>•</span>
@@ -137,7 +184,7 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
                 variant="ghost"
                 size="sm"
                 className={`text-muted-foreground gap-2 ${
-                  hasLiked ? "text-red-500 hover:text-red-600" : "hover:text-red-500"
+                  hasLiked ? 'text-red-500 hover:text-red-600' : 'hover:text-red-500'
                 }`}
                 onClick={handleLike}
               >
@@ -169,16 +216,16 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
                   // Use setTimeout to ensure the textarea is rendered before scrolling
                   setTimeout(() => {
                     commentInputRef.current?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "center", 
+                      behavior: 'smooth',
+                      block: 'center',
                     });
-                    commentInputRef.current?.focus(); 
-                  }, 100); 
+                    commentInputRef.current?.focus();
+                  }, 100);
                 }
               }}
             >
               <MessageCircleIcon
-                className={`size-5 ${showComments ? "fill-blue-500 text-blue-500" : ""}`}
+                className={`size-5 ${showComments ? 'fill-blue-500 text-blue-500' : ''}`}
               />
               <span>{post.comments.length}</span>
             </Button>
@@ -192,7 +239,7 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
                 {post.comments.map((comment) => (
                   <div key={comment.id} className="flex space-x-3">
                     <Avatar className="size-8 flex-shrink-0">
-                      <AvatarImage src={comment.author.image ?? "/avatar.png"} />
+                      <AvatarImage src={comment.author.image ?? '/avatar.png'} />
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -201,13 +248,28 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
                           @{comment.author.username}
                         </span>
                         {comment.author.isCompany && (
-                          <svg className="inline-flex items-center " width="18px" height="18px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M9.02975 3.3437C10.9834 2.88543 13.0166 2.88543 14.9703 3.3437C17.7916 4.00549 19.9945 6.20842 20.6563 9.02975C21.1146 10.9834 21.1146 13.0166 20.6563 14.9703C19.9945 17.7916 17.7916 19.9945 14.9703 20.6563C13.0166 21.1146 10.9834 21.1146 9.02975 20.6563C6.20842 19.9945 4.0055 17.7916 3.3437 14.9703C2.88543 13.0166 2.88543 10.9834 3.3437 9.02974C4.0055 6.20841 6.20842 4.00549 9.02975 3.3437ZM15.0524 10.4773C15.2689 10.2454 15.2563 9.88195 15.0244 9.6655C14.7925 9.44906 14.4291 9.46159 14.2126 9.6935L11.2678 12.8487L9.77358 11.3545C9.54927 11.1302 9.1856 11.1302 8.9613 11.3545C8.73699 11.5788 8.73699 11.9425 8.9613 12.1668L10.8759 14.0814C10.986 14.1915 11.1362 14.2522 11.2919 14.2495C11.4477 14.2468 11.5956 14.181 11.7019 14.0671L15.0524 10.4773Z" fill="#1281ff "/>
+                          <svg
+                            className="inline-flex items-center "
+                            width="18px"
+                            height="18px"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M9.02975 3.3437C10.9834 2.88543 13.0166 2.88543 14.9703 3.3437C17.7916 4.00549 19.9945 6.20842 20.6563 9.02975C21.1146 10.9834 21.1146 13.0166 20.6563 14.9703C19.9945 17.7916 17.7916 19.9945 14.9703 20.6563C13.0166 21.1146 10.9834 21.1146 9.02975 20.6563C6.20842 19.9945 4.0055 17.7916 3.3437 14.9703C2.88543 13.0166 2.88543 10.9834 3.3437 9.02974C4.0055 6.20841 6.20842 4.00549 9.02975 3.3437ZM15.0524 10.4773C15.2689 10.2454 15.2563 9.88195 15.0244 9.6655C14.7925 9.44906 14.4291 9.46159 14.2126 9.6935L11.2678 12.8487L9.77358 11.3545C9.54927 11.1302 9.1856 11.1302 8.9613 11.3545C8.73699 11.5788 8.73699 11.9425 8.9613 12.1668L10.8759 14.0814C10.986 14.1915 11.1362 14.2522 11.2919 14.2495C11.4477 14.2468 11.5956 14.181 11.7019 14.0671L15.0524 10.4773Z"
+                              fill="#1281ff "
+                            />
                           </svg>
                         )}
                         <span className="text-sm text-muted-foreground">·</span>
                         <span className="text-sm text-muted-foreground">
-                          Hace {formatDistanceToNow(new Date(comment.createdAt), { locale: es })}
+                          Hace{' '}
+                          {formatDistanceToNow(new Date(comment.createdAt), {
+                            locale: es,
+                          })}
                         </span>
                       </div>
                       <p className="text-sm break-words">{comment.content}</p>
@@ -219,11 +281,11 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
               {user ? (
                 <div className="flex space-x-3">
                   <Avatar className="size-8 flex-shrink-0">
-                    <AvatarImage src={user?.imageUrl || "/avatar.png"} />
+                    <AvatarImage src={user?.imageUrl || '/avatar.png'} />
                   </Avatar>
                   <div className="flex-1">
                     <Textarea
-                      ref={commentInputRef} 
+                      ref={commentInputRef}
                       placeholder="Escribe un comentario..."
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
@@ -237,7 +299,7 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
                         disabled={!newComment.trim() || isCommenting}
                       >
                         {isCommenting ? (
-                          "Publicando..."
+                          'Publicando...'
                         ) : (
                           <>
                             <SendIcon className="size-4" />

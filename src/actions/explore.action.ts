@@ -1,23 +1,31 @@
-// src/actions/explore.action.ts
-"use server";
+/**
+ * @file Server actions for company exploration features including filtering and pagination
+ */
+'use server';
 
-import prisma from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
-import { getDbUserId } from "./user.action";
+import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
+import { getDbUserId } from './user.action';
 
 // --- Constants ---
 const DEFAULT_PAGE_SIZE = 6;
 
 // --- Types ---
+/**
+ * Represents filter criteria for company search and filtering
+ */
 export interface CompanyFiltersType {
   searchTerm?: string;
   categories?: string[];
   location?: string;
 }
 
+/**
+ * Options for paginating company results
+ */
 export interface PaginationOptions {
-    page?: number;
-    pageSize?: number;
+  page?: number;
+  pageSize?: number;
 }
 
 // Select base fields + relations needed for counts/calcs
@@ -33,51 +41,71 @@ const companyDataSelectBase = Prisma.validator<Prisma.UserSelect>()({
   backgroundImage: true, // Added backgroundImage here
   // Select ratings needed to calculate average
   reviewsReceived: {
-      select: {
-          rating: true,
-      },
+    select: {
+      rating: true,
+    },
   },
   // Select counts directly
   _count: {
     select: {
-      followers: true,    // For follower count display
+      followers: true, // For follower count display
       reviewsReceived: true, // For review count display
     },
   },
 });
 
-// Type reflecting the raw data fetched
+/**
+ * Raw data structure returned from Prisma query including relations
+ * Used internally for processing before sending to client
+ */
 type CompanyDataWithRelations = Prisma.UserGetPayload<{
   select: typeof companyDataSelectBase & {
-      // Include followers relation filtered for the current user to check follow status
-      followers: { select: { followerId: true } };
-  }
+    // Include followers relation filtered for the current user to check follow status
+    followers: { select: { followerId: true } };
+  };
 }>;
 
-// Final processed type for the CompanyCard component
+/**
+ * Processed company data ready for client consumption
+ * Contains calculated fields like averageRating and follower status
+ */
 export type CompanyCardData = Omit<
-    Prisma.UserGetPayload<{ select: typeof companyDataSelectBase }>,
-    'reviewsReceived' | '_count' // Remove raw relations/counts
+  Prisma.UserGetPayload<{ select: typeof companyDataSelectBase }>,
+  'reviewsReceived' | '_count' // Remove raw relations/counts
 > & {
-    isFollowing: boolean;
-    averageRating: number | null;
-    reviewCount: number;
-    followerCount: number;
-    backgroundImage: string | null;
+  isFollowing: boolean;
+  averageRating: number | null;
+  reviewCount: number;
+  followerCount: number;
+  backgroundImage: string | null;
 };
 
-
+/**
+ * Response structure for paginated company queries
+ * Contains companies data and pagination metadata
+ */
 export interface PaginatedCompaniesResponse {
-    success: boolean;
-    error?: string;
-    companies: CompanyCardData[];
-    totalCount: number;
-    currentPage: number;
-    pageSize: number;
-    hasNextPage: boolean;
+  success: boolean;
+  error?: string;
+  companies: CompanyCardData[];
+  totalCount: number;
+  currentPage: number;
+  pageSize: number;
+  hasNextPage: boolean;
 }
 
-// --- Action Function ---
+/**
+ * Fetches companies based on filter criteria with pagination
+ * 
+ * Applies search filtering across multiple fields (name, username, bio)
+ * Filters by categories and location if specified
+ * Handles pagination and includes follow status for the current user
+ * Calculates derived fields like average rating from raw data
+ * 
+ * @param filters - Filter criteria for companies (search term, categories, location)
+ * @param pagination - Pagination options (page number, page size)
+ * @returns Promise resolving to paginated companies with metadata
+ */
 export async function getFilteredCompanies(
   filters: CompanyFiltersType,
   pagination: PaginationOptions = {}
@@ -95,74 +123,83 @@ export async function getFilteredCompanies(
       AND: [],
     };
 
-    // --- Apply Filters ---
+    // Apply search term filter if provided
+    // Searches across name, username, and bio fields (case-insensitive)
     if (searchTerm) {
       (whereClause.AND as Prisma.UserWhereInput[]).push({
         OR: [
-          { name: { contains: searchTerm, mode: "insensitive" } },
-          { username: { contains: searchTerm, mode: "insensitive" } },
-          { bio: { contains: searchTerm, mode: "insensitive" } },
+          { name: { contains: searchTerm, mode: 'insensitive' } },
+          { username: { contains: searchTerm, mode: 'insensitive' } },
+          { bio: { contains: searchTerm, mode: 'insensitive' } },
         ],
       });
     }
+
+    // Apply category filter if categories are provided
+    // Ensures company has at least one of the selected categories
     if (categories?.length) {
       (whereClause.AND as Prisma.UserWhereInput[]).push({
-        categories: { 
-          hasSome: categories
-        }
+        categories: {
+          hasSome: categories,
+        },
       });
     }
+
+    // Apply location filter if provided
+    // Case-insensitive search in company location
     if (location) {
       (whereClause.AND as Prisma.UserWhereInput[]).push({
-        location: { contains: location, mode: "insensitive" },
+        location: { contains: location, mode: 'insensitive' },
       });
     }
+
+    // Clean up the where clause by removing empty AND array
+    // This prevents Prisma from throwing errors with empty AND conditions
     if ((whereClause.AND as Prisma.UserWhereInput[]).length === 0) {
       delete whereClause.AND;
     }
-    // --- End Apply Filters ---
 
     // --- Perform Queries ---
     const [totalCount, companiesRaw] = await prisma.$transaction([
-        prisma.user.count({ where: whereClause }),
-        prisma.user.findMany({
-            where: whereClause,
-            select: {
-                ...companyDataSelectBase, // Base fields, ratings, counts
-                // Include followers relation filtered only for the current user
-                followers: {
-                    where: { followerId: currentUserId ?? undefined },
-                    select: { followerId: true } // Only need to know if it exists
-                }
-            },
-            orderBy: { name: "asc" }, // Example: order by creation date or name: "asc"
-            skip: (currentPage - 1) * currentPageSize,
-            take: currentPageSize,
-        })
+      prisma.user.count({ where: whereClause }),
+      prisma.user.findMany({
+        where: whereClause,
+        select: {
+          ...companyDataSelectBase, // Base fields, ratings, counts
+          // Include followers relation filtered only for the current user
+          followers: {
+            where: { followerId: currentUserId ?? undefined },
+            select: { followerId: true }, // Only need to know if it exists
+          },
+        },
+        orderBy: { name: 'asc' }, // Example: order by creation date or name: "asc"
+        skip: (currentPage - 1) * currentPageSize,
+        take: currentPageSize,
+      }),
     ]);
 
     // --- Process results ---
     const companies: CompanyCardData[] = companiesRaw.map((company: CompanyDataWithRelations) => {
-        const isFollowing = !!currentUserId && company.followers.length > 0;
+      const isFollowing = !!currentUserId && company.followers.length > 0;
 
-        // Calculate average rating from fetched ratings
-        const reviewCount = company._count.reviewsReceived;
-        const sumOfRatings = company.reviewsReceived.reduce((acc, review) => acc + review.rating, 0);
-        const averageRating = reviewCount > 0 ? sumOfRatings / reviewCount : null;
+      // Calculate average rating from fetched ratings
+      const reviewCount = company._count.reviewsReceived;
+      const sumOfRatings = company.reviewsReceived.reduce((acc, review) => acc + review.rating, 0);
+      const averageRating = reviewCount > 0 ? sumOfRatings / reviewCount : null;
 
-        const followerCount = company._count.followers;
+      const followerCount = company._count.followers;
 
-        // Exclude raw relations/counts from the final object
-        const { followers, reviewsReceived, _count, ...restOfCompany } = company;
+      // Exclude raw relations/counts from the final object
+      const { followers, reviewsReceived, _count, ...restOfCompany } = company;
 
-        return {
-            ...restOfCompany,
-            isFollowing,
-            averageRating,
-            reviewCount,
-            followerCount,
-            backgroundImage: company.backgroundImage, // Use fetched value
-        };
+      return {
+        ...restOfCompany,
+        isFollowing,
+        averageRating,
+        reviewCount,
+        followerCount,
+        backgroundImage: company.backgroundImage, // Use fetched value
+      };
     });
 
     // --- Pagination Metadata ---
@@ -170,25 +207,24 @@ export async function getFilteredCompanies(
     const hasNextPage = currentPage < totalPages;
 
     return {
-        success: true,
-        companies,
-        totalCount,
-        currentPage,
-        pageSize: currentPageSize,
-        hasNextPage,
+      success: true,
+      companies,
+      totalCount,
+      currentPage,
+      pageSize: currentPageSize,
+      hasNextPage,
     };
-
   } catch (error: unknown) {
-    console.error("Error fetching filtered companies:", error);
-    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    console.error('Error fetching filtered companies:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return {
-        success: false,
-        error: `Failed to fetch companies: ${errorMessage}`,
-        companies: [],
-        totalCount: 0,
-        currentPage: 1,
-        pageSize: DEFAULT_PAGE_SIZE,
-        hasNextPage: false,
+      success: false,
+      error: `Failed to fetch companies: ${errorMessage}`,
+      companies: [],
+      totalCount: 0,
+      currentPage: 1,
+      pageSize: DEFAULT_PAGE_SIZE,
+      hasNextPage: false,
     };
   }
 }
@@ -199,49 +235,49 @@ export async function getFilteredCompanies(
  * @returns {Promise<Array<{ id: string; username: string | null; image: string | null }>>} - A promise that resolves to an array of featured companies.
  */
 export async function getFeaturedCompanies(): Promise<
-	Array<{
-		id: string;
-		username: string | null;
-		image: string | null;
-	}>
+  Array<{
+    id: string;
+    username: string | null;
+    image: string | null;
+  }>
 > {
-	const take = 10;
-	try {
-		// 1. Get the total count of companies
-		const totalCompanies = await prisma.user.count({
-			where: {
-				isCompany: true,
-			},
-		});
+  const take = 10;
+  try {
+    // 1. Get the total count of companies
+    const totalCompanies = await prisma.user.count({
+      where: {
+        isCompany: true,
+      },
+    });
 
-		// 2. Calculate a random skip offset
-		const maxSkip = Math.max(0, totalCompanies - take);
-		const randomSkip = Math.floor(Math.random() * (maxSkip + 1));
+    // 2. Calculate a random skip offset
+    const maxSkip = Math.max(0, totalCompanies - take);
+    const randomSkip = Math.floor(Math.random() * (maxSkip + 1));
 
-		// 3. Fetch companies with the random skip
-		const companies = await prisma.user.findMany({
-			where: {
-				isCompany: true,
-			},
-			take: take,
-			skip: randomSkip, // Apply the random offset
-			select: {
-				id: true,
-				username: true,
-				image: true,
-			},
-			// No specific order needed when taking a random slice
-			// orderBy: {
-			// 	createdAt: 'desc',
-			// },
-		});
+    // 3. Fetch companies with the random skip
+    const companies = await prisma.user.findMany({
+      where: {
+        isCompany: true,
+      },
+      take: take,
+      skip: randomSkip, // Apply the random offset
+      select: {
+        id: true,
+        username: true,
+        image: true,
+      },
+      // No specific order needed when taking a random slice
+      // orderBy: {
+      // 	createdAt: 'desc',
+      // },
+    });
 
-		// Optional: If fewer than 'take' companies were returned (e.g., near the end of the list),
-		// and you absolutely need 10, you might need a fallback fetch, but this is often sufficient.
+    // Optional: If fewer than 'take' companies were returned (e.g., near the end of the list),
+    // and you absolutely need 10, you might need a fallback fetch, but this is often sufficient.
 
-		return companies;
-	} catch (error) {
-		console.error('Error fetching featured companies:', error);
-		return []; // Return empty array on error
-	}
+    return companies;
+  } catch (error) {
+    console.error('Error fetching featured companies:', error);
+    return []; // Return empty array on error
+  }
 }

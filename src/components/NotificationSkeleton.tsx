@@ -1,9 +1,23 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
+/**
+ * Skeleton loading component for notifications.
+ * @module NotificationSkeleton
+ */
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 
+/**
+ * Skeleton loading component that displays:
+ * - Card header with title and action button placeholder
+ * - Scrollable area with 5 notification items
+ * - Each item includes:
+ *   - Avatar placeholder
+ *   - Username and timestamp placeholders
+ *   - Content placeholder
+ *   - Action button placeholder
+ * @returns {JSX.Element} The notification skeleton component
+ */
 export function NotificationsSkeleton() {
-  // array of 5 items
   const skeletonItems = Array.from({ length: 5 }, (_, i) => i);
 
   return (

@@ -1,5 +1,12 @@
-"use client";
+/**
+ * Mobile navigation bar component with responsive design.
+ * @module MobileNavbar
+ */
+'use client';
 
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { SignInButton, useAuth, useClerk, useUser } from '@clerk/nextjs';
 import {
   BellIcon,
   HomeIcon,
@@ -9,20 +16,24 @@ import {
   RssIcon,
   SunIcon,
   UserIcon,
-} from "lucide-react";
-import { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
-import { useAuth, useUser, useClerk, SignInButton } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import Link from "next/link";
+} from 'lucide-react';
+import { useTheme } from 'next-themes';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
+/**
+ * Mobile navigation bar component that displays:
+ * - Theme toggle button
+ * - Menu button that opens a sidebar with navigation links
+ * - Navigation links include:
+ *   - Home
+ *   - Feed
+ *   - Notifications (for authenticated users)
+ *   - Profile (for authenticated users)
+ *   - Sign in button (for non-authenticated users)
+ *   - Sign out button (for authenticated users)
+ * @returns {JSX.Element} The mobile navigation bar component
+ */
 function MobileNavbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -32,7 +43,6 @@ function MobileNavbar() {
 
   const handleCloseMenu = () => setShowMobileMenu(false);
 
-  // Cierra el menú cuando el usuario inicia sesión
   useEffect(() => {
     if (isSignedIn) handleCloseMenu();
   }, [isSignedIn]);
@@ -51,7 +61,7 @@ function MobileNavbar() {
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
         className="mr-2"
       >
         <SunIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -78,11 +88,7 @@ function MobileNavbar() {
             {isSignedIn ? (
               <>
                 <MenuLink href="/notifications" icon={BellIcon} label="Notificaciones" />
-                <MenuLink
-                  href={`/profile/${user?.username}`}
-                  icon={UserIcon}
-                  label="Perfil"
-                />
+                <MenuLink href={`/profile/${user?.username}`} icon={UserIcon} label="Perfil" />
                 <Button
                   variant="ghost"
                   className="flex items-center gap-3 justify-start w-full"

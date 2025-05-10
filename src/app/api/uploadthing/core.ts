@@ -1,79 +1,95 @@
-import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { auth } from "@clerk/nextjs/server";
+/**
+ * UploadThing file router configuration.
+ * @module uploadthing/core
+ */
+import { auth } from '@clerk/nextjs/server';
+import { createUploadthing, type FileRouter } from 'uploadthing/next';
 
 const f = createUploadthing();
 
+/**
+ * File router configuration for different types of uploads in the application.
+ * @type {FileRouter}
+ */
 export const ourFileRouter = {
-  // define routes for different upload types
+  /**
+   * Route for uploading post images
+   * - Max file size: 4MB
+   * - Max files: 1
+   * - Requires authentication
+   * - Returns UFS URL for file access
+   */
   postImage: f({
     image: {
-      maxFileSize: "4MB",
+      maxFileSize: '4MB',
       maxFileCount: 1,
     },
   })
     .middleware(async () => {
-      // this code runs on your server before upload
       const { userId } = await auth();
-      if (!userId) throw new Error("Unauthorized");
-
-      // whatever is returned here is accessible in onUploadComplete as `metadata`
+      if (!userId) throw new Error('Unauthorized');
       return { userId };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       try {
         return { fileUrl: file.ufsUrl };
       } catch (error) {
-        console.error("Error in onUploadComplete:", error);
+        console.error('Error in onUploadComplete:', error);
         throw error;
       }
     }),
 
-  // Route for profile images
+  /**
+   * Route for uploading profile images
+   * - Max file size: 4MB
+   * - Max files: 1
+   * - Requires authentication
+   * - Returns URL for client use
+   */
   profileImage: f({
     image: {
-      maxFileSize: "4MB", // Same constraint as postImage
+      maxFileSize: '4MB',
       maxFileCount: 1,
     },
   })
     .middleware(async () => {
-      // this code runs on your server before upload
       const { userId } = await auth();
-      if (!userId) throw new Error("Unauthorized");
-
-      // whatever is returned here is accessible in onUploadComplete as `metadata`
+      if (!userId) throw new Error('Unauthorized');
       return { userId };
     })
     .onUploadComplete(async ({ metadata, file }) => {
-      // This code RUNS ON YOUR SERVER after upload
-      console.log("Profile image upload complete for userId:", metadata.userId);
-      console.log("file url", file.url);
-      // Return the URL for the client to use
+      console.log('Profile image upload complete for userId:', metadata.userId);
+      console.log('file url', file.url);
       return { uploadedBy: metadata.userId, fileUrl: file.url };
     }),
 
-  // Route for profile background images
+  /**
+   * Route for uploading profile background images
+   * - Max file size: 8MB (larger than other images)
+   * - Max files: 1
+   * - Requires authentication
+   * - Returns URL for client use
+   */
   profileBackground: f({
     image: {
-      maxFileSize: "8MB", // Allow larger files for backgrounds
+      maxFileSize: '8MB',
       maxFileCount: 1,
     },
   })
     .middleware(async () => {
-      // this code runs on your server before upload
       const { userId } = await auth();
-      if (!userId) throw new Error("Unauthorized");
-
-      // whatever is returned here is accessible in onUploadComplete as `metadata`
+      if (!userId) throw new Error('Unauthorized');
       return { userId };
     })
     .onUploadComplete(async ({ metadata, file }) => {
-       // This code RUNS ON YOUR SERVER after upload
-       console.log("Upload complete for userId:", metadata.userId);
-       console.log("file url", file.url); // Log the standard URL
-       // Return the URL for the client to use
-       // Ensure you return the correct URL field provided by Uploadthing
-       return { uploadedBy: metadata.userId, fileUrl: file.url };
+      console.log('Upload complete for userId:', metadata.userId);
+      console.log('file url', file.url);
+      return { uploadedBy: metadata.userId, fileUrl: file.url };
     }),
 } satisfies FileRouter;
 
+/**
+ * Type definition for our file router configuration.
+ * @type {FileRouter}
+ */
 export type OurFileRouter = typeof ourFileRouter;

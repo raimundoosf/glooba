@@ -1,10 +1,24 @@
-import { BellIcon, HomeIcon, RssIcon, UserIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { SignInButton, UserButton } from "@clerk/nextjs";
-import ModeToggle from "./ModeToggle";
-import { currentUser } from "@clerk/nextjs/server";
+/**
+ * Desktop navigation bar component with responsive design.
+ * @module DesktopNavbar
+ */
+import { Button } from '@/components/ui/button';
+import { SignInButton, UserButton } from '@clerk/nextjs';
+import { currentUser } from '@clerk/nextjs/server';
+import { BellIcon, HomeIcon, RssIcon, UserIcon } from 'lucide-react';
+import Link from 'next/link';
+import ModeToggle from './ModeToggle';
 
+/**
+ * Desktop navigation bar component that displays:
+ * - Mode toggle (light/dark theme)
+ * - Home button
+ * - Feed button
+ * - Notifications button (for authenticated users)
+ * - Profile button (for authenticated users)
+ * - Sign in button (for non-authenticated users)
+ * @returns {JSX.Element} The desktop navigation bar component
+ */
 async function DesktopNavbar() {
   const user = await currentUser();
 
@@ -35,9 +49,7 @@ async function DesktopNavbar() {
             </Link>
           </Button>
           <Button variant="ghost" className="flex items-center gap-2" asChild>
-            <Link
-              href={`/profile/${user.username}`}
-            >
+            <Link href={`/profile/${user.username}`}>
               <UserIcon className="w-4 h-4" />
               <span className="hidden lg:inline">Perfil</span>
             </Link>
@@ -52,5 +64,5 @@ async function DesktopNavbar() {
     </div>
   );
 }
-export default DesktopNavbar;
 
+export default DesktopNavbar;

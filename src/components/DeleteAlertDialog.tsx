@@ -1,7 +1,9 @@
-"use client";
+/**
+ * Reusable delete confirmation dialog component.
+ * @module DeleteAlertDialog
+ */
+'use client';
 
-import { Loader2Icon, Trash2Icon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,8 +14,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Loader2Icon, Trash2Icon } from 'lucide-react';
 
+/**
+ * Props interface for the DeleteAlertDialog component
+ * @interface DeleteAlertDialogProps
+ */
 interface DeleteAlertDialogProps {
   isDeleting: boolean;
   onDelete: () => Promise<void>;
@@ -21,11 +29,16 @@ interface DeleteAlertDialogProps {
   description?: string;
 }
 
+/**
+ * Delete confirmation dialog component with loading state.
+ * @param {DeleteAlertDialogProps} props - Component props
+ * @returns {JSX.Element} The delete confirmation dialog component
+ */
 export function DeleteAlertDialog({
   isDeleting,
   onDelete,
-  title = "Eliminar publicación",
-  description = "Esta acción no se puede deshacer.",
+  title = 'Eliminar publicación',
+  description = 'Esta acción no se puede deshacer.',
 }: DeleteAlertDialogProps) {
   return (
     <AlertDialog>
@@ -54,11 +67,10 @@ export function DeleteAlertDialog({
             className="bg-red-500 hover:bg-red-600"
             disabled={isDeleting}
           >
-            {isDeleting ? "Eliminando..." : "Eliminar"}
+            {isDeleting ? 'Eliminando...' : 'Eliminar'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
 }
-

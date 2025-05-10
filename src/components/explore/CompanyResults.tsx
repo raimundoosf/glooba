@@ -1,15 +1,27 @@
-// src/components/explore/CompanyResults.tsx
-"use client";
+/**
+ * Component that displays a grid of company cards with loading and empty states.
+ * @module CompanyResults
+ */
+'use client';
 
-import { CompanyCardData } from "@/actions/explore.action";
-import CompanyCard from "./CompanyCard";
-import { Loader2 } from "lucide-react"; // ShadCN loader icon
+import { CompanyCardData } from '@/actions/explore.action';
+import { Loader2 } from 'lucide-react';
+import CompanyCard from './CompanyCard';
 
+/**
+ * Props interface for the CompanyResults component
+ * @interface CompanyResultsProps
+ */
 interface CompanyResultsProps {
   companies: CompanyCardData[];
   isLoading: boolean;
 }
 
+/**
+ * Main component that renders a grid of company cards with responsive layout.
+ * @param {CompanyResultsProps} props - Component props
+ * @returns {JSX.Element} The company cards grid or loading/empty state
+ */
 export default function CompanyResults({ companies, isLoading }: CompanyResultsProps) {
   if (isLoading) {
     return (

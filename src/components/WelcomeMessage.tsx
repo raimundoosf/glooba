@@ -1,19 +1,29 @@
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Info } from "lucide-react";
+/**
+ * Component that displays a welcome message for new users.
+ * @module WelcomeMessage
+ */
+import { Button } from '@/components/ui/button';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Info } from 'lucide-react';
+import Link from 'next/link';
 
+/**
+ * Component that displays a welcome card with:
+ * - Welcome message in Spanish
+ * - Description about the platform's purpose
+ * - "Learn More" button linking to about page
+ * @returns {JSX.Element} The welcome message component
+ */
 export default function WelcomeMessage() {
   return (
     <Card className="mb-8">
       <CardHeader className="items-center text-center">
-        <link rel="icon" href="/favicon.ico" />
         <CardTitle className="text-2xl font-bold text-primary dark:text-primary-light">
           ¡Bienvenido/a a Glooba!
         </CardTitle>
         <CardDescription className="text-base text-muted-foreground max-w-xl">
-        Conectamos personas y organizaciones con iniciativas sostenibles. 
-        ¡Explora, valora y sé parte del cambio!
+          Conectamos personas y organizaciones con iniciativas sostenibles. ¡Explora, valora y sé
+          parte del cambio!
         </CardDescription>
         <div className="pt-2">
           <Link href="/about" passHref>
