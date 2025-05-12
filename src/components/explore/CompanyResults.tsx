@@ -15,6 +15,7 @@ import CompanyCard from './CompanyCard';
 interface CompanyResultsProps {
   companies: CompanyCardData[];
   isLoading: boolean;
+  dbUserId: string | null;
 }
 
 /**
@@ -22,7 +23,7 @@ interface CompanyResultsProps {
  * @param {CompanyResultsProps} props - Component props
  * @returns {JSX.Element} The company cards grid or loading/empty state
  */
-export default function CompanyResults({ companies, isLoading }: CompanyResultsProps) {
+export default function CompanyResults({ companies, isLoading, dbUserId }: CompanyResultsProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
@@ -46,7 +47,7 @@ export default function CompanyResults({ companies, isLoading }: CompanyResultsP
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {companies.map((company) => (
-        <CompanyCard key={company.id} company={company} />
+        <CompanyCard key={company.id} company={company} dbUserId={dbUserId} />
       ))}
     </div>
   );

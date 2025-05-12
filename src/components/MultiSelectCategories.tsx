@@ -32,6 +32,7 @@ interface MultiSelectCategoriesProps {
   maxSelection?: number;
   disabled?: boolean;
   className?: string;
+  renderBareList?: boolean;
 }
 
 /**
@@ -52,6 +53,7 @@ export function MultiSelectCategories({
   maxSelection,
   disabled = false,
   className,
+  renderBareList = false,
 }: MultiSelectCategoriesProps) {
   const [open, setOpen] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -84,6 +86,64 @@ export function MultiSelectCategories({
 
   const isMaxSelected = maxSelection && selectedCategories.length >= maxSelection;
 
+  // Define the Command component structure separately
+  const commandComponent = (
+    <Command>
+      <CommandInput
+        placeholder="Buscar categoría..."
+        value={searchTerm}
+        onValueChange={setSearchTerm}
+        disabled={disabled}
+        className="hidden md:block"
+      />
+      <CommandList>
+        <ScrollArea className="h-[200px]">
+          <CommandEmpty>No se encontró categoría.</CommandEmpty>
+          <CommandGroup>
+            {filteredCategories.map((category) => {
+              const isSelected = selectedSet.has(category);
+              const isDisabledItem = !isSelected && isMaxSelected;
+
+              return (
+                <CommandItem
+                  key={category}
+                  value={category}
+                  onSelect={() => {
+                    if (!isDisabledItem) handleSelect(category);
+                  }}
+                  disabled={isDisabledItem || disabled}
+                  className={cn(
+                    'flex items-center justify-between',
+                    isDisabledItem && 'opacity-50 cursor-not-allowed'
+                  )}
+                  aria-selected={isSelected}
+                >
+                  <span>{category}</span>
+                  <div
+                    className={cn(
+                      'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
+                      isSelected
+                        ? 'bg-primary text-primary-foreground'
+                        : 'opacity-50 [&_svg]:invisible'
+                    )}
+                  >
+                    <Check className="h-4 w-4" />
+                  </div>
+                </CommandItem>
+              );
+            })}
+          </CommandGroup>
+        </ScrollArea>
+      </CommandList>
+    </Command>
+  );
+
+  // Conditionally render based on renderBareList
+  if (renderBareList) {
+    return commandComponent; // Render only the command list
+  }
+
+  // Original rendering with Popover
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -103,54 +163,7 @@ export function MultiSelectCategories({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command>
-          <CommandInput
-            placeholder="Buscar categoría..."
-            value={searchTerm}
-            onValueChange={setSearchTerm}
-            disabled={disabled}
-            className="hidden lg:block"
-          />
-          <CommandList>
-            <ScrollArea className="h-[200px]">
-              <CommandEmpty>No se encontró categoría.</CommandEmpty>
-              <CommandGroup>
-                {filteredCategories.map((category) => {
-                  const isSelected = selectedSet.has(category);
-                  const isDisabledItem = !isSelected && isMaxSelected;
-
-                  return (
-                    <CommandItem
-                      key={category}
-                      value={category}
-                      onSelect={() => {
-                        if (!isDisabledItem) handleSelect(category);
-                      }}
-                      disabled={isDisabledItem || disabled}
-                      className={cn(
-                        'flex items-center justify-between',
-                        isDisabledItem && 'opacity-50 cursor-not-allowed'
-                      )}
-                      aria-selected={isSelected}
-                    >
-                      <span>{category}</span>
-                      <div
-                        className={cn(
-                          'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
-                          isSelected
-                            ? 'bg-primary text-primary-foreground'
-                            : 'opacity-50 [&_svg]:invisible'
-                        )}
-                      >
-                        <Check className="h-4 w-4" />
-                      </div>
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            </ScrollArea>
-          </CommandList>
-        </Command>
+        {commandComponent} 
       </PopoverContent>
     </Popover>
   );

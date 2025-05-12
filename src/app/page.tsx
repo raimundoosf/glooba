@@ -13,6 +13,7 @@ import ExploreClientWrapper from '@/components/explore/ExploreClientWrapper';
 import WelcomeMessage from '@/components/WelcomeMessage';
 import { COMPANY_CATEGORIES } from '@/lib/constants';
 import { currentUser } from '@clerk/nextjs/server';
+import { getDbUserId } from '@/actions/user.action';
 import { Suspense } from 'react';
 
 /**
@@ -70,7 +71,9 @@ function LoadingSkeleton() {
  */
 export default async function HomePage() {
   // Fetch authenticated user data (if logged in)
-  const user = await currentUser();
+  const user = await currentUser(); // Keep this to check if user is logged in at all
+  // Call getDbUserId to get the database ID, returns null if not logged in
+  const dbUserId = await getDbUserId();
 
   /**
    * Fetch initial company data for the explore section.
@@ -122,6 +125,7 @@ export default async function HomePage() {
           initialTotalCount={initialData.totalCount} // Pass total count
           initialHasNextPage={initialData.hasNextPage} // Pass hasNextPage
           allCategories={allCategories}
+          dbUserId={dbUserId} // Pass the extracted dbUserId here
         />
       </Suspense>
     </div>
