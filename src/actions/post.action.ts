@@ -8,6 +8,7 @@ import { getDbUserId } from './user.action';
 
 // --- Constants ---
 const FEED_PAGE_SIZE = 2; // Number of posts per page for the feed
+const EXPLORE_POSTS_PAGE_SIZE = 2; // Number of posts per page for the explore posts view
 
 // --- Types ---
 const postInclude = Prisma.validator<Prisma.PostInclude>()({
@@ -133,6 +134,110 @@ export async function getPosts(
       totalCount: 0,
       currentPage: 1,
       pageSize: FEED_PAGE_SIZE,
+      hasNextPage: false,
+    };
+  }
+}
+
+
+/**
+ * Interface for post filters
+ */
+export interface PostFilters {
+  searchTerm?: string;
+  categories?: string[];
+  location?: string;
+}
+
+/**
+ * Fetches all posts for the explore view, paginated and filtered.
+ *
+ * @param filters - Filter options including searchTerm, categories, and location
+ * @param pagination - Optional pagination options (page, pageSize)
+ * @returns A promise resolving to a PaginatedPostsResponse object
+ */
+export async function getAllPosts(
+  filters: PostFilters & PaginationOptions = {}
+): Promise<PaginatedPostsResponse> {
+  try {
+    const { 
+      searchTerm, 
+      categories, 
+      location,
+      page = 1, 
+      pageSize = EXPLORE_POSTS_PAGE_SIZE 
+    } = filters;
+
+    const currentPage = Math.max(1, Math.floor(page));
+    const currentPageSize = Math.max(1, Math.floor(pageSize));
+
+    // Build the where clause based on filters
+    const conditions: Prisma.PostWhereInput[] = [];
+
+    if (searchTerm) {
+      conditions.push({
+        OR: [
+          { content: { contains: searchTerm, mode: 'insensitive' as const } },
+          { author: { name: { contains: searchTerm, mode: 'insensitive' as const } } },
+          { author: { username: { contains: searchTerm, mode: 'insensitive' as const } } }
+        ]
+      });
+    }
+
+    if (categories?.length) {
+      // Filter posts where the author has any of the selected categories
+      // Using hasSome to check if any of the selected categories are in the user's categories array
+      conditions.push({
+        author: {
+          categories: {
+            hasSome: categories
+          }
+        }
+      });
+    }
+
+    if (location) {
+      conditions.push({
+        author: {
+          location: { contains: location, mode: 'insensitive' as const }
+        }
+      });
+    }
+
+    const whereClause: Prisma.PostWhereInput = conditions.length > 0 ? { AND: conditions } : {};
+
+    const [totalCount, posts] = await prisma.$transaction([
+      prisma.post.count({ where: whereClause }), // Count all posts
+      prisma.post.findMany({
+        where: whereClause, // Find all posts
+        orderBy: { createdAt: 'desc' }, // Order newest first
+        include: postInclude, // Include author, comments, likes count, etc.
+        skip: (currentPage - 1) * currentPageSize,
+        take: currentPageSize,
+      }),
+    ]);
+
+    const hasNextPage = currentPage * currentPageSize < totalCount;
+
+    // Note: PostCard determines like status based on dbUserId and the full post.likes array
+    return {
+      success: true,
+      posts, // Already includes the necessary details via postInclude
+      totalCount,
+      currentPage,
+      pageSize: currentPageSize,
+      hasNextPage,
+    };
+  } catch (error: unknown) {
+    console.error('Error fetching all posts for explore:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return {
+      success: false,
+      error: `Failed to fetch posts: ${errorMessage}`,
+      posts: [],
+      totalCount: 0,
+      currentPage: 1,
+      pageSize: EXPLORE_POSTS_PAGE_SIZE,
       hasNextPage: false,
     };
   }

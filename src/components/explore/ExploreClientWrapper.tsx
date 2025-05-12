@@ -11,8 +11,9 @@ import {
   PaginatedCompaniesResponse,
 } from '@/actions/explore.action';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
-import CompanyFilters from './CompanyFilters';
+import { CompanyFilters, ViewMode } from './CompanyFilters';
 import CompanyResults from './CompanyResults';
+import { ExplorePostsList } from './ExplorePostsList';
 import { Loader2 } from 'lucide-react';
 
 /**
@@ -24,6 +25,7 @@ interface ExploreClientWrapperProps {
   initialTotalCount: number;
   initialHasNextPage: boolean;
   allCategories: string[];
+  dbUserId: string | null; // Add dbUserId prop
 }
 
 /**
@@ -36,6 +38,7 @@ export default function ExploreClientWrapper({
   initialTotalCount,
   initialHasNextPage,
   allCategories,
+  dbUserId, // Add dbUserId prop
 }: ExploreClientWrapperProps) {
   const [companies, setCompanies] = useState<CompanyCardData[]>(initialCompanies);
   const [appliedFilters, setAppliedFilters] = useState<CompanyFiltersType>({});
@@ -44,6 +47,7 @@ export default function ExploreClientWrapper({
   const [hasNextPage, setHasNextPage] = useState<boolean>(initialHasNextPage);
   const [isFiltering, startFilteringTransition] = useTransition();
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const [currentViewMode, setCurrentViewMode] = useState<ViewMode>('list');
 
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -52,7 +56,7 @@ export default function ExploreClientWrapper({
    * Handles filter changes and triggers refetching of filtered data.
    */
   const handleFilterChange = useCallback(
-    (newFilters: CompanyFiltersType) => {
+    (newFilters: CompanyFiltersType & { viewMode: ViewMode }) => {
       const filtersToApply: CompanyFiltersType = {
         searchTerm: newFilters.searchTerm || undefined,
         categories:
@@ -86,6 +90,21 @@ export default function ExploreClientWrapper({
   );
 
   /**
+   * Handles view mode changes from CompanyFilters.
+   */
+  const handleViewModeChange = useCallback((newViewMode: ViewMode) => {
+    setCurrentViewMode(newViewMode);
+    // Potentially reset filters or refetch data based on view mode change
+    // For now, just update the mode and let filters apply to the new mode
+    // You might want to trigger a new data fetch here if the view mode implies a different dataset
+    // e.g., if 'posts' view needs to fetch all posts immediately upon switching.
+    // For now, we'll assume filters are reapplied by the user or another action.
+    console.log('View mode changed to:', newViewMode);
+    // Example: Trigger a refetch if needed
+    // handleFilterChange({ ...appliedFilters, viewMode: newViewMode });
+  }, []);
+
+  /**
    * Fetches and appends the next page of companies when triggered by infinite scroll.
    * Handles loading states, error handling, and data appending.
    */
@@ -111,7 +130,7 @@ export default function ExploreClientWrapper({
     } finally {
       setIsLoadingMore(false);
     }
-  }, [hasNextPage, isLoadingMore, isFiltering, currentPage, appliedFilters]); // Add loadMoreCompanies itself? No, it causes infinite loop if added.
+  }, [hasNextPage, isLoadingMore, isFiltering, currentPage, appliedFilters]);
 
   /**
    * Effect that sets up and manages the Intersection Observer for infinite scrolling.
@@ -147,26 +166,41 @@ export default function ExploreClientWrapper({
 
   // Combined loading state for disabling filters during any loading operation
   const isCurrentlyLoadingFilters = isFiltering || isLoadingMore;
-  
-  // NOTE: Consider extracting intersection observer logic to a custom hook for reusability
 
   return (
     <div className="space-y-6">
       <CompanyFilters
         allCategories={allCategories}
-        appliedFilters={appliedFilters}
+        currentViewMode={currentViewMode}
+        onViewModeChange={handleViewModeChange}
         onFilterChange={handleFilterChange}
-        isDisabled={isCurrentlyLoadingFilters}
+        isLoading={isCurrentlyLoadingFilters}
+        initialSearchTerm={appliedFilters.searchTerm}
+        initialLocation={appliedFilters.location}
+        initialCategories={appliedFilters.categories}
       />
-      {/* Display results - show spinner only during initial filtering when results are empty */}
-      <CompanyResults companies={companies} isLoading={isFiltering && companies.length === 0} />
-      {/* Sentinel Element and Loading Indicator for Infinite Scroll */}
-      <div ref={sentinelRef} style={{ height: '10px' }} /> {/* Invisible sentinel */}
-      <div className="flex justify-center py-4">
-        {isLoadingMore && ( // Show loader only when loading more pages
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        )}
-      </div>
+      {currentViewMode === 'list' ? (
+        <CompanyResults
+          companies={companies}
+          isLoading={isFiltering && companies.length === 0}
+          dbUserId={dbUserId}
+        />
+      ) : (
+        <ExplorePostsList 
+          dbUserId={dbUserId} 
+          filters={appliedFilters}
+        />
+      )}
+      {currentViewMode === 'list' && (
+        <>
+          <div ref={sentinelRef} style={{ height: '10px' }} /> {/* Invisible sentinel */}
+          <div className="flex justify-center py-4">
+            {isLoadingMore && ( // Show loader only when loading more pages
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
