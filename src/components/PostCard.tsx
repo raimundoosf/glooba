@@ -6,7 +6,6 @@
 
 import { PostWithDetails, createComment, deletePost, toggleLike } from '@/actions/post.action';
 import TimeAgo from '@/components/TimeAgo';
-import { useFeedContext } from '@/contexts/FeedContext';
 import { SignInButton, useUser } from '@clerk/nextjs';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -27,6 +26,7 @@ import { Textarea } from './ui/textarea';
 interface PostCardProps {
   post: PostWithDetails;
   dbUserId: string | null;
+  onActionComplete?: () => void | Promise<void>;
 }
 
 /**
@@ -39,9 +39,9 @@ interface PostCardProps {
  * @param {PostCardProps} props - Component props
  * @returns {JSX.Element} The post card component
  */
-export default function PostCard({ post, dbUserId }: PostCardProps) {
+export default function PostCard({ post, dbUserId, onActionComplete }: PostCardProps) {
   const { user } = useUser();
-  const feedContext = useFeedContext();
+
   const [newComment, setNewComment] = useState('');
   const [isCommenting, startCommentTransition] = useTransition();
   const [isLiking, setIsLiking] = useState(false);
@@ -83,8 +83,7 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
         if (result?.success) {
           toast.success('Comentario publicado exitosamente');
           setNewComment('');
-          if (feedContext) await feedContext.refreshFeed();
-          else console.warn('FeedContext not found after comment.');
+          if (onActionComplete) await onActionComplete();
         } else {
           throw new Error(result.error || 'Unknown error adding comment');
         }
@@ -105,8 +104,7 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
         const result = await deletePost(post.id);
         if (result.success) {
           toast.success('Publicación eliminada exitosamente');
-          if (feedContext) await feedContext.refreshFeed();
-          else console.warn('FeedContext not found after delete.');
+          if (onActionComplete) await onActionComplete();
         } else {
           throw new Error(result.error || 'Unknown error deleting post');
         }
@@ -132,7 +130,7 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
             {/* POST HEADER & TEXT CONTENT */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 truncate">
+                <div className="flex flex-col truncate">
                   <Link
                     href={`/profile/${post.author.username}`}
                     className="font-semibold truncate"
@@ -166,9 +164,10 @@ export default function PostCard({ post, dbUserId }: PostCardProps) {
                   <DeleteAlertDialog onDelete={handleDeletePost} isDeleting={isDeleting} />
                 )}
               </div>
-              <p className="mt-2 text-sm text-foreground break-words">{post.content}</p>
             </div>
           </div>
+
+          <p className="mt-2 text-sm text-foreground break-words">{post.content}</p>
 
           {/* POST IMAGE */}
           {post.image && (

@@ -1,8 +1,7 @@
-import { getPosts, PaginatedPostsResponse } from '@/actions/post.action';
 import { getDbUserId } from '@/actions/user.action';
 import { Suspense } from 'react';
 import WhoToFollow from '@/components/WhoToFollow';
-import FeedClient from '@/components/feed/FeedClient';
+import { FeedClient } from '@/components/feed/FeedClient';
 import { currentUser } from '@clerk/nextjs/server';
 import { Loader2 } from 'lucide-react';
 
@@ -39,39 +38,21 @@ function FeedLoadingSkeleton() {
 async function FeedContent() {
   const [user, dbUserId] = await Promise.all([currentUser(), getDbUserId()]);
 
-  let initialFeedData: PaginatedPostsResponse;
-  try {
-    initialFeedData = await getPosts({ page: 1 });
-  } catch {
-    initialFeedData = {
-      success: false,
-      error: 'Could not connect to fetch feed data.',
-      posts: [],
-      totalCount: 0,
-      currentPage: 1,
-      pageSize: 10,
-      hasNextPage: false,
-    };
-  }
-
   // Pass necessary user info (or null if not logged in) to FeedClient
   const clerkUser = user
     ? {
-        // Pass only necessary fields to client
-        id: user.id,
-        imageUrl: user.imageUrl,
-        firstName: user.firstName,
-      }
+      // Pass only necessary fields to client
+      id: user.id,
+      imageUrl: user.imageUrl,
+      firstName: user.firstName,
+    }
     : null;
 
   return (
     <>
       {/* FeedClient now handles CreatePost rendering internally */}
       <FeedClient
-        initialPosts={initialFeedData.posts}
-        initialHasNextPage={initialFeedData.hasNextPage}
         dbUserId={dbUserId} // Pass DB ID for PostCard interactions
-        initialError={initialFeedData.error}
         clerkUser={clerkUser} // Pass Clerk user info
       />
     </>

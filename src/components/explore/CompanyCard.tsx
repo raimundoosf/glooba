@@ -26,6 +26,7 @@ import toast from 'react-hot-toast';
  */
 interface CompanyCardProps {
   company: CompanyCardData;
+  dbUserId: string | null;
 }
 
 /**
@@ -33,7 +34,7 @@ interface CompanyCardProps {
  * @param {CompanyCardProps} props - Component props
  * @returns {JSX.Element} The company card component
  */
-export default function CompanyCard({ company }: CompanyCardProps) {
+export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
   const { user: loggedInUser, isSignedIn } = useUser();
   const [isFollowingOptimistic, setIsFollowingOptimistic] = useState(company.isFollowing);
   const [isPending, startTransition] = useTransition();
@@ -48,7 +49,18 @@ export default function CompanyCard({ company }: CompanyCardProps) {
    * Handles follow/unfollow toggling with optimistic updates.
    */
   const handleFollowToggle = () => {
-    if (!isSignedIn || isPending) return;
+    // Use dbUserId passed down AND check Clerk's isSignedIn
+    if (!dbUserId || !isSignedIn || isPending) {
+      if (!isSignedIn && !dbUserId) {
+         // If definitely not signed in, prompt login instead of just returning
+         // Find the sign-in button and click it programmatically or show a toast
+         // For simplicity now, just return, but ideally prompt login.
+         // Maybe find the SignInButton and trigger click?
+         console.warn("User not signed in, cannot follow."); // Log warning
+         toast.error("Debes iniciar sesión para seguir a una organización."); // User feedback
+      }
+      return;
+    }
 
     const originalState = isFollowingOptimistic;
     setIsFollowingOptimistic(!originalState);

@@ -5,7 +5,6 @@
 'use client';
 
 import { createPost } from '@/actions/post.action';
-import { useFeedContext } from '@/contexts/FeedContext';
 import { useUser } from '@clerk/nextjs';
 import { ImageIcon, Loader2Icon, SendIcon } from 'lucide-react';
 import { useState, useTransition } from 'react';
@@ -15,6 +14,8 @@ import { Avatar, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Textarea } from './ui/textarea';
+import { useQueryClient } from '@tanstack/react-query';
+import { getDbUserId } from '@/actions/user.action';
 
 /**
  * Main component for creating new posts.
@@ -22,7 +23,7 @@ import { Textarea } from './ui/textarea';
  */
 function CreatePost() {
   const { user } = useUser();
-  const feedContext = useFeedContext();
+  const queryClient = useQueryClient();
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isPosting, startPostingTransition] = useTransition();
@@ -43,10 +44,14 @@ function CreatePost() {
           setShowImageUpload(false);
           toast.success('Publicación creada con éxito');
 
-          if (feedContext) {
-            await feedContext.refreshFeed();
-          } else {
-            console.warn('FeedContext not found, cannot refresh feed automatically.');
+          try {
+            const dbUserId = await getDbUserId();
+            // Invalidate the feed query to trigger refetch
+            await queryClient.invalidateQueries({ queryKey: ['feedPosts', dbUserId] });
+          } catch (invalidationError) {
+            console.error('Failed to invalidate feed query:', invalidationError);
+            // Optionally notify user about the failure to refresh
+            toast.error('Post created, but failed to refresh feed automatically.');
           }
         } else {
           throw new Error(result.error || 'Unknown error creating post');

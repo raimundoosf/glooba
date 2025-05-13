@@ -4,14 +4,16 @@
  */
 'use client';
 
-import { getPosts, PostWithDetails } from '@/actions/post.action';
+import { getPosts, PaginatedPostsResponse, PostWithDetails } from '@/actions/post.action';
 import CreatePost from '@/components/CreatePost';
 import PostCard from '@/components/PostCard';
 import { Button } from '@/components/ui/button';
-import { FeedContext } from '@/contexts/FeedContext';
 import { AlertTriangle, Loader2, MessageCircleIcon, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { ReactNode, useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useInView } from 'react-intersection-observer';
+import { PostSkeleton } from '@/components/skeletons/PostSkeleton';
 
 /**
  * Interface for Clerk user information
@@ -29,10 +31,7 @@ interface ClerkUserInfo {
  * @interface FeedClientProps
  */
 interface FeedClientProps {
-  initialPosts: PostWithDetails[];
-  initialHasNextPage: boolean;
   dbUserId: string | null;
-  initialError?: string;
   clerkUser: ClerkUserInfo | null;
 }
 
@@ -66,149 +65,121 @@ function FeedMessageBox({
   );
 }
 
-export default function FeedClient({
-  initialPosts,
-  initialHasNextPage,
-  dbUserId,
-  initialError,
-  clerkUser,
-}: FeedClientProps) {
-  const [posts, setPosts] = useState<PostWithDetails[]>(initialPosts);
-  const [hasNextPage, setHasNextPage] = useState<boolean>(initialHasNextPage);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(initialError || null);
-  const [isRefreshing, startRefreshTransition] = useTransition();
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+export const FeedClient = ({ dbUserId, clerkUser }: FeedClientProps): JSX.Element => {
+  const queryClient = useQueryClient();
+  const { ref, inView } = useInView();
 
-  const loadMorePosts = useCallback(async () => {
-    if (isLoadingMore || isRefreshing || !hasNextPage || error) return;
-    setIsLoadingMore(true);
-    const nextPage = currentPage + 1;
-    try {
-      const result = await getPosts({ page: nextPage });
-      if (result.success) {
-        setPosts((prev) => [...prev, ...result.posts]);
-        setHasNextPage(result.hasNextPage);
-        setCurrentPage(result.currentPage);
-        setError(null);
-      } else {
-        setError(result.error || 'Error al cargar más publicaciones.');
-        setHasNextPage(false);
+  const {
+    data,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    status,
+  } = useInfiniteQuery<PaginatedPostsResponse, Error>({
+    queryKey: ['feedPosts', dbUserId],
+    queryFn: async ({ pageParam = 1 }) => {
+      const result = await getPosts({ page: pageParam as number });
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch feed posts');
       }
-    } catch {
-      setError('Ocurrió un error inesperado al cargar más publicaciones.');
-      setHasNextPage(false);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }, [isLoadingMore, isRefreshing, hasNextPage, currentPage, error]);
-
-  const refreshFeed = useCallback(async () => {
-    startRefreshTransition(async () => {
-      setError(null);
-      try {
-        const result = await getPosts({ page: 1 });
-        if (result.success) {
-          setPosts(result.posts);
-          setCurrentPage(1);
-          setHasNextPage(result.hasNextPage);
-        } else {
-          setError(result.error || 'Error al refrescar el feed.');
-          setPosts([]);
-          setHasNextPage(false);
-        }
-      } catch {
-        setError('Ocurrió un error inesperado al refrescar el feed.');
-        setPosts([]);
-        setHasNextPage(false);
-      }
-    });
-  }, [startRefreshTransition]);
+      return result;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: PaginatedPostsResponse) => {
+      return lastPage.hasNextPage ? lastPage.currentPage + 1 : undefined;
+    },
+    enabled: !!dbUserId,
+    staleTime: 1000 * 60 * 5,
+    retry: 1,
+  });
 
   useEffect(() => {
-    if (observerRef.current) observerRef.current.disconnect();
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isLoadingMore && !isRefreshing && !error) {
-          loadMorePosts();
-        }
-      },
-      { rootMargin: '200px' }
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const handleActionComplete = (): void => {
+    void queryClient.invalidateQueries({ queryKey: ['feedPosts', dbUserId] });
+  };
+
+  const posts = data?.pages.flatMap((page: PaginatedPostsResponse) => page.posts) ?? [];
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-4">
+        {clerkUser && <CreatePost />}
+        <PostSkeleton />
+        <PostSkeleton />
+      </div>
     );
-    const currentRef = loadMoreRef.current;
-    if (currentRef) observerRef.current.observe(currentRef);
-    return () => {
-      if (observerRef.current) observerRef.current.disconnect();
-    };
-  }, [hasNextPage, isLoadingMore, isRefreshing, loadMorePosts, error]);
+  }
 
-  const contextValue = { refreshFeed };
-
-  // --- Render Logic ---
-  const isCurrentlyLoading = isLoadingMore || isRefreshing;
+  if (status === 'error') {
+    return (
+      <div className="mx-auto max-w-2xl text-center text-red-500">
+        Error loading feed: {error?.message ?? 'Unknown error'}
+      </div>
+    );
+  }
 
   return (
-    <FeedContext.Provider value={contextValue}>
-      {/* Render CreatePost INSIDE the provider if user is logged in */}
+    <div className="mx-auto max-w-2xl space-y-4">
       {clerkUser && <CreatePost />}
 
-      {/* *** REMOVED Refresh Indicator *** */}
-      {/* {isRefreshing && (
-        <div className="flex justify-center py-2"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground"/></div>
-      )} */}
-
-      {/* Initial Error State */}
-      {error && posts.length === 0 && !isRefreshing && (
+      {posts.length > 0 ? (
+        posts.map((post: PostWithDetails) => (
+          <PostCard
+            key={post.id}
+            post={post}
+            dbUserId={dbUserId}
+            onActionComplete={handleActionComplete}
+          />
+        ))
+      ) : (
+        !isLoading && clerkUser && (
+          <FeedMessageBox
+            icon={<MessageCircleIcon className="h-10 w-10" />}
+            title="Tu feed está vacío"
+            message="Las publicaciones de las organizaciones que sigues aparecerán aquí."
+          >
+            <Link href="/">
+              <Button variant="outline">Explora alternativas sostenibles</Button>
+            </Link>
+          </FeedMessageBox>
+        )
+      )}
+      {!clerkUser && !isLoading && (
         <FeedMessageBox
-          icon={<AlertTriangle className="h-10 w-10" />}
-          title="Error al cargar el feed"
-          message={error}
-        >
-          <Button onClick={refreshFeed} variant="destructive" size="sm" disabled={isRefreshing}>
-            {isRefreshing ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="mr-2 h-4 w-4" />
-            )}
-            Inténtalo de nuevo
-          </Button>
-        </FeedMessageBox>
+        icon={<MessageCircleIcon className="h-10 w-10" />}
+        title="Inicia sesión para ver tu feed"
+        message="Las publicaciones de las organizaciones que sigues aparecerán aquí."
+      >
+        <Link href="/">
+          <Button variant="outline">Explora alternativas sostenibles</Button>
+        </Link>
+      </FeedMessageBox>
       )}
 
-      {/* Empty State */}
-      {!error && posts.length === 0 && !isRefreshing && !isLoadingMore && (
-        <FeedMessageBox
-          icon={<MessageCircleIcon className="h-10 w-10" />}
-          title="Tu feed está vacio"
-          message="Las publicaciones de las organizaciones que sigues aparecerán aquí."
-        >
-          <Link href="/">
-            <Button variant="outline">Explora alternativas sostenibles</Button>
-          </Link>
-        </FeedMessageBox>
+      {isFetchingNextPage && <PostSkeleton />}
+
+      {hasNextPage && !isFetchingNextPage && (
+        <div ref={ref} style={{ height: '10px' }} />
       )}
 
-      {/* Render Posts */}
-      {/* Add margin-top only if CreatePost is not rendered or if refreshing */}
-      <div className={`space-y-6 ${!clerkUser || isRefreshing ? 'mt-6' : ''}`}>
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} dbUserId={dbUserId} />
-        ))}
-      </div>
+      {!hasNextPage && posts.length > 0 && (
+        <p className="text-center text-muted-foreground">
+          Has llegado al final!
+        </p>
+      )}
 
-      {/* Sentinel Element & Loading/End Indicator */}
-      {hasNextPage && <div ref={loadMoreRef} style={{ height: '50px' }} />}
-      <div className="flex justify-center py-6 mt-4">
-        {isLoadingMore && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
-        {!hasNextPage && !isLoadingMore && !isRefreshing && posts.length > 0 && (
-          <p className="text-sm text-muted-foreground">Has llegado al final!</p>
-        )}
-        {error && !isLoadingMore && !isRefreshing && posts.length > 0 && (
-          <p className="text-sm text-destructive">Error al cargar más publicaciones.</p>
-        )}
-      </div>
-    </FeedContext.Provider>
+      {error && (
+        <div className="flex justify-center py-6 mt-4">
+          <p className="text-sm text-destructive">Error al cargar las publicaciones.</p>
+        </div>
+      )}
+    </div>
   );
-}
+};
