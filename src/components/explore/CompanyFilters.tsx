@@ -134,7 +134,7 @@ export function CompanyFilters({
   const handleSort = () => console.log('Sort action triggered');
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
       <div className="relative">
         <Input
           id="search"
@@ -156,13 +156,13 @@ export function CompanyFilters({
             onViewModeChange(value as ViewMode);
           }
         }}
-        className="w-full grid grid-cols-2 rounded-full p-1 bg-muted"
+        className="w-full grid grid-cols-2 rounded-full bg-muted"
         disabled={isDisabled}
       >
         <ToggleGroupItem
           value="posts"
           aria-label="Toggle posts view"
-          className="rounded-full data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=off]:text-muted-foreground py-2.5 text-base font-medium border-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=on]:shadow-sm transition-colors"
+          className="rounded-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-muted-foreground py-2.5 text-base font-medium border-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=on]:shadow-sm transition-colors"
         >
           Publicaciones
         </ToggleGroupItem>
@@ -199,7 +199,7 @@ export function CompanyFilters({
                 <ShoppingBag className="h-4 w-4" />
                 <span>Categorías</span>
                 {selectedCategories.length > 0 && (
-                  <Badge 
+                  <Badge
                     variant="secondary"
                     className="ml-1.5 h-5 px-1.5 text-xs font-medium rounded-full"
                   >

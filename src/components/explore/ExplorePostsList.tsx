@@ -67,7 +67,7 @@ export function ExplorePostsList({ dbUserId, filters = {} }: ExplorePostsListPro
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 md:px-20">
       {status === 'pending' ? (
         <div className="flex justify-center items-center p-10">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -79,7 +79,7 @@ export function ExplorePostsList({ dbUserId, filters = {} }: ExplorePostsListPro
       ) : (
         <>
           {allPosts.length === 0 && !isFetching ? (
-            <p className="text-center text-muted-foreground p-4">
+            <p className="text-center text-muted-foreground py-8 px-4">
               No hay publicaciones disponibles por el momento.
             </p>
           ) : (
@@ -97,12 +97,12 @@ export function ExplorePostsList({ dbUserId, filters = {} }: ExplorePostsListPro
           {/* Sentinel element for infinite scroll */}
           <div ref={ref} className="h-10">
             {isFetchingNextPage && (
-              <div className="flex justify-center items-center py-4">
+              <div className="flex justify-center items-center py-6">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             )}
             {!hasNextPage && allPosts.length > 0 && (
-              <p className="text-center text-muted-foreground py-4">
+              <p className="text-center text-muted-foreground py-6">
                 Has llegado al final.
               </p>
             )}

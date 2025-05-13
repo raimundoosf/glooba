@@ -130,7 +130,7 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
             {/* POST HEADER & TEXT CONTENT */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 truncate">
+                <div className="flex flex-col truncate">
                   <Link
                     href={`/profile/${post.author.username}`}
                     className="font-semibold truncate"
@@ -164,9 +164,10 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
                   <DeleteAlertDialog onDelete={handleDeletePost} isDeleting={isDeleting} />
                 )}
               </div>
-              <p className="mt-2 text-sm text-foreground break-words">{post.content}</p>
             </div>
           </div>
+
+          <p className="mt-2 text-sm text-foreground break-words">{post.content}</p>
 
           {/* POST IMAGE */}
           {post.image && (
