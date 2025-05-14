@@ -14,10 +14,13 @@ const DEFAULT_PAGE_SIZE = 6;
 /**
  * Represents filter criteria for company search and filtering
  */
+export type SortOption = 'name_asc' | 'name_desc' | 'rating_desc' | 'reviews_desc' | 'followers_desc' | 'newest';
+
 export interface CompanyFiltersType {
   searchTerm?: string;
   categories?: string[];
   location?: string;
+  sortBy?: SortOption;
 }
 
 /**
@@ -160,6 +163,25 @@ export async function getFilteredCompanies(
     }
 
     // --- Perform Queries ---
+    // Define sort order based on sortBy parameter
+    const getOrderBy = () => {
+      switch (filters.sortBy) {
+        case 'name_desc':
+          return { name: 'desc' as const };
+        case 'rating_desc':
+          return { reviewsReceived: { _count: 'desc' as const } };
+        case 'reviews_desc':
+          return { reviewsReceived: { _count: 'desc' as const } };
+        case 'followers_desc':
+          return { followers: { _count: 'desc' as const } };
+        case 'newest':
+          return { createdAt: 'desc' as const };
+        case 'name_asc':
+        default:
+          return { name: 'asc' as const };
+      }
+    };
+
     const [totalCount, companiesRaw] = await prisma.$transaction([
       prisma.user.count({ where: whereClause }),
       prisma.user.findMany({
@@ -171,8 +193,10 @@ export async function getFilteredCompanies(
             where: { followerId: currentUserId ?? undefined },
             select: { followerId: true }, // Only need to know if it exists
           },
+          // Include createdAt for sorting by newest
+          createdAt: true,
         },
-        orderBy: { name: 'asc' }, // Example: order by creation date or name: "asc"
+        orderBy: getOrderBy(),
         skip: (currentPage - 1) * currentPageSize,
         take: currentPageSize,
       }),
