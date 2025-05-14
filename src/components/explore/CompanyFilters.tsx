@@ -4,7 +4,7 @@
  */
 'use client';
 
-import { CompanyFiltersType } from '@/actions/explore.action';
+import { CompanyFiltersType, SortOption } from '@/actions/explore.action';
 import { MultiSelectCategories } from '@/components/MultiSelectCategories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,7 @@ interface FilterCriteria {
   searchTerm?: string;
   location?: string;
   categories?: string[];
+  sortBy?: SortOption;
 }
 
 /**
@@ -43,6 +44,7 @@ interface CompanyFiltersProps {
   initialSearchTerm?: string;
   initialLocation?: string;
   initialCategories?: string[];
+  initialSortBy?: SortOption;
 }
 
 /**
@@ -58,14 +60,22 @@ export function CompanyFilters({
   initialSearchTerm = '',
   initialLocation = '',
   initialCategories = [],
+  initialSortBy = 'name_asc',
 }: CompanyFiltersProps) {
   const [searchInput, setSearchInput] = useState<string>(initialSearchTerm);
   const [locationInput, setLocationInput] = useState<string>(initialLocation);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories || []);
+  // State for sort functionality and dialogs
+  const [sortBy, setSortBy] = useState<SortOption>(initialSortBy);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false);
-  const [localSelectedCategories, setLocalSelectedCategories] = useState<string[]>(selectedCategories);
-  const [localLocationInput, setLocalLocationInput] = useState(locationInput);
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  
+  // Local form states
+  const [localSelectedCategories, setLocalSelectedCategories] = useState<string[]>(
+    initialCategories || []
+  );
+  const [localLocationInput, setLocalLocationInput] = useState(initialLocation);
 
   // Sync local state with props
   useEffect(() => {
@@ -75,6 +85,11 @@ export function CompanyFilters({
   useEffect(() => {
     setLocalLocationInput(locationInput);
   }, [locationInput]);
+  
+  // Update sort when initialSortBy changes
+  useEffect(() => {
+    setSortBy(initialSortBy);
+  }, [initialSortBy]);
 
   const handleApplyCategories = () => {
     setSelectedCategories(localSelectedCategories);
@@ -82,6 +97,7 @@ export function CompanyFilters({
       searchTerm: searchInput.trim() || undefined,
       location: locationInput.trim() || undefined,
       categories: localSelectedCategories.length > 0 ? localSelectedCategories : undefined,
+      sortBy,
       viewMode: currentViewMode,
     });
     setIsCategoryDialogOpen(false);
@@ -93,6 +109,7 @@ export function CompanyFilters({
       searchTerm: searchInput.trim() || undefined,
       location: localLocationInput.trim() || undefined,
       categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+      sortBy,
       viewMode: currentViewMode,
     });
     setIsLocationDialogOpen(false);
@@ -121,9 +138,10 @@ export function CompanyFilters({
       searchTerm: searchInput.trim() || undefined,
       location: locationInput.trim() || undefined,
       categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+      sortBy,
       viewMode: currentViewMode,
     });
-  }, [searchInput, locationInput, selectedCategories, onFilterChange, currentViewMode]);
+  }, [searchInput, locationInput, selectedCategories, sortBy, onFilterChange, currentViewMode]);
 
   const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -146,6 +164,7 @@ export function CompanyFilters({
       searchTerm: searchInput.trim() || undefined,
       location: locationInput.trim() || undefined,
       categories: newSelection.length > 0 ? newSelection : undefined,
+      sortBy,
       viewMode: currentViewMode,
     });
   };
@@ -157,6 +176,19 @@ export function CompanyFilters({
       searchTerm: searchInput.trim() || undefined,
       location: locationInput.trim() || undefined,
       categories: newSelection.length > 0 ? newSelection : undefined,
+      sortBy,
+      viewMode: currentViewMode,
+    });
+  };
+
+  const handleSortSelect = (option: SortOption) => {
+    setSortBy(option);
+    setIsSortOpen(false);
+    onFilterChange({
+      searchTerm: searchInput.trim() || undefined,
+      location: locationInput.trim() || undefined,
+      categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+      sortBy: option,
       viewMode: currentViewMode,
     });
   };
@@ -165,15 +197,15 @@ export function CompanyFilters({
     setSearchInput('');
     setLocationInput('');
     setSelectedCategories([]);
+    setSortBy('name_asc');
     onFilterChange({
       searchTerm: undefined,
       location: undefined,
       categories: undefined,
+      sortBy: 'name_asc',
       viewMode: currentViewMode,
     });
   };
-
-  const handleSort = () => console.log('Sort action triggered');
 
   return (
     <div className="p-4 space-y-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
@@ -229,16 +261,70 @@ export function CompanyFilters({
       {/* Filter Buttons Row - Wrapper for centering */}
       <div className="flex justify-center">
         <div className="flex space-x-2 sm:space-x-4 overflow-x-auto pb-2 no-scrollbar ">
-          {/* Sort Button */}
-          <Button
-            variant="outline"
-            onClick={handleSort}
-            disabled={isDisabled}
-            className="flex items-center space-x-2 rounded-full bg-background border hover:bg-accent h-10 px-4 py-2 text-sm whitespace-nowrap"
-          >
-            <ArrowUpDown className="h-4 w-4" />
-            <span>Ordenar</span>
-          </Button>
+          {/* Sort Dialog */}
+          <Dialog open={isSortOpen} onOpenChange={setIsSortOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                disabled={isDisabled}
+                className="flex items-center space-x-2 rounded-full bg-background border hover:bg-accent h-10 px-4 py-2 text-sm whitespace-nowrap"
+              >
+                <ArrowUpDown className="h-4 w-4" />
+                <span>Ordenar</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] max-h-[80vh] flex flex-col">
+              <DialogHeader>
+                <DialogTitle>Ordenar por</DialogTitle>
+              </DialogHeader>
+              <ScrollArea className="flex-1 -mx-6 px-6">
+                <div className="py-2 space-y-2">
+                  <button
+                    onClick={() => handleSortSelect('name_asc')}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'name_asc' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                  >
+                    {sortBy === 'name_asc' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'name_asc' ? 'ml-6' : 'ml-8'}>Nombre (A-Z)</span>
+                  </button>
+                  <button
+                    onClick={() => handleSortSelect('name_desc')}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'name_desc' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                  >
+                    {sortBy === 'name_desc' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'name_desc' ? 'ml-6' : 'ml-8'}>Nombre (Z-A)</span>
+                  </button>
+                  <button
+                    onClick={() => handleSortSelect('rating_desc')}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'rating_desc' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                  >
+                    {sortBy === 'rating_desc' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'rating_desc' ? 'ml-6' : 'ml-8'}>Mejor valorados</span>
+                  </button>
+                  <button
+                    onClick={() => handleSortSelect('reviews_desc')}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'reviews_desc' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                  >
+                    {sortBy === 'reviews_desc' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'reviews_desc' ? 'ml-6' : 'ml-8'}>Más reseñas</span>
+                  </button>
+                  <button
+                    onClick={() => handleSortSelect('followers_desc')}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'followers_desc' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                  >
+                    {sortBy === 'followers_desc' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'followers_desc' ? 'ml-6' : 'ml-8'}>Más seguidores</span>
+                  </button>
+                  <button
+                    onClick={() => handleSortSelect('newest')}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'newest' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                  >
+                    {sortBy === 'newest' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'newest' ? 'ml-6' : 'ml-8'}>Más recientes</span>
+                  </button>
+                </div>
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
 
           <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
             <DialogTrigger asChild>

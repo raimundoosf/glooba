@@ -7,6 +7,7 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useInView } from 'react-intersection-observer';
+import { SortOption } from '@/actions/explore.action';
 
 interface ExplorePostsListProps {
   dbUserId: string | null;
@@ -14,6 +15,7 @@ interface ExplorePostsListProps {
     searchTerm?: string;
     categories?: string[];
     location?: string;
+    sortBy?: SortOption;
   };
 }
 
@@ -23,7 +25,14 @@ interface ExplorePostsListProps {
  */
 export function ExplorePostsList({ dbUserId, filters = {} }: ExplorePostsListProps) {
   const { ref, inView } = useInView();
-  const queryKey = ['allPosts', filters]; // Include filters in query key to trigger refetch when filters change
+  // Create a stable query key that doesn't include undefined values to prevent unnecessary refetches
+  const sortBy = filters?.sortBy || 'newest';
+  const queryKey = ['allPosts', 
+    filters?.searchTerm, 
+    filters?.categories?.join(','), 
+    filters?.location, 
+    sortBy
+  ].filter(Boolean);
 
   const queryClient = useQueryClient();
 
@@ -31,8 +40,10 @@ export function ExplorePostsList({ dbUserId, filters = {} }: ExplorePostsListPro
     useInfiniteQuery({
       queryKey: queryKey,
       queryFn: async ({ pageParam = 1 }: { pageParam: number }) => {
+        const { sortBy = 'newest', ...restFilters } = filters || {};
         const result = await getAllPosts({ 
-          ...filters,
+          ...restFilters,
+          sortBy: sortBy as SortOption,
           page: pageParam 
         });
         if (!result.success) {

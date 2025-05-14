@@ -141,12 +141,18 @@ export async function getPosts(
 
 
 /**
+ * Sort options for posts
+ */
+import { SortOption } from './explore.action';
+
+/**
  * Interface for post filters
  */
 export interface PostFilters {
   searchTerm?: string;
   categories?: string[];
   location?: string;
+  sortBy?: SortOption;
 }
 
 /**
@@ -164,6 +170,7 @@ export async function getAllPosts(
       searchTerm, 
       categories, 
       location,
+      sortBy = 'newest',
       page = 1, 
       pageSize = EXPLORE_POSTS_PAGE_SIZE 
     } = filters;
@@ -206,11 +213,30 @@ export async function getAllPosts(
 
     const whereClause: Prisma.PostWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
+    // Define the orderBy clause based on sortBy parameter
+    const orderBy: Prisma.PostOrderByWithRelationInput = (() => {
+      switch (sortBy) {
+        case 'name_asc':
+          return { author: { name: 'asc' } };
+        case 'name_desc':
+          return { author: { name: 'desc' } };
+        case 'rating_desc':
+          return { author: { reviewsReceived: { _count: 'desc' } } };
+        case 'reviews_desc':
+          return { author: { reviewsReceived: { _count: 'desc' } } };
+        case 'followers_desc':
+          return { author: { followers: { _count: 'desc' } } };
+        case 'newest':
+        default:
+          return { createdAt: 'desc' };
+      }
+    })();
+
     const [totalCount, posts] = await prisma.$transaction([
       prisma.post.count({ where: whereClause }), // Count all posts
       prisma.post.findMany({
         where: whereClause, // Find all posts
-        orderBy: { createdAt: 'desc' }, // Order newest first
+        orderBy, // Apply sorting based on sortBy parameter
         include: postInclude, // Include author, comments, likes count, etc.
         skip: (currentPage - 1) * currentPageSize,
         take: currentPageSize,
