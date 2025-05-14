@@ -12,13 +12,13 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { getCategoryEmoji } from '@/lib/constants';
 
 /**
  * Props interface for the MultiSelectCategories component
@@ -56,8 +56,6 @@ export function MultiSelectCategories({
   renderBareList = false,
 }: MultiSelectCategoriesProps) {
   const [open, setOpen] = React.useState(false);
-  const [searchTerm, setSearchTerm] = React.useState('');
-
   const selectedSet = React.useMemo(() => new Set(selectedCategories), [selectedCategories]);
 
   /**
@@ -77,30 +75,15 @@ export function MultiSelectCategories({
     onChange(newSelected.sort());
   };
 
-  const filteredCategories = React.useMemo(() => {
-    if (!searchTerm) return allCategories;
-    return allCategories.filter((category) =>
-      category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [allCategories, searchTerm]);
-
   const isMaxSelected = maxSelection && selectedCategories.length >= maxSelection;
 
-  // Define the Command component structure separately
+  // Define the Command component structure
   const commandComponent = (
     <Command>
-      <CommandInput
-        placeholder="Buscar categoría..."
-        value={searchTerm}
-        onValueChange={setSearchTerm}
-        disabled={disabled}
-        className="hidden md:block"
-      />
       <CommandList>
         <ScrollArea className="h-[200px]">
-          <CommandEmpty>No se encontró categoría.</CommandEmpty>
           <CommandGroup>
-            {filteredCategories.map((category) => {
+            {allCategories.map((category) => {
               const isSelected = selectedSet.has(category);
               const isDisabledItem = !isSelected && isMaxSelected;
 
@@ -114,20 +97,24 @@ export function MultiSelectCategories({
                   disabled={isDisabledItem || disabled}
                   className={cn(
                     'flex items-center justify-between',
-                    isDisabledItem && 'opacity-50 cursor-not-allowed'
+                    isDisabledItem && 'opacity-50 cursor-not-allowed',
+                    'px-4 py-2 text-sm'
                   )}
                   aria-selected={isSelected}
                 >
-                  <span>{category}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-lg">{getCategoryEmoji(category)}</span>
+                    <span>{category}</span>
+                  </span>
                   <div
                     className={cn(
-                      'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
+                      'flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
                       isSelected
                         ? 'bg-primary text-primary-foreground'
                         : 'opacity-50 [&_svg]:invisible'
                     )}
                   >
-                    <Check className="h-4 w-4" />
+                    <Check className="h-3 w-3" />
                   </div>
                 </CommandItem>
               );
