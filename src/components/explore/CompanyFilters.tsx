@@ -4,16 +4,17 @@
  */
 'use client';
 
-import { CompanyFiltersType } from '@/actions/explore.action';
+import { CompanyFiltersType, SortOption } from '@/actions/explore.action';
 import { MultiSelectCategories } from '@/components/MultiSelectCategories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Loader2, Search, ArrowUpDown, ShoppingBag, Bike, X, MapPin } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2, Search, ArrowUpDown, ShoppingBag, Bike, X, MapPin, Check } from 'lucide-react';
+import React, { useCallback, useState, useEffect } from 'react';
 
 /**
  * Type for the view mode.
@@ -27,6 +28,7 @@ interface FilterCriteria {
   searchTerm?: string;
   location?: string;
   categories?: string[];
+  sortBy?: SortOption;
 }
 
 /**
@@ -42,6 +44,7 @@ interface CompanyFiltersProps {
   initialSearchTerm?: string;
   initialLocation?: string;
   initialCategories?: string[];
+  initialSortBy?: SortOption;
 }
 
 /**
@@ -57,12 +60,68 @@ export function CompanyFilters({
   initialSearchTerm = '',
   initialLocation = '',
   initialCategories = [],
+  initialSortBy = 'name_asc',
 }: CompanyFiltersProps) {
   const [searchInput, setSearchInput] = useState<string>(initialSearchTerm);
   const [locationInput, setLocationInput] = useState<string>(initialLocation);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories);
-  const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
-  const [isLocationPopoverOpen, setIsLocationPopoverOpen] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories || []);
+  // State for sort functionality and dialogs
+  const [sortBy, setSortBy] = useState<SortOption>(initialSortBy);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false);
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  
+  // Local form states
+  const [localSelectedCategories, setLocalSelectedCategories] = useState<string[]>(
+    initialCategories || []
+  );
+  const [localLocationInput, setLocalLocationInput] = useState(initialLocation);
+
+  // Sync local state with props
+  useEffect(() => {
+    setLocalSelectedCategories(selectedCategories);
+  }, [selectedCategories]);
+
+  useEffect(() => {
+    setLocalLocationInput(locationInput);
+  }, [locationInput]);
+  
+  // Update sort when initialSortBy changes
+  useEffect(() => {
+    setSortBy(initialSortBy);
+  }, [initialSortBy]);
+
+  const handleApplyCategories = () => {
+    setSelectedCategories(localSelectedCategories);
+    onFilterChange({
+      searchTerm: searchInput.trim() || undefined,
+      location: locationInput.trim() || undefined,
+      categories: localSelectedCategories.length > 0 ? localSelectedCategories : undefined,
+      sortBy,
+      viewMode: currentViewMode,
+    });
+    setIsCategoryDialogOpen(false);
+  };
+
+  const handleApplyLocation = () => {
+    setLocationInput(localLocationInput);
+    onFilterChange({
+      searchTerm: searchInput.trim() || undefined,
+      location: localLocationInput.trim() || undefined,
+      categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+      sortBy,
+      viewMode: currentViewMode,
+    });
+    setIsLocationDialogOpen(false);
+  };
+
+  const handleClearCategories = () => {
+    setLocalSelectedCategories([]);
+  };
+
+  const handleClearLocation = () => {
+    setLocalLocationInput('');
+  };
 
   const isDisabled = isLoading;
 
@@ -79,9 +138,10 @@ export function CompanyFilters({
       searchTerm: searchInput.trim() || undefined,
       location: locationInput.trim() || undefined,
       categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+      sortBy,
       viewMode: currentViewMode,
     });
-  }, [searchInput, locationInput, selectedCategories, onFilterChange, currentViewMode]);
+  }, [searchInput, locationInput, selectedCategories, sortBy, onFilterChange, currentViewMode]);
 
   const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -94,7 +154,7 @@ export function CompanyFilters({
     if (event.key === 'Enter') {
       event.preventDefault();
       applyFilters();
-      setIsLocationPopoverOpen(false);
+      setIsLocationDialogOpen(false);
     }
   };
 
@@ -104,6 +164,7 @@ export function CompanyFilters({
       searchTerm: searchInput.trim() || undefined,
       location: locationInput.trim() || undefined,
       categories: newSelection.length > 0 ? newSelection : undefined,
+      sortBy,
       viewMode: currentViewMode,
     });
   };
@@ -115,6 +176,19 @@ export function CompanyFilters({
       searchTerm: searchInput.trim() || undefined,
       location: locationInput.trim() || undefined,
       categories: newSelection.length > 0 ? newSelection : undefined,
+      sortBy,
+      viewMode: currentViewMode,
+    });
+  };
+
+  const handleSortSelect = (option: SortOption) => {
+    setSortBy(option);
+    setIsSortOpen(false);
+    onFilterChange({
+      searchTerm: searchInput.trim() || undefined,
+      location: locationInput.trim() || undefined,
+      categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+      sortBy: option,
       viewMode: currentViewMode,
     });
   };
@@ -123,19 +197,19 @@ export function CompanyFilters({
     setSearchInput('');
     setLocationInput('');
     setSelectedCategories([]);
+    setSortBy('name_asc');
     onFilterChange({
       searchTerm: undefined,
       location: undefined,
       categories: undefined,
+      sortBy: 'name_asc',
       viewMode: currentViewMode,
     });
   };
 
-  const handleSort = () => console.log('Sort action triggered');
-
   return (
     <div className="p-4 space-y-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
-      <div className="relative">
+      <div className="relative flex items-center">
         <Input
           id="search"
           placeholder="¿Qué quieres buscar?"
@@ -143,9 +217,18 @@ export function CompanyFilters({
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={handleSearchKeyDown}
           disabled={isDisabled}
-          className="pl-10 pr-4 py-2 rounded-full border focus:border-primary focus:ring-primary h-12 text-base"
+          className="lg:pl-10 pl-4 pr-12 py-2 rounded-full border focus:border-primary focus:ring-primary h-12 text-base"
         />
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <Search className="absolute left-3 h-5 w-5 text-muted-foreground hidden lg:block" />
+        <button
+          type="button"
+          onClick={applyFilters}
+          disabled={isDisabled}
+          className="absolute right-2 p-1.5 rounded-full bg-input hover:bg-accent transition-colors lg:hidden"
+          aria-label="Buscar"
+        >
+          <Search className="h-5 w-5 text-primary" />
+        </button>
       </div>
 
       <ToggleGroup
@@ -178,19 +261,73 @@ export function CompanyFilters({
       {/* Filter Buttons Row - Wrapper for centering */}
       <div className="flex justify-center">
         <div className="flex space-x-2 sm:space-x-4 overflow-x-auto pb-2 no-scrollbar ">
-          {/* Sort Button */}
-          <Button
-            variant="outline"
-            onClick={handleSort}
-            disabled={isDisabled}
-            className="flex items-center space-x-2 rounded-full bg-background border hover:bg-accent h-10 px-4 py-2 text-sm whitespace-nowrap"
-          >
-            <ArrowUpDown className="h-4 w-4" />
-            <span>Ordenar</span>
-          </Button>
+          {/* Sort Dialog */}
+          <Dialog open={isSortOpen} onOpenChange={setIsSortOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                disabled={isDisabled}
+                className="flex items-center space-x-2 rounded-full bg-background border hover:bg-accent h-10 px-4 py-2 text-sm whitespace-nowrap"
+              >
+                <ArrowUpDown className="h-4 w-4" />
+                <span>Ordenar</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] max-h-[80vh] flex flex-col">
+              <DialogHeader>
+                <DialogTitle>Ordenar por</DialogTitle>
+              </DialogHeader>
+              <ScrollArea className="flex-1 -mx-6 px-6">
+                <div className="py-2 space-y-2">
+                  <button
+                    onClick={() => handleSortSelect('name_asc')}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'name_asc' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                  >
+                    {sortBy === 'name_asc' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'name_asc' ? 'ml-6' : 'ml-8'}>Nombre (A-Z)</span>
+                  </button>
+                  <button
+                    onClick={() => handleSortSelect('name_desc')}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'name_desc' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                  >
+                    {sortBy === 'name_desc' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'name_desc' ? 'ml-6' : 'ml-8'}>Nombre (Z-A)</span>
+                  </button>
+                  <button
+                    onClick={() => handleSortSelect('rating_desc')}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'rating_desc' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                  >
+                    {sortBy === 'rating_desc' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'rating_desc' ? 'ml-6' : 'ml-8'}>Mejor valorados</span>
+                  </button>
+                  <button
+                    onClick={() => handleSortSelect('reviews_desc')}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'reviews_desc' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                  >
+                    {sortBy === 'reviews_desc' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'reviews_desc' ? 'ml-6' : 'ml-8'}>Más reseñas</span>
+                  </button>
+                  <button
+                    onClick={() => handleSortSelect('followers_desc')}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'followers_desc' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                  >
+                    {sortBy === 'followers_desc' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'followers_desc' ? 'ml-6' : 'ml-8'}>Más seguidores</span>
+                  </button>
+                  <button
+                    onClick={() => handleSortSelect('newest')}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'newest' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                  >
+                    {sortBy === 'newest' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'newest' ? 'ml-6' : 'ml-8'}>Más recientes</span>
+                  </button>
+                </div>
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
 
-          <Popover open={isCategoryPopoverOpen} onOpenChange={setIsCategoryPopoverOpen}>
-            <PopoverTrigger asChild>
+          <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+            <DialogTrigger asChild>
               <Button
                 variant="outline"
                 disabled={isDisabled}
@@ -207,20 +344,40 @@ export function CompanyFilters({
                   </Badge>
                 )}
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-screen max-w-xs sm:max-w-sm p-4" align="start">
-              <MultiSelectCategories
-                allCategories={allCategories}
-                selectedCategories={selectedCategories}
-                onChange={handleCategoriesChange}
-                disabled={isDisabled}
-                renderBareList={true}
-              />
-            </PopoverContent>
-          </Popover>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] max-h-[80vh] flex flex-col">
+              <DialogHeader>
+                <DialogTitle>Filtrar por categoría</DialogTitle>
+              </DialogHeader>
+              <ScrollArea className="flex-1 -mx-6 px-6">
+                <div className="py-2">
+                  <MultiSelectCategories
+                    allCategories={allCategories}
+                    selectedCategories={localSelectedCategories}
+                    onChange={setLocalSelectedCategories}
+                    disabled={isDisabled}
+                    renderBareList={true}
+                    placeholder="Buscar categorías..."
+                  />
+                </div>
+              </ScrollArea>
+              <div className="flex justify-between pt-4 border-t">
+                <Button
+                  variant="ghost"
+                  onClick={handleClearCategories}
+                  disabled={localSelectedCategories.length === 0}
+                >
+                  Limpiar
+                </Button>
+                <Button onClick={handleApplyCategories}>
+                  Aplicar
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
-          <Popover open={isLocationPopoverOpen} onOpenChange={setIsLocationPopoverOpen}>
-            <PopoverTrigger asChild>
+          <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
+            <DialogTrigger asChild>
               <Button
                 variant="outline"
                 disabled={isDisabled}
@@ -228,21 +385,54 @@ export function CompanyFilters({
               >
                 <MapPin className="h-4 w-4" />
                 <span>Localización</span>
+                {locationInput && (
+                  <span className="w-2 h-2 rounded-full bg-primary ml-1"></span>
+                )}
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-screen max-w-[200px] p-2" align="start">
-              <Label htmlFor="location-popover" className="sr-only">Ubicación</Label>
-              <Input
-                id="location-popover"
-                placeholder="Ciudad, dirección..."
-                value={locationInput}
-                onChange={(e) => setLocationInput(e.target.value)}
-                onKeyDown={handleLocationKeyDown}
-                disabled={isDisabled}
-                className="h-9"
-              />
-            </PopoverContent>
-          </Popover>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Filtrar por ubicación</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label htmlFor="location" className="flex items-center gap-1">
+                    <span>📍</span>
+                    <span>Región o comuna</span>
+                  </Label>
+                  <Input
+                    id="location"
+                    placeholder="Ej: Santiago, Chile"
+                    value={localLocationInput}
+                    onChange={(e) => setLocalLocationInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleApplyLocation();
+                      }
+                    }}
+                    disabled={isDisabled}
+                    className="h-10"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-between pt-4 border-t">
+                <Button
+                  variant="ghost"
+                  onClick={handleClearLocation}
+                  disabled={!localLocationInput}
+                >
+                  Limpiar
+                </Button>
+                <Button 
+                  onClick={handleApplyLocation}
+                  disabled={!localLocationInput.trim()}
+                >
+                  Aplicar
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {hasActiveFilters && (
             <Button

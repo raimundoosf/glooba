@@ -41,7 +41,7 @@ export default function ExploreClientWrapper({
   dbUserId, // Add dbUserId prop
 }: ExploreClientWrapperProps) {
   const [companies, setCompanies] = useState<CompanyCardData[]>(initialCompanies);
-  const [appliedFilters, setAppliedFilters] = useState<CompanyFiltersType>({});
+  const [appliedFilters, setAppliedFilters] = useState<CompanyFiltersType>({ sortBy: 'name_asc' });
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(initialTotalCount);
   const [hasNextPage, setHasNextPage] = useState<boolean>(initialHasNextPage);
@@ -64,6 +64,7 @@ export default function ExploreClientWrapper({
             ? newFilters.categories
             : undefined,
         location: newFilters.location || undefined,
+        sortBy: newFilters.sortBy || 'name_asc',
       };
 
       setAppliedFilters(filtersToApply);
@@ -188,7 +189,12 @@ export default function ExploreClientWrapper({
       ) : (
         <ExplorePostsList 
           dbUserId={dbUserId} 
-          filters={appliedFilters}
+          filters={{
+            searchTerm: appliedFilters.searchTerm,
+            categories: appliedFilters.categories,
+            location: appliedFilters.location,
+            sortBy: appliedFilters.sortBy
+          }}
         />
       )}
       {currentViewMode === 'list' && (
