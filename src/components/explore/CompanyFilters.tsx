@@ -265,14 +265,14 @@ export function CompanyFilters({
         <ToggleGroupItem
           value="posts"
           aria-label="Toggle posts view"
-          className="rounded-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-muted-foreground py-2.5 text-base font-medium border-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=on]:shadow-sm transition-colors"
+          className="rounded-full data-[state=on]:bg-black data-[state=on]:text-white data-[state=off]:text-gray-400 py-2.5 text-base font-medium border-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=on]:shadow-sm transition-colors dark:data-[state=on]:bg-white dark:data-[state=on]:text-black dark:data-[state=off]:text-gray-500"
         >
           Publicaciones
         </ToggleGroupItem>
         <ToggleGroupItem
           value="list"
           aria-label="Toggle list view"
-          className="rounded-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-muted-foreground py-2.5 text-base font-medium border-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=on]:shadow-sm transition-colors"
+          className="rounded-full data-[state=on]:bg-black data-[state=on]:text-white data-[state=off]:text-gray-400 py-2.5 text-base font-medium border-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=on]:shadow-sm transition-colors dark:data-[state=on]:bg-white dark:data-[state=on]:text-black dark:data-[state=off]:text-gray-500"
         >
           Lista
         </ToggleGroupItem>

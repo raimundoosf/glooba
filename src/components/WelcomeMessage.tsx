@@ -18,7 +18,7 @@ export default function WelcomeMessage() {
   return (
     <Card className="mb-8">
       <CardHeader className="items-center text-center">
-        <CardTitle className="text-2xl font-bold text-primary dark:text-primary-light">
+        <CardTitle className="text-2xl font-bold">
           ¡Bienvenido/a a Glooba!
         </CardTitle>
         <CardDescription className="text-base text-muted-foreground max-w-xl">
@@ -28,7 +28,7 @@ export default function WelcomeMessage() {
         <div className="pt-2">
           <Link href="/about" passHref>
             <Button size="default" variant="outline">
-              <Info className="mr-2 h-5 w-5" /> Conoce Más
+              <Info className="mr-2 h-5 w-5 text-primary" /> Conoce Más
             </Button>
           </Link>
         </div>

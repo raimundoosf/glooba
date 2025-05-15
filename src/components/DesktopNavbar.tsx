@@ -58,7 +58,7 @@ async function DesktopNavbar() {
         </>
       ) : (
         <SignInButton mode="modal">
-          <Button variant="default">Iniciar sesión</Button>
+          <Button variant="outline">Iniciar sesión</Button>
         </SignInButton>
       )}
     </div>
