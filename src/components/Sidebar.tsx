@@ -5,7 +5,7 @@
 import { getUserByClerkId } from '@/actions/user.action';
 import { SignInButton, SignUpButton } from '@clerk/nextjs';
 import { currentUser } from '@clerk/nextjs/server';
-import { Info, Instagram, Linkedin, LinkIcon, Mail, MapPinIcon, MessageSquareText, Smartphone } from 'lucide-react';
+import { Info, Instagram, Linkedin, LinkIcon, Mail, MapPinIcon, MessageSquareText, Smartphone, BookOpen, FileText, Shield } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -140,16 +140,6 @@ const UnAuthenticatedSidebar = () => (
     <Card>
       <CardContent className="pt-6">
         <div className="flex flex-col items-center space-y-3 text-center">
-          {/* The logo.svg is blue, so we use green text for "Glooba" as in the image */}
-          {/* <div className="relative h-12 w-12 mb-1">
-            <Image
-              src="/logo.svg" 
-              alt="Glooba Logo"
-              fill
-              className="object-contain"
-              priority
-            />
-          </div> */}
           <h2 className="text-2xl font-bold">
             Glooba
           </h2>
@@ -164,38 +154,36 @@ const UnAuthenticatedSidebar = () => (
               <Linkedin className="h-5 w-5 text-primary" />
             </Link>
           </div>
-          <Link href="/about" className="flex items-center text-sm text-primary-600 hover:text-primary-700 pt-1">
-            <Info className="h-4 w-4 mr-1 text-primary" />
+          <Link href="/about" className="flex items-center space-x-2 rounded-full bg-muted px-4 py-2 text-sm text-primary-600 hover:bg-gray-200 transition-all duration-200 ease-in-out">
+            <Info className="h-4 w-4 text-primary" />
             Conoce más
           </Link>
         </div>
       </CardContent>
     </Card>
 
-    {/* Contact Card */}
+    {/* Información Legal */}
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center text-lg font-semibold">
-          <MessageSquareText className="h-5 w-5 mr-2" />
-          Contacto
+          <BookOpen className="h-5 w-5 mr-2" />
+          Información Legal
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <Link
-          href="https://wa.me/56953321695"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/terms"
           className="flex items-center space-x-3 rounded-lg bg-primary-50 p-3 hover:bg-primary-100 transition-colors"
         >
-          <Smartphone className="h-5 w-5 text-primary" />
-          <span className="text-sm">+56 9 5332 1695</span>
+          <FileText className="h-5 w-5 text-primary" />
+          <span className="text-sm">Términos de Servicio</span>
         </Link>
         <Link
-          href="mailto:Gloobacl@gmail.com" // Corrected email from image
-className="flex items-center space-x-3 rounded-lg bg-primary-50 p-3 hover:bg-primary-100 transition-colors"
+          href="/privacy"
+          className="flex items-center space-x-3 rounded-lg bg-primary-50 p-3 hover:bg-primary-100 transition-colors"
         >
-          <Mail className="h-5 w-5 text-primary" />
-          <span className="text-sm">Gloobacl@gmail.com</span>
+          <Shield className="h-5 w-5 text-primary" />
+          <span className="text-sm">Política de Privacidad</span>
         </Link>
       </CardContent>
     </Card>
