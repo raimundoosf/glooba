@@ -155,7 +155,7 @@ const UnAuthenticatedSidebar = () => (
             </Link>
           </div>
           <Link href="/about" className="flex items-center space-x-2 rounded-full bg-muted px-4 py-2 text-sm text-primary-600 hover:bg-gray-200 transition-all duration-200 ease-in-out">
-            <Info className="h-4 w-4 text-primary" />
+            <Info className="h-4 w-4 text-primary mr-2" />
             Conoce más
           </Link>
         </div>

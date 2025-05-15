@@ -60,7 +60,7 @@ export function CompanyFilters({
   initialSearchTerm = '',
   initialLocation = '',
   initialCategories = [],
-  initialSortBy = 'name_asc',
+  initialSortBy = 'newest',
 }: CompanyFiltersProps) {
   const [searchInput, setSearchInput] = useState<string>(initialSearchTerm);
   const [locationInput, setLocationInput] = useState<string>(initialLocation);
@@ -300,18 +300,11 @@ export function CompanyFilters({
               <ScrollArea className="flex-1 -mx-6 px-6">
                 <div className="py-1 space-y-1">
                   <button
-                    onClick={() => handleSortSelect('name_asc')}
-                    className={`w-full text-left px-4 py-3 rounded-lg text-sm flex items-center transition-colors duration-200 ${sortBy === 'name_asc' ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'}`}
+                    onClick={() => handleSortSelect('newest')}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'newest' ? 'bg-accent' : 'hover:bg-accent/50'}`}
                   >
-                    {sortBy === 'name_asc' && <Check className="h-4 w-4 mr-2 text-primary" />}
-                    <span className={sortBy === 'name_asc' ? 'ml-6' : 'ml-8'}>Nombre (A-Z)</span>
-                  </button>
-                  <button
-                    onClick={() => handleSortSelect('name_desc')}
-                    className={`w-full text-left px-4 py-3 rounded-lg text-sm flex items-center transition-colors duration-200 ${sortBy === 'name_desc' ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'}`}
-                  >
-                    {sortBy === 'name_desc' && <Check className="h-4 w-4 mr-2 text-primary" />}
-                    <span className={sortBy === 'name_desc' ? 'ml-6' : 'ml-8'}>Nombre (Z-A)</span>
+                    {sortBy === 'newest' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'newest' ? 'ml-6' : 'ml-8'}>Más recientes</span>
                   </button>
                   <button
                     onClick={() => handleSortSelect('rating_desc')}
@@ -335,11 +328,18 @@ export function CompanyFilters({
                     <span className={sortBy === 'followers_desc' ? 'ml-6' : 'ml-8'}>Más seguidores</span>
                   </button>
                   <button
-                    onClick={() => handleSortSelect('newest')}
-                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'newest' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                    onClick={() => handleSortSelect('name_asc')}
+                    className={`w-full text-left px-4 py-3 rounded-lg text-sm flex items-center transition-colors duration-200 ${sortBy === 'name_asc' ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'}`}
                   >
-                    {sortBy === 'newest' && <Check className="h-4 w-4 mr-2 text-primary" />}
-                    <span className={sortBy === 'newest' ? 'ml-6' : 'ml-8'}>Más recientes</span>
+                    {sortBy === 'name_asc' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'name_asc' ? 'ml-6' : 'ml-8'}>Nombre (A-Z)</span>
+                  </button>
+                  <button
+                    onClick={() => handleSortSelect('name_desc')}
+                    className={`w-full text-left px-4 py-3 rounded-lg text-sm flex items-center transition-colors duration-200 ${sortBy === 'name_desc' ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'}`}
+                  >
+                    {sortBy === 'name_desc' && <Check className="h-4 w-4 mr-2 text-primary" />}
+                    <span className={sortBy === 'name_desc' ? 'ml-6' : 'ml-8'}>Nombre (Z-A)</span>
                   </button>
                 </div>
               </ScrollArea>
