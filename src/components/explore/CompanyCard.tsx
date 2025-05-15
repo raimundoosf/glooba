@@ -138,57 +138,53 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
             aria-label={`Ver perfil de ${company.name || company.username}`}
             className="absolute -bottom-6 left-4 z-10 block" // Adjusted -bottom
           >
-            {/* Slightly reduced avatar size */}
             <Avatar className="h-14 w-14 border-2 border-background bg-background shadow-md">
-              {' '}
-              {/* Use background color for border "cutout" effect */}
               <AvatarImage
                 src={company.image || undefined}
                 alt={`${company.name || company.username}'s avatar`}
-              />{' '}
-              {/* Added alt text */}
+              />
               <AvatarFallback>{fallbackName}</AvatarFallback>
             </Avatar>
           </Link>
-
-          {/* Follow Button - Positioned absolutely in the top-right corner */}
-          {!isOwnProfile && (
-            <div className="absolute top-3 right-3 z-10">
-              {isSignedIn ? (
-                // Button for signed-in users (Follow/Unfollow)
-                <Button
-                  variant={isFollowingOptimistic ? 'outline' : 'secondary'}
-                  size="sm" // Small size
-                  onClick={handleFollowToggle}
-                  disabled={isPending}
-                  className="h-7 rounded-full border bg-card/80 hover:bg-card backdrop-blur-sm px-3 text-xs inline-flex items-center" // Adjusted height, padding, and text size
-                  aria-label={followButtonTooltip}
-                >
-                  {followButtonIcon}
-                  <span className="ml-1">
-                    {' '}
-                    {/* Added span for text with margin */}
-                    {isFollowingOptimistic ? 'Siguiendo' : 'Seguir'}
-                  </span>
-                </Button>
-              ) : (
-                // Button for guests (Sign In to Follow)
-                <SignInButton mode="modal">
-                  <Button
-                    variant="secondary"
-                    size="sm" // Small size
-                    className="h-7 rounded-full border bg-card/80 hover:bg-card backdrop-blur-sm px-3 text-xs inline-flex items-center" // Adjusted height, padding, and text size
-                    aria-label={`Seguir a @${company.username}`}
-                  >
-                    <UserPlus className="h-3.5 w-3.5" /> {/* Slightly smaller icon */}
-                    <span className="ml-1">Seguir</span> {/* Added span for "Seguir" text */}
-                  </Button>
-                </SignInButton>
-              )}
-            </div>
-          )}
         </div>
       </Link>
+
+      {/* Follow Button - Positioned absolutely in the top-right corner */}
+      {!isOwnProfile && (
+        <div className="absolute top-3 right-3 z-10">
+          {isSignedIn ? (
+            // Button for signed-in users (Follow/Unfollow)
+            <Button
+              variant={isFollowingOptimistic ? 'outline' : 'secondary'}
+              size="sm" // Small size
+              onClick={handleFollowToggle}
+              disabled={isPending}
+              className="h-7 rounded-full border bg-card/80 hover:bg-card backdrop-blur-sm px-3 text-xs inline-flex items-center" // Adjusted height, padding, and text size
+              aria-label={followButtonTooltip}
+            >
+              {followButtonIcon}
+              <span className="ml-1">
+                {' '}
+                {/* Added span for text with margin */}
+                {isFollowingOptimistic ? 'Siguiendo' : 'Seguir'}
+              </span>
+            </Button>
+          ) : (
+            // Button for guests (Sign In to Follow)
+            <SignInButton mode="modal">
+              <Button
+                variant="secondary"
+                size="sm" // Small size
+                className="h-7 rounded-full border bg-card/80 hover:bg-card backdrop-blur-sm px-3 text-xs inline-flex items-center" // Adjusted height, padding, and text size
+                aria-label={`Seguir a @${company.username}`}
+              >
+                <UserPlus className="h-3.5 w-3.5" /> {/* Slightly smaller icon */}
+                <span className="ml-1">Seguir</span> {/* Added span for "Seguir" text */}
+              </Button>
+            </SignInButton>
+          )}
+        </div>
+      )}
       {/* Content Area Below Background Image */}
       {/* Add padding-top to make space for the overlapping avatar */}
       {/* Adjusted padding-top and overall vertical space */}
