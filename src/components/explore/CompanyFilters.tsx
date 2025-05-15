@@ -70,7 +70,7 @@ export function CompanyFilters({
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
-  
+
   // Local form states
   const [localSelectedCategories, setLocalSelectedCategories] = useState<string[]>(
     initialCategories || []
@@ -85,7 +85,7 @@ export function CompanyFilters({
   useEffect(() => {
     setLocalLocationInput(locationInput);
   }, [locationInput]);
-  
+
   // Update sort when initialSortBy changes
   useEffect(() => {
     setSortBy(initialSortBy);
@@ -210,25 +210,45 @@ export function CompanyFilters({
   return (
     <div className="p-4 space-y-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
       <div className="relative flex items-center">
-        <Input
-          id="search"
-          placeholder="¿Qué quieres buscar?"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          onKeyDown={handleSearchKeyDown}
-          disabled={isDisabled}
-          className="lg:pl-10 pl-4 pr-12 py-2 rounded-full border focus:border-primary focus:ring-primary h-12 text-base"
-        />
-        <Search className="absolute left-3 h-5 w-5 text-muted-foreground hidden lg:block" />
-        <button
-          type="button"
-          onClick={applyFilters}
-          disabled={isDisabled}
-          className="absolute right-2 p-1.5 rounded-full bg-input hover:bg-accent transition-colors lg:hidden"
-          aria-label="Buscar"
-        >
-          <Search className="h-5 w-5 text-primary" />
-        </button>
+        <div className="relative flex-1">
+          <Input
+            id="search"
+            placeholder="¿Qué quieres buscar?"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
+            disabled={isDisabled}
+            className="lg:pl-10 pl-4 pr-12 py-2 rounded-full border focus:border-primary focus:ring-primary h-12 text-base"
+          />
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${searchInput ? 'text-primary' : 'text-muted-foreground'} hidden lg:block transition-colors`} />
+
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchInput('');
+                // Optionally trigger search with empty input
+                if (searchInput.trim()) {
+                  handleSearchKeyDown({ key: 'Enter' } as React.KeyboardEvent<HTMLInputElement>);
+                }
+              }}
+              className="absolute right-14 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-accent transition-colors"
+              aria-label="Limpiar búsqueda"
+            >
+              <X className="h-5 w-5 text-muted-foreground lg:hidden" />
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={applyFilters}
+            disabled={isDisabled}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-input hover:bg-accent transition-colors lg:hidden"
+            aria-label="Buscar"
+          >
+            <Search className={`h-5 w-5 ${searchInput ? 'text-primary' : 'text-muted-foreground'} transition-colors`} />
+          </button>
+        </div>
       </div>
 
       <ToggleGroup
@@ -273,36 +293,36 @@ export function CompanyFilters({
                 <span>Ordenar</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] max-h-[80vh] flex flex-col">
-              <DialogHeader>
-                <DialogTitle>Ordenar por</DialogTitle>
+            <DialogContent className="sm:max-w-[425px] max-h-[80vh] flex flex-col rounded-2xl border-0 shadow-xl">
+              <DialogHeader className="px  -2">
+                <DialogTitle className="text-lg font-semibold">Ordenar por</DialogTitle>
               </DialogHeader>
               <ScrollArea className="flex-1 -mx-6 px-6">
-                <div className="py-2 space-y-2">
+                <div className="py-1 space-y-1">
                   <button
                     onClick={() => handleSortSelect('name_asc')}
-                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'name_asc' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                    className={`w-full text-left px-4 py-3 rounded-lg text-sm flex items-center transition-colors duration-200 ${sortBy === 'name_asc' ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'}`}
                   >
                     {sortBy === 'name_asc' && <Check className="h-4 w-4 mr-2 text-primary" />}
                     <span className={sortBy === 'name_asc' ? 'ml-6' : 'ml-8'}>Nombre (A-Z)</span>
                   </button>
                   <button
                     onClick={() => handleSortSelect('name_desc')}
-                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'name_desc' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                    className={`w-full text-left px-4 py-3 rounded-lg text-sm flex items-center transition-colors duration-200 ${sortBy === 'name_desc' ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'}`}
                   >
                     {sortBy === 'name_desc' && <Check className="h-4 w-4 mr-2 text-primary" />}
                     <span className={sortBy === 'name_desc' ? 'ml-6' : 'ml-8'}>Nombre (Z-A)</span>
                   </button>
                   <button
                     onClick={() => handleSortSelect('rating_desc')}
-                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'rating_desc' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                    className={`w-full text-left px-4 py-3 rounded-lg text-sm flex items-center transition-colors duration-200 ${sortBy === 'rating_desc' ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'}`}
                   >
                     {sortBy === 'rating_desc' && <Check className="h-4 w-4 mr-2 text-primary" />}
                     <span className={sortBy === 'rating_desc' ? 'ml-6' : 'ml-8'}>Mejor valorados</span>
                   </button>
                   <button
                     onClick={() => handleSortSelect('reviews_desc')}
-                    className={`w-full text-left px-4 py-3 rounded-md text-sm flex items-center ${sortBy === 'reviews_desc' ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                    className={`w-full text-left px-4 py-3 rounded-lg text-sm flex items-center transition-colors duration-200 ${sortBy === 'reviews_desc' ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'}`}
                   >
                     {sortBy === 'reviews_desc' && <Check className="h-4 w-4 mr-2 text-primary" />}
                     <span className={sortBy === 'reviews_desc' ? 'ml-6' : 'ml-8'}>Más reseñas</span>
@@ -345,12 +365,12 @@ export function CompanyFilters({
                 )}
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] max-h-[80vh] flex flex-col">
-              <DialogHeader>
-                <DialogTitle>Filtrar por categoría</DialogTitle>
+            <DialogContent className="sm:max-w-[425px] max-h-[80vh] flex flex-col rounded-2xl border-0 shadow-xl">
+              <DialogHeader className="px-2">
+                <DialogTitle className="text-lg font-semibold">Filtrar por categoría</DialogTitle>
               </DialogHeader>
               <ScrollArea className="flex-1 -mx-6 px-6">
-                <div className="py-2">
+                <div className="py-1">
                   <MultiSelectCategories
                     allCategories={allCategories}
                     selectedCategories={localSelectedCategories}
@@ -361,15 +381,20 @@ export function CompanyFilters({
                   />
                 </div>
               </ScrollArea>
-              <div className="flex justify-between pt-4 border-t">
+              <div className="flex justify-between pt-4 border-t gap-2">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   onClick={handleClearCategories}
                   disabled={localSelectedCategories.length === 0}
+                  className="flex-1 rounded-lg border-border/50 hover:bg-accent/50 transition-colors"
                 >
                   Limpiar
                 </Button>
-                <Button onClick={handleApplyCategories}>
+                <Button
+                  variant="default"
+                  className="flex-1 rounded-lg bg-primary hover:bg-primary/90 transition-colors"
+                  onClick={handleApplyCategories}
+                >
                   Aplicar
                 </Button>
               </div>
@@ -390,41 +415,59 @@ export function CompanyFilters({
                 )}
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] rounded-2xl border-0 shadow-xl">
               <DialogHeader>
-                <DialogTitle>Filtrar por ubicación</DialogTitle>
+                <DialogTitle className="text-lg font-semibold">Filtrar por ubicación</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 py-2">
+              <div className="space-y-4 py-1">
                 <div className="space-y-2">
                   <Label htmlFor="location" className="flex items-center gap-1">
                     <span>📍</span>
                     <span>Región o comuna</span>
                   </Label>
-                  <Input
-                    id="location"
-                    placeholder="Ej: Santiago, Chile"
-                    value={localLocationInput}
-                    onChange={(e) => setLocalLocationInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleApplyLocation();
-                      }
-                    }}
-                    disabled={isDisabled}
-                    className="h-10"
-                  />
+                  <div className="relative">
+                    <Input
+                      placeholder="Ej: Santiago, Chile"
+                      value={localLocationInput}
+                      onChange={(e) => setLocalLocationInput(e.target.value)}
+                    />
+                    {/* <MapPin className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${localLocationInput ? 'text-primary' : 'text-muted-foreground'} transition-colors`} /> */}
+
+                    <button
+                      type="button"
+                      onClick={handleApplyLocation}
+                      disabled={!localLocationInput.trim()}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-muted hover:bg-accent transition-colors"
+                      aria-label="Buscar ubicación"
+                    >
+                      <Search className={`h-4 w-4 ${localLocationInput ? 'text-primary' : 'text-muted-foreground'} transition-colors`} />
+                    </button>
+
+                    {localLocationInput && (
+                      <button
+                        type="button"
+                        onClick={() => setLocalLocationInput('')}
+                        className="absolute right-14 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-accent transition-colors"
+                        aria-label="Limpiar ubicación"
+                      >
+                        <X className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-between pt-4 border-t">
+              <div className="flex justify-between pt-4 border-t gap-2">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   onClick={handleClearLocation}
                   disabled={!localLocationInput}
+                  className="flex-1 rounded-lg border-border/50 hover:bg-accent/50 transition-colors"
                 >
                   Limpiar
                 </Button>
-                <Button 
+                <Button
+                  variant="default"
+                  className="flex-1 rounded-lg bg-primary hover:bg-primary/90 transition-colors"
                   onClick={handleApplyLocation}
                   disabled={!localLocationInput.trim()}
                 >
