@@ -13,6 +13,7 @@ import {
   Search,
   TrendingUp,
   Users,
+  UserPlus,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -43,15 +44,23 @@ export default async function AboutPage() {
             impulsan iniciativas sostenibles en Latam.
           </p>
           {/* Call to action integrated early */}
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12 max-w-2xl mx-auto">
             <Link href="/">
-              <Button size="lg" variant="default">
+              <Button 
+                size="default" 
+                variant="default" 
+                className="font-semibold transition-all duration-200 hover:scale-105 hover:shadow-lg"
+              >
                 <Search className="mr-2 h-5 w-5" /> Encuentra Iniciativas Ahora
               </Button>
             </Link>
             <SignInButton mode="modal">
-              <Button size="lg" variant="outline" className="mx-7">
-                Únete a la Comunidad
+              <Button 
+                size="default" 
+                variant="outline" 
+                className="font-semibold transition-all duration-200 hover:scale-105 hover:bg-primary/10"
+              >
+                <UserPlus className="mr-2 h-5 w-5" /> Únete a la Comunidad
               </Button>
             </SignInButton>
           </div>
@@ -285,15 +294,23 @@ export default async function AboutPage() {
             Únete a nuestra comunidad, explora iniciativas y descubre cómo tus acciones pueden
             generar un impacto positivo.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12 max-w-2xl mx-auto">
             <Link href="/">
-              <Button size="lg" variant="default">
+              <Button 
+                size="default" 
+                variant="default" 
+                className="font-semibold transition-all duration-200 hover:scale-105 hover:shadow-lg"
+              >
                 <Search className="mr-2 h-5 w-5" /> Explorar Iniciativas
               </Button>
             </Link>
             <SignInButton mode="modal">
-              <Button size="lg" variant="outline" className="mx-6">
-                Crear Cuenta Gratuita
+              <Button 
+                size="default" 
+                variant="outline" 
+                className="font-semibold transition-all duration-200 hover:scale-105 hover:bg-primary/10"
+              >
+                <UserPlus className="mr-2 h-5 w-5" /> Crear Cuenta Gratuita
               </Button>
             </SignInButton>
           </div>

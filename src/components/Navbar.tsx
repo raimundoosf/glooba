@@ -21,9 +21,9 @@ async function Navbar() {
           <div className="flex items-center">
             <Link
               href="/"
-              className="flex items-center gap-2 text-xl font-bold text-primary font-mono tracking-wider"
+              className="flex items-center gap-2 text-xl font-bold font-mono tracking-wider"
             >
-              <img src="/favicon.ico" alt="Glooba icon" className="h-6 w-6" />
+              <img src="favicon.ico" alt="Glooba icon" className="h-8 w-8" />
               <span>Glooba</span>
             </Link>
           </div>
