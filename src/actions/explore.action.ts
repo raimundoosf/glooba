@@ -174,11 +174,11 @@ export async function getFilteredCompanies(
           return { reviewsReceived: { _count: 'desc' as const } };
         case 'followers_desc':
           return { followers: { _count: 'desc' as const } };
-        case 'newest':
-          return { createdAt: 'desc' as const };
         case 'name_asc':
-        default:
           return { name: 'asc' as const };
+        case 'newest':
+        default:
+          return { createdAt: 'desc' as const };
       }
     };
 
