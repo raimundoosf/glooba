@@ -41,7 +41,7 @@ export default function ExploreClientWrapper({
   dbUserId, // Add dbUserId prop
 }: ExploreClientWrapperProps) {
   const [companies, setCompanies] = useState<CompanyCardData[]>(initialCompanies);
-  const [appliedFilters, setAppliedFilters] = useState<CompanyFiltersType>({ sortBy: 'name_asc' });
+  const [appliedFilters, setAppliedFilters] = useState<CompanyFiltersType>({ sortBy: 'newest' });
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(initialTotalCount);
   const [hasNextPage, setHasNextPage] = useState<boolean>(initialHasNextPage);

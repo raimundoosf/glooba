@@ -166,13 +166,13 @@ export async function getAllPosts(
   filters: PostFilters & PaginationOptions = {}
 ): Promise<PaginatedPostsResponse> {
   try {
-    const { 
-      searchTerm, 
-      categories, 
+    const {
+      searchTerm,
+      categories,
       location,
       sortBy = 'newest',
-      page = 1, 
-      pageSize = EXPLORE_POSTS_PAGE_SIZE 
+      page = 1,
+      pageSize = EXPLORE_POSTS_PAGE_SIZE
     } = filters;
 
     const currentPage = Math.max(1, Math.floor(page));
