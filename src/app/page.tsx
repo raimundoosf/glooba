@@ -117,7 +117,7 @@ export default async function HomePage() {
 
   return (
     <div>
-      {!user && <div className="block lg:hidden"><WelcomeMessage /></div>}
+      {!user && <div><WelcomeMessage /></div>}
 
       <Suspense fallback={<LoadingSkeleton />}>
         <ExploreClientWrapper

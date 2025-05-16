@@ -213,7 +213,7 @@ export function CompanyFilters({
         <div className="relative flex-1">
           <Input
             id="search"
-            placeholder="¿Qué quieres buscar?"
+            placeholder="¿Qué alternativa buscas?"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={handleSearchKeyDown}
