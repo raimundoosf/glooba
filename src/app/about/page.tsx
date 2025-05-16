@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { SignInButton } from '@clerk/nextjs';
 import {
-  CheckCircle,
   CloudOff,
   Handshake,
   Leaf,
@@ -14,6 +13,12 @@ import {
   TrendingUp,
   Users,
   UserPlus,
+  CircleCheckBig,
+  MessagesSquare,
+  Recycle,
+  Goal,
+  ChartNoAxesCombined,
+  HandHeart,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -37,7 +42,7 @@ export default async function AboutPage() {
         {/* --- Hero Section: What is Glooba & Core Promise --- */}
         <section className="text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
-            Tu puerta de entrada a un <span className="text-primary">futuro sostenible</span>
+            El poder de tu decisión para <br /> <span className="text-primary">generar el cambio</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
             Glooba es la plataforma que conecta a personas como tú con empresas y organizaciones que
@@ -67,10 +72,10 @@ export default async function AboutPage() {
           {/* Key features/pillars presented visually below CTA */}
           <div className="flex flex-wrap justify-center items-center gap-6 text-muted-foreground">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-600" /> Comunidad sostenible
+              <CircleCheckBig className="h-5 w-5 text-blue-600" /> Alternativas verificadas
             </div>
             <div className="flex items-center gap-2">
-              <Search className="h-5 w-5 text-blue-600" /> Buscador verificado
+              <Handshake className="h-5 w-5 text-green-600" /> Actores locales
             </div>
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-purple-600" /> Evaluación colaborativa
@@ -107,7 +112,7 @@ export default async function AboutPage() {
             <Card className="text-center hover:shadow-md transition-shadow p-6">
               {' '}
               {/* Added padding to Card */}
-              <MapPin className="h-10 w-10 text-blue-600 mx-auto mb-4" />{' '}
+              <MapPin className="h-10 w-10 text-teal-600 mx-auto mb-4" />{' '}
               {/* Larger icon, centered */}
               <CardTitle className="text-xl font-semibold mb-2">
                 Encontrar Fácilmente
@@ -123,18 +128,18 @@ export default async function AboutPage() {
               </CardContent>
             </Card>
             <Card className="text-center hover:shadow-md transition-shadow p-6">
-              <TrendingUp className="h-10 w-10 text-green-600 mx-auto mb-4" />{' '}
+              <ChartNoAxesCombined className="h-10 w-10 text-lime-600 mx-auto mb-4" />{' '}
               {/* Larger icon, centered */}
               <CardTitle className="text-xl font-semibold mb-2">Impulsar el Cambio</CardTitle>
               <CardContent className="p-0">
                 <p className="text-muted-foreground text-sm">
-                  Apoyando a empresas comprometidas y descubriendo formas de unirte al movimiento
+                  Apoyando a entidades comprometidas y descubriendo formas de unirte al movimiento
                   sostenible.
                 </p>
               </CardContent>
             </Card>
             <Card className="text-center hover:shadow-md transition-shadow p-6">
-              <Users className="h-10 w-10 text-purple-600 mx-auto mb-4" />{' '}
+              <MessagesSquare className="h-10 w-10 text-sky-600 mx-auto mb-4" />{' '}
               {/* Larger icon, centered */}
               <CardTitle className="text-xl font-semibold mb-2">Conectar y Colaborar</CardTitle>
               <CardContent className="p-0">
@@ -160,7 +165,7 @@ export default async function AboutPage() {
               {
                 title: 'Economía Circular',
                 description: 'Fomentando la reutilización y el reciclaje.',
-                icon: Lightbulb,
+                icon: Recycle,
               },
               {
                 title: 'Materiales Sustentables',
@@ -170,7 +175,7 @@ export default async function AboutPage() {
               {
                 title: 'Comunidad Local',
                 description: 'Apoyando a productores y negocios cercanos.',
-                icon: Handshake,
+                icon: HandHeart,
               },
               {
                 title: 'Disminución de Huella de Carbono',
@@ -248,37 +253,37 @@ export default async function AboutPage() {
             <div className="md:col-span-1 space-y-3">
               {' '}
               {/* Added space-y */}
-              <Lightbulb className="h-8 w-8 text-blue-600 mb-2" /> {/* Added icon */}
+              <Lightbulb className="h-8 w-8 text-yellow-600 mb-2" /> {/* Added icon */}
               <h3 className="text-xl font-semibold">¿Qué es Glooba?</h3>
               <p className="text-muted-foreground text-sm">
                 {' '}
                 {/* Reduced text size */}
                 Glooba es una plataforma que conecta a consumidores con iniciativas y ofertas
-                sostenibles en Latam, facilitando el consumo responsable y apoyando a empresas
+                sostenibles en Latam, facilitando el consumo responsable y apoyando a entidades
                 comprometidas.
               </p>
             </div>
             <div className="md:col-span-1 space-y-3">
               {' '}
               {/* Added space-y */}
-              <Handshake className="h-8 w-8 text-green-600 mb-2" /> {/* Added icon */}
+              <Goal className="h-8 w-8 text-green-600 mb-2" /> {/* Added icon */}
               <h3 className="text-xl font-semibold">Misión</h3>
               <p className="text-muted-foreground text-sm">
                 {' '}
                 {/* Reduced text size */}
                 Facilitar la transición global hacia el consumo responsable conectando personas con
-                empresas sostenibles. Empoderamos elecciones conscientes para un futuro mejor.
+                organizaciones sostenibles. Empoderamos elecciones conscientes para un futuro mejor.
               </p>
             </div>
             <div className="md:col-span-1 space-y-3">
               {' '}
               {/* Added space-y */}
-              <TrendingUp className="h-8 w-8 text-purple-600 mb-2" /> {/* Added icon */}
+              <TrendingUp className="h-8 w-8 text-cyan-600 mb-2" /> {/* Added icon */}
               <h3 className="text-xl font-semibold">Visión</h3>
               <p className="text-muted-foreground text-sm">
                 {' '}
                 {/* Reduced text size */}
-                Ser el ecosistema líder donde la sostenibilidad es accesible y la opción preferida
+                Ser la comunidad líder donde la sostenibilidad es accesible y la opción preferida
                 para todos, transformando decisiones en impacto positivo.
               </p>
             </div>
