@@ -10,12 +10,10 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { getCategoryEmoji } from '@/lib/constants';
@@ -56,7 +54,9 @@ export function MultiSelectCategories({
   renderBareList = false,
 }: MultiSelectCategoriesProps) {
   const [open, setOpen] = React.useState(false);
+  const [inputValue, setInputValue] = React.useState('');
   const selectedSet = React.useMemo(() => new Set(selectedCategories), [selectedCategories]);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
 
   /**
    * Handles category selection/deselection and maintains sorted order.
@@ -130,16 +130,40 @@ export function MultiSelectCategories({
     return commandComponent; // Render only the command list
   }
 
+  // Event handlers
+  const handleToggle = React.useCallback(() => {
+    if (!disabled) {
+      setOpen((prev) => !prev);
+    }
+  }, [disabled]);
+
+  const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleToggle();
+  };
+
   // Original rendering with Popover
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <div className="relative w-full">
+      <div 
+        className={cn(
+          'flex items-center w-full',
+          className
+        )}
+      >
         <Button
+          type="button"
+          ref={buttonRef}
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn('w-full justify-between font-normal', className)}
+          className={cn(
+            'w-full justify-between font-normal',
+            open && 'border-primary ring-2 ring-primary/20'
+          )}
           disabled={disabled}
+          onClick={handleButtonClick}
         >
           <span className="truncate">
             {selectedCategories.length > 0
@@ -148,10 +172,19 @@ export function MultiSelectCategories({
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        {commandComponent} 
-      </PopoverContent>
-    </Popover>
+      </div>
+      
+      {open && !renderBareList && (
+        <div
+          className={cn(
+            'absolute z-50 top-full mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none'
+          )}
+        >
+          {commandComponent}
+        </div>
+      )}
+      
+      {renderBareList && commandComponent}
+    </div>
   );
 }
