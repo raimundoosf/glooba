@@ -188,7 +188,12 @@ export default function ExploreClientWrapper({
         if (currentPage === 1) {
           setCompanies(results.companies);
         } else {
-          setCompanies((prevCompanies) => [...prevCompanies, ...results.companies]);
+          setCompanies((prevCompanies) => {
+            const newCompanies = results.companies.filter(
+              (newCompany) => !prevCompanies.some((prevCompany) => prevCompany.id === newCompany.id)
+            );
+            return [...prevCompanies, ...newCompanies];
+          });
         }
         setTotalCount(results.totalCount);
         setHasNextPage(results.hasNextPage);
