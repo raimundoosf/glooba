@@ -51,18 +51,18 @@ export default async function AboutPage() {
           {/* Call to action integrated early */}
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12 max-w-2xl mx-auto">
             <Link href="/">
-              <Button 
-                size="default" 
-                variant="default" 
+              <Button
+                size="default"
+                variant="default"
                 className="font-semibold transition-all duration-200 hover:scale-105 hover:shadow-lg"
               >
                 <Search className="mr-2 h-5 w-5" /> Encuentra Iniciativas Ahora
               </Button>
             </Link>
             <SignInButton mode="modal">
-              <Button 
-                size="default" 
-                variant="outline" 
+              <Button
+                size="default"
+                variant="outline"
                 className="font-semibold transition-all duration-200 hover:scale-105 hover:bg-primary/10"
               >
                 <UserPlus className="mr-2 h-5 w-5" /> Únete a la Comunidad
@@ -144,8 +144,8 @@ export default async function AboutPage() {
               <CardTitle className="text-xl font-semibold mb-2">Conectar y Colaborar</CardTitle>
               <CardContent className="p-0">
                 <p className="text-muted-foreground text-sm">
-                  Interactúa con una comunidad, comparte experiencias y ayuda a verificar
-                  iniciativas.
+                  Interactúa con una comunidad, sigue organizaciones, comparte experiencias y ayuda
+                  a verificar iniciativas.
                 </p>
               </CardContent>
             </Card>
@@ -301,18 +301,18 @@ export default async function AboutPage() {
           </p>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12 max-w-2xl mx-auto">
             <Link href="/">
-              <Button 
-                size="default" 
-                variant="default" 
+              <Button
+                size="default"
+                variant="default"
                 className="font-semibold transition-all duration-200 hover:scale-105 hover:shadow-lg"
               >
                 <Search className="mr-2 h-5 w-5" /> Explorar Iniciativas
               </Button>
             </Link>
             <SignInButton mode="modal">
-              <Button 
-                size="default" 
-                variant="outline" 
+              <Button
+                size="default"
+                variant="outline"
                 className="font-semibold transition-all duration-200 hover:scale-105 hover:bg-primary/10"
               >
                 <UserPlus className="mr-2 h-5 w-5" /> Crear Cuenta Gratuita
