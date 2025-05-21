@@ -9,8 +9,10 @@ import {
   CompanyFiltersType,
   getFilteredCompanies,
   PaginatedCompaniesResponse,
+  SortOption,
 } from '@/actions/explore.action';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { CompanyFilters, ViewMode } from './CompanyFilters';
 import CompanyResults from './CompanyResults';
 import { ExplorePostsList } from './ExplorePostsList';
@@ -33,6 +35,26 @@ interface ExploreClientWrapperProps {
  * @param {ExploreClientWrapperProps} props - Component props
  * @returns {JSX.Element} The explore wrapper with filters and results
  */
+/**
+ * Parses company filters from URL search parameters.
+ * @param {URLSearchParams} params - The URL search parameters.
+ * @returns {CompanyFiltersType} The parsed filters.
+ */
+const parseFiltersFromParams = (params: URLSearchParams): CompanyFiltersType => {
+  const filters: CompanyFiltersType = {
+    searchTerm: params.get('searchTerm')?.trim() || undefined,
+    location: params.get('location')?.trim() || undefined,
+    categories: params.get('categories')
+      ? params.get('categories')!.split(',').map(c => decodeURIComponent(c.trim())).filter(Boolean)
+      : undefined,
+    sortBy: (params.get('sortBy') as SortOption) || 'newest',
+  };
+  if (filters.categories && filters.categories.length === 0) {
+    filters.categories = undefined;
+  }
+  return filters;
+};
+
 export default function ExploreClientWrapper({
   initialCompanies,
   initialTotalCount,
@@ -40,54 +62,85 @@ export default function ExploreClientWrapper({
   allCategories,
   dbUserId, // Add dbUserId prop
 }: ExploreClientWrapperProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [companies, setCompanies] = useState<CompanyCardData[]>(initialCompanies);
-  const [appliedFilters, setAppliedFilters] = useState<CompanyFiltersType>({ sortBy: 'newest' });
+  const [appliedFilters, setAppliedFilters] = useState<CompanyFiltersType>(() => {
+    if (typeof window !== 'undefined') {
+      const initialUrlParams = new URLSearchParams(window.location.search);
+      const filtersFromUrl = parseFiltersFromParams(initialUrlParams);
+      const hasUrlFilters = Object.keys(filtersFromUrl).some(key => {
+        const value = filtersFromUrl[key as keyof CompanyFiltersType];
+        if (key === 'sortBy') return value !== 'newest';
+        return value !== undefined && (Array.isArray(value) ? value.length > 0 : true);
+      });
+      if (hasUrlFilters) {
+        return filtersFromUrl;
+      }
+    }
+    return { sortBy: 'newest' }; // Default filters
+  });
+
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(initialTotalCount);
   const [hasNextPage, setHasNextPage] = useState<boolean>(initialHasNextPage);
   const [isFiltering, startFilteringTransition] = useTransition();
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   const [currentViewMode, setCurrentViewMode] = useState<ViewMode>('list');
+  const [isDataInitializedFromUrl, setIsDataInitializedFromUrl] = useState<boolean>(false);
 
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
+  // Effect to synchronize filters from URL to state
+  useEffect(() => {
+    const filtersFromUrl = parseFiltersFromParams(searchParams);
+    
+    // Normalize appliedFilters for comparison (empty array to undefined)
+    const currentFiltersForComparison = { ...appliedFilters };
+    if (currentFiltersForComparison.categories && currentFiltersForComparison.categories.length === 0) {
+      currentFiltersForComparison.categories = undefined;
+    }
+
+    if (JSON.stringify(filtersFromUrl) !== JSON.stringify(currentFiltersForComparison)) {
+      setAppliedFilters(filtersFromUrl);
+      setCurrentPage(1); // Reset to page 1 when URL filters are applied externally
+      setCompanies([]); // Clear companies to show loading or new results
+      setHasNextPage(false); // Reset pagination
+      setIsDataInitializedFromUrl(true); // Mark that data will be fetched based on URL params
+    }
+  }, [searchParams]); // Removed appliedFilters from deps
+
   /**
-   * Handles filter changes and triggers refetching of filtered data.
+   * Handles filter changes from the CompanyFilters component and updates the URL.
    */
   const handleFilterChange = useCallback(
-    (newFilters: CompanyFiltersType & { viewMode: ViewMode }) => {
+    (newFiltersFromComponent: CompanyFiltersType & { viewMode: ViewMode }) => {
       const filtersToApply: CompanyFiltersType = {
-        searchTerm: newFilters.searchTerm || undefined,
+        searchTerm: newFiltersFromComponent.searchTerm?.trim() || undefined,
         categories:
-          newFilters.categories && newFilters.categories.length > 0
-            ? newFilters.categories
+          newFiltersFromComponent.categories && newFiltersFromComponent.categories.length > 0
+            ? newFiltersFromComponent.categories
             : undefined,
-        location: newFilters.location || undefined,
-        sortBy: newFilters.sortBy || 'name_asc',
+        location: newFiltersFromComponent.location?.trim() || undefined,
+        sortBy: newFiltersFromComponent.sortBy || 'newest',
       };
 
-      setAppliedFilters(filtersToApply);
-      setCurrentPage(1);
-      setCompanies([]);
-      setHasNextPage(false);
+      const params = new URLSearchParams();
+      if (filtersToApply.searchTerm) params.set('searchTerm', filtersToApply.searchTerm);
+      if (filtersToApply.location) params.set('location', filtersToApply.location);
+      if (filtersToApply.categories && filtersToApply.categories.length > 0) {
+        params.set('categories', filtersToApply.categories.map(c => encodeURIComponent(c)).join(','));
+      }
+      if (filtersToApply.sortBy) params.set('sortBy', filtersToApply.sortBy);
 
-      startFilteringTransition(async () => {
-        try {
-          const results = await getFilteredCompanies(filtersToApply, { page: 1 });
-          setCompanies(results.companies);
-          setTotalCount(results.totalCount);
-          setHasNextPage(results.hasNextPage);
-          setCurrentPage(results.currentPage);
-        } catch (error) {
-          console.error('Failed to fetch filtered companies:', error);
-          setCompanies([]);
-          setTotalCount(0);
-          setHasNextPage(false);
-        }
-      });
+      const queryString = params.toString();
+      router.push(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
+      // The useEffect listening to searchParams will update appliedFilters and trigger data fetch.
     },
-    [startFilteringTransition]
+    [router, pathname]
   );
 
   /**
@@ -105,33 +158,65 @@ export default function ExploreClientWrapper({
     // handleFilterChange({ ...appliedFilters, viewMode: newViewMode });
   }, []);
 
-  /**
-   * Fetches and appends the next page of companies when triggered by infinite scroll.
-   * Handles loading states, error handling, and data appending.
-   */
-  const loadMoreCompanies = useCallback(async () => {
-    // Prevent fetching if already loading or no more pages
-    if (isLoadingMore || isFiltering || !hasNextPage) return;
+  // Effect to fetch/refetch data when appliedFilters or currentPage changes
+  useEffect(() => {
+    // Guard against running on server or if essential parts aren't ready.
+    if (typeof window === 'undefined') return;
 
-    setIsLoadingMore(true);
-    const nextPage = currentPage + 1;
+    const filtersAreDefault = JSON.stringify(appliedFilters) === JSON.stringify({ sortBy: 'newest' });
 
-    try {
-      console.log(`Loading more (Page ${nextPage}):`, appliedFilters);
-      const results: PaginatedCompaniesResponse = await getFilteredCompanies(appliedFilters, {
-        page: nextPage,
-      });
-      setCompanies((prevCompanies) => [...prevCompanies, ...results.companies]);
-      setTotalCount(results.totalCount);
-      setHasNextPage(results.hasNextPage);
-      setCurrentPage(results.currentPage);
-    } catch (error) {
-      console.error('Failed to load more companies:', error);
-      // Consider showing an error message to the user
-    } finally {
-      setIsLoadingMore(false);
+    // If initial load, no URL params (filtersAreDefault), initialCompanies are provided, and we haven't fetched based on URL yet.
+    if (currentPage === 1 && filtersAreDefault && initialCompanies.length > 0 && !isDataInitializedFromUrl) {
+      setCompanies(initialCompanies);
+      setTotalCount(initialTotalCount);
+      setHasNextPage(initialHasNextPage);
+      // setIsDataInitializedFromUrl remains false, so if user applies filters then comes back to default, it will fetch.
+      return; // Use server-passed initial data
     }
-  }, [hasNextPage, isLoadingMore, isFiltering, currentPage, appliedFilters]);
+    
+    // Proceed with fetching
+    startFilteringTransition(async () => {
+      const loadingForPageOne = currentPage === 1;
+      if (loadingForPageOne) {
+        // Handled by isFiltering transition state if needed for skeletons
+      } else {
+        setIsLoadingMore(true);
+      }
+
+      try {
+        const results = await getFilteredCompanies(appliedFilters, { page: currentPage });
+        if (currentPage === 1) {
+          setCompanies(results.companies);
+        } else {
+          setCompanies((prevCompanies) => [...prevCompanies, ...results.companies]);
+        }
+        setTotalCount(results.totalCount);
+        setHasNextPage(results.hasNextPage);
+        // setCurrentPage is already managed by filter changes (reset to 1) or loadMore (incremented)
+      } catch (error) {
+        console.error('Failed to fetch companies based on filters/page:', error);
+        if (currentPage === 1) {
+          setCompanies([]);
+          setTotalCount(0);
+        }
+        setHasNextPage(false); // Stop pagination on error
+      } finally {
+        if (!loadingForPageOne) {
+          setIsLoadingMore(false);
+        }
+        setIsDataInitializedFromUrl(true); // Mark that a fetch attempt (or use of initial data) has occurred.
+      }
+    });
+  }, [appliedFilters, currentPage, initialCompanies, initialTotalCount, initialHasNextPage, isDataInitializedFromUrl, startFilteringTransition]);
+
+  /**
+   * Increments current page to load more companies for infinite scroll.
+   */
+  const loadMoreCompanies = useCallback(() => {
+    if (isLoadingMore || isFiltering || !hasNextPage) return;
+    setCurrentPage((prevPage) => prevPage + 1);
+    // The useEffect listening to appliedFilters & currentPage will handle the fetch.
+  }, [hasNextPage, isLoadingMore, isFiltering]);
 
   /**
    * Effect that sets up and manages the Intersection Observer for infinite scrolling.
@@ -162,11 +247,13 @@ export default function ExploreClientWrapper({
         observerRef.current.disconnect();
       }
     };
-    // Re-run effect if loading states or hasNextPage change, or if loadMoreCompanies function reference changes
-  }, [hasNextPage, isLoadingMore, isFiltering, loadMoreCompanies]);
+    // Re-run effect if these dependencies change, ensuring observer is correctly managed.
+  }, [hasNextPage, isLoadingMore, isFiltering, loadMoreCompanies, appliedFilters]); // Added appliedFilters
 
   // Combined loading state for disabling filters during any loading operation
-  const isCurrentlyLoadingFilters = isFiltering || isLoadingMore;
+  // isFiltering is true during startFilteringTransition for page 1 fetches.
+  // isLoadingMore is true for subsequent page fetches.
+  const isCurrentlyLoadingFilters = isFiltering || (isLoadingMore && currentPage > 1);
 
   return (
     <div className="space-y-6">
@@ -179,6 +266,7 @@ export default function ExploreClientWrapper({
         initialSearchTerm={appliedFilters.searchTerm}
         initialLocation={appliedFilters.location}
         initialCategories={appliedFilters.categories}
+        initialSortBy={appliedFilters.sortBy}
       />
       {currentViewMode === 'list' ? (
         <CompanyResults
