@@ -39,3 +39,6 @@ next-env.d.ts
 # windsurf
 .windsurfrules
 
+# config files
+.prettierrc
+.eslintrc.js
