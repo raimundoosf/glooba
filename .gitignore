@@ -36,12 +36,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# windsurf
-.windsurfrules
-
 # config files
 .prettierrc
 .eslintrc.js
 
 # ide specific
 /.vscode/
+
+# windsurf
+.windsurfrules
+.windsurf/
