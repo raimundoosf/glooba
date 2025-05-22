@@ -42,3 +42,6 @@ next-env.d.ts
 # config files
 .prettierrc
 .eslintrc.js
+
+# ide specific
+/.vscode/
