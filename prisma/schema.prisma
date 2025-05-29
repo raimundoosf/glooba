@@ -139,6 +139,19 @@ model Notification {
   @@index([userId, createdAt])
 }
 
+model CompanyRequest {
+  id             String   @id @default(cuid())
+  name           String
+  industry       String
+  contactName    String
+  contactEmail   String
+  phone          String?
+  website        String?
+  description    String
+  sustainability String?
+  createdAt      DateTime @default(now())
+}
+
 enum NotificationType {
   LIKE
   COMMENT
