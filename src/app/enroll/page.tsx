@@ -82,7 +82,7 @@ export default function EnrollmentPage() {
       const res = await submitEnrollment(formData);
       if (res.success) {
         toast.success(
-          "¡Gracias por su interés! Revisaremos su solicitud y nos pondremos en contacto a la brevedad.",
+          "¡Gracias por tu interés! Revisaremos tu solicitud y nos pondremos en contacto a la brevedad.",
           {
             duration: 5000,
           }
