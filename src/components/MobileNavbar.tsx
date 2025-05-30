@@ -9,11 +9,13 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { SignInButton, useAuth, useClerk, useUser } from '@clerk/nextjs';
 import {
   BellIcon,
+  FileText,
   HomeIcon,
   LogOutIcon,
   MenuIcon,
   MoonIcon,
   RssIcon,
+  Shield,
   SunIcon,
   UserIcon,
 } from 'lucide-react';
@@ -48,7 +50,7 @@ function MobileNavbar() {
   }, [isSignedIn]);
 
   const MenuLink = ({ href, icon: Icon, label }: { href: string; icon: any; label: string }) => (
-    <Button variant="ghost" className="flex items-center gap-3 justify-start" asChild>
+    <Button variant="ghost" className="flex items-center gap-3 justify-start w-full" asChild>
       <Link href={href} onClick={handleCloseMenu}>
         <Icon className="w-4 h-4" />
         {label}
@@ -108,6 +110,12 @@ function MobileNavbar() {
                 </Button>
               </SignInButton>
             )}
+            
+            <div className="pt-4 mt-4 border-t">
+              <p className="text-xs text-muted-foreground px-2 mb-2">Legal</p>
+              <MenuLink href="/terms" icon={FileText} label="Términos de Servicio" />
+              <MenuLink href="/privacy" icon={Shield} label="Política de Privacidad" />
+            </div>
           </nav>
         </SheetContent>
       </Sheet>

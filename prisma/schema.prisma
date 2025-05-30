@@ -41,6 +41,7 @@ model User {
 
   notifications        Notification[] @relation("userNotifications") // notifications received by a user
   notificationsCreated Notification[] @relation("notificationCreator") // notifications triggered by a user
+  feedbacks           Feedback[]      @relation("userFeedbacks") // feedback submitted by the user
 }
 
 model Post {
@@ -120,6 +121,16 @@ model Follows {
   @@index([followerId, followingId]) // composite index for faster queries
 }
 
+model Feedback {
+  id        String   @id @default(cuid())
+  content   String
+  email     String?  // Optional email for follow-up
+  userId    String?  // Optional user ID if user is logged in
+  user      User?    @relation("userFeedbacks", fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Notification {
   id        String           @id @default(cuid())
   userId    String
@@ -137,6 +148,19 @@ model Notification {
   comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model CompanyRequest {
+  id             String   @id @default(cuid())
+  name           String
+  industry       String
+  contactName    String
+  contactEmail   String
+  phone          String?
+  website        String?
+  description    String
+  sustainability String?
+  createdAt      DateTime @default(now())
 }
 
 enum NotificationType {
