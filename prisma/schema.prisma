@@ -41,6 +41,7 @@ model User {
 
   notifications        Notification[] @relation("userNotifications") // notifications received by a user
   notificationsCreated Notification[] @relation("notificationCreator") // notifications triggered by a user
+  feedbacks           Feedback[]      @relation("userFeedbacks") // feedback submitted by the user
 }
 
 model Post {
@@ -118,6 +119,16 @@ model Follows {
 
   @@id([followerId, followingId]) // composite primary key prevents duplicate follows
   @@index([followerId, followingId]) // composite index for faster queries
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  content   String
+  email     String?  // Optional email for follow-up
+  userId    String?  // Optional user ID if user is logged in
+  user      User?    @relation("userFeedbacks", fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Notification {
