@@ -52,14 +52,14 @@ export function FeedbackForm({ onFeedbackSubmitted }: FeedbackFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>Deja tu comentario</CardTitle>
-        <CardDescription>
+    <Card className="w-full max-w-2xl mx-auto px-6">
+      <CardHeader className="px-0 pt-6">
+        <CardTitle className="text-xl sm:text-2xl">Deja tu comentario</CardTitle>
+        <CardDescription className="text-base sm:text-sm">
           Nos encantaría escuchar tus pensamientos, sugerencias o reportar cualquier problema que hayas encontrado.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0 pb-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Textarea
@@ -85,7 +85,7 @@ export function FeedbackForm({ onFeedbackSubmitted }: FeedbackFormProps) {
                 disabled={isPending}
                 className="w-full"
               />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm sm:text-xs text-muted-foreground">
                 Si deseas que te contactemos, déjanos tu correo electrónico.
               </p>
             </div>
