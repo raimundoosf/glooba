@@ -72,7 +72,9 @@ export default function EnrollmentPage() {
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      toast.error("Por favor, corrige los errores en el formulario.");
+      toast.error("Por favor, corrige los errores en el formulario.", {
+        duration: 5000,
+      });
       return;
     }
     setErrors({});
@@ -80,7 +82,10 @@ export default function EnrollmentPage() {
       const res = await submitEnrollment(formData);
       if (res.success) {
         toast.success(
-          "¡Gracias por su interés! Revisaremos su solicitud y nos pondremos en contacto a la brevedad."
+          "¡Gracias por su interés! Revisaremos su solicitud y nos pondremos en contacto a la brevedad.",
+          {
+            duration: 5000,
+          }
         );
         setFormData({
           companyName: "",
@@ -93,16 +98,18 @@ export default function EnrollmentPage() {
           sustainability: "",
         });
       } else {
-        toast.error(res.error || "Ocurrió un error inesperado.");
+        toast.error(res.error || "Ocurrió un error inesperado.", {
+          duration: 5000,
+        });
       }
     });
   };
 
   return (
-    <div className="container mx-auto px-4">
+    <div className="container mx-auto">
       <Card className="max-w-3xl mx-auto">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold">
+          <CardTitle className="text-2xl md:text-3xl font-bold text-pretty break-words text-center mb-2">
             Registro de Empresas/Organizaciones
           </CardTitle>
           <CardDescription>
@@ -255,7 +262,11 @@ export default function EnrollmentPage() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-4 pt-4">
+            <div className="flex items-center justify-between space-x-4 pt-4">
+              <p className="text-sm text-muted-foreground">
+                Revisaremos su solicitud y nos pondremos en contacto dentro de
+                3-5 días hábiles.
+              </p>
               <Button
                 type="submit"
                 className="w-full md:w-auto"
@@ -263,10 +274,6 @@ export default function EnrollmentPage() {
               >
                 {isPending ? "Enviando..." : "Enviar Solicitud"}
               </Button>
-              <p className="text-sm text-muted-foreground">
-                Revisaremos su solicitud y nos pondremos en contacto dentro de
-                3-5 días hábiles.
-              </p>
             </div>
           </form>
         </CardContent>
