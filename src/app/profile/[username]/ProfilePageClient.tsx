@@ -7,6 +7,7 @@
 import { getUserPosts, updateProfile } from '@/actions/profile.action';
 import { getCompanyReviewsAndStats, ReviewWithAuthor } from '@/actions/review.action';
 import { toggleFollow } from '@/actions/user.action';
+import { updateUserScope } from '@/actions/scope.actions'; // Nueva importación para la acción de alcance
 import { MultiSelectCategories } from '@/components/MultiSelectCategories';
 import PostCard from '@/components/PostCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -48,6 +49,8 @@ import { DisplayStars } from '@/components/reviews/DisplayStars';
 import { LeaveReviewForm } from '@/components/reviews/LeaveReviewForm';
 import { ReviewsSection } from '@/components/reviews/ReviewsSection';
 import { generateReactHelpers } from '@uploadthing/react';
+import { ScopeType, Region, Commune } from '@prisma/client'; // Nuevas importaciones de tipos
+import { useRouter } from 'next/navigation'; // <<< IMPORTAR useRouter
 
 /**
  * Interface defining the user profile type
@@ -66,6 +69,12 @@ interface UserProfile {
   createdAt: Date;
   categories: string[];
   backgroundImage: string | null;
+  // Nueva propiedad para el área de servicio
+  CompanyServiceArea: {
+    scope: ScopeType;
+    regionId: string | null;
+    communeId: string | null;
+  }[];
   followers: { followerId: string }[];
   _count: {
     posts: number;
@@ -134,6 +143,7 @@ function ProfilePageClient({
   user,
   initialReviewData,
 }: ProfilePageClientProps) {
+  const router = useRouter(); // <<< OBTENER INSTANCIA DEL ROUTER
   const { user: currentUser, isLoaded: isClerkLoaded } = useUser();
   const { startUpload, isUploading } = useUploadThing('profileBackground');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -146,6 +156,14 @@ function ProfilePageClient({
   const [newBackgroundUrl, setNewBackgroundUrl] = useState<string | null>(user.backgroundImage);
   const [profilePicPreview, setProfilePicPreview] = useState<string | null>(user.image);
 
+  // --- Estados para el Alcance Geográfico ---
+  const [scope, setScope] = useState<ScopeType>('COUNTRY');
+  const [allRegions, setAllRegions] = useState<Region[]>([]);
+  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+  const [communesForSelectedRegions, setCommunesForSelectedRegions] = useState<Commune[]>([]);
+  const [selectedCommunes, setSelectedCommunes] = useState<string[]>([]);
+  // --- Fin de estados para el Alcance Geográfico ---
+
   const [editForm, setEditForm] = useState<ProfileEditFormData>({
     name: user.name ?? '',
     bio: user.bio ?? '',
@@ -154,6 +172,47 @@ function ProfilePageClient({
     isCompany: user.isCompany ?? false,
   });
   const [selectedCategories, setSelectedCategories] = useState<string[]>(user.categories ?? []);
+
+  // --- Nuevos UseEffects para Cargar Datos Geográficos ---
+  useEffect(() => {
+    // Cargar todas las regiones al montar el componente
+    const fetchRegions = async () => {
+      try {
+        const res = await fetch('/api/regions');
+        if (!res.ok) throw new Error('Failed to fetch regions');
+        const data = await res.json();
+        setAllRegions(data);
+      } catch (error) {
+        console.error(error);
+        toast.error('No se pudieron cargar las regiones.');
+      }
+    };
+    fetchRegions();
+  }, []);
+
+  useEffect(() => {
+    // Cargar comunas cuando el usuario selecciona regiones en el modo 'COMMUNE'
+    if (scope !== 'COMMUNE' || selectedRegions.length === 0) {
+      setCommunesForSelectedRegions([]);
+      return;
+    }
+
+    const fetchCommunes = async () => {
+      try {
+        const promises = selectedRegions.map((regionId) =>
+          fetch(`/api/regions/${regionId}/communes`).then((res) => res.json())
+        );
+        const results = await Promise.all(promises);
+        setCommunesForSelectedRegions(results.flat());
+      } catch (error) {
+        console.error(error);
+        toast.error('No se pudieron cargar las comunas.');
+      }
+    };
+
+    fetchCommunes();
+  }, [selectedRegions, scope]);
+  // --- Fin de UseEffects ---
 
   // Update form when user data changes
   useEffect(() => {
@@ -169,6 +228,33 @@ function ProfilePageClient({
       setNewProfilePic(null);
       setProfilePicPreview(user.image);
       setNewBackgroundUrl(user.backgroundImage);
+
+      // --- Lógica para inicializar el estado del alcance ---
+      const serviceAreas = user.CompanyServiceArea ?? [];
+      if (serviceAreas.length > 0) {
+        const firstArea = serviceAreas[0];
+        setScope(firstArea.scope);
+
+        if (firstArea.scope === 'REGION') {
+          setSelectedRegions(serviceAreas.map((area) => area.regionId).filter(Boolean) as string[]);
+          setSelectedCommunes([]); // Limpiar comunas si el scope es regional
+        } else if (firstArea.scope === 'COMMUNE') {
+          const communeIds = serviceAreas.map((area) => area.communeId).filter(Boolean) as string[];
+          const regionIds = serviceAreas.map((area) => area.regionId).filter(Boolean) as string[];
+          
+          setSelectedCommunes(communeIds);
+          // Pre-seleccionar las regiones únicas a las que pertenecen las comunas guardadas
+          setSelectedRegions([...new Set(regionIds)]);
+        } else {
+          // Limpiar selecciones si el scope es Nacional
+          setSelectedRegions([]);
+          setSelectedCommunes([]);
+        }
+      } else {
+        setScope('COUNTRY');
+        setSelectedRegions([]);
+      }
+      // --- Fin de la lógica de inicialización ---
     }
   }, [user, isEditDialogOpen]);
 
@@ -200,94 +286,91 @@ function ProfilePageClient({
     setIsFollowingState(initialIsFollowing);
   }, [user, initialIsFollowing]);
 
-  const handleEditSubmit = async () => {
-    if (!currentUser) return;
-
-    const toastId = toast.loading('Guardando cambios...');
-    let newImageUrl: string | undefined | null = currentUser.imageUrl;
+  const handleEditSubmit = () => {
+    if (!currentUser) {
+      toast.error('Debes iniciar sesión para editar tu perfil.');
+      return;
+    }
 
     startEditTransition(async () => {
+      const toastId = toast.loading('Guardando cambios...');
+      let newImageUrl = user.image; // Comienza con la URL de la imagen actual
+
       try {
+        // 1. Maneja la actualización de la foto de perfil a través de Clerk si se establece una nueva.
         if (newProfilePic) {
           try {
             await currentUser.setProfileImage({
               file: newProfilePic,
             });
-            // Refetch or access the updated user object to get the new URL
-            // Assuming Clerk updates the currentUser object in place or provides a new one:
-            // It's safer to potentially refetch the user or rely on the structure
-            // returned by Clerk's methods if they provide the updated user state.
-            // For now, let's assume currentUser object is updated.
-            await currentUser.reload(); // Explicitly reload the user data from Clerk
-            newImageUrl = currentUser.imageUrl; // Get the *new* URL after update
-            setNewProfilePic(null); // Clear the preview state
-            toast.success('Imagen de perfil actualizada.', { id: toastId }); // Immediate feedback for image
+            await currentUser.reload(); // Recarga explícitamente los datos del usuario desde Clerk
+            newImageUrl = currentUser.imageUrl; // Obtiene la *nueva* URL después de la actualización
+            setNewProfilePic(null); // Limpia el estado del archivo
           } catch (clerkError: any) {
-            console.error('Clerk update error:', clerkError);
-            toast.error(
-              `Error al actualizar imagen: ${clerkError.errors?.[0]?.message || clerkError.message || 'Error desconocido'}`,
-              { id: toastId }
+            console.error('Error de actualización de Clerk:', clerkError);
+            throw new Error(
+              `Error al actualizar imagen: ${
+                clerkError.errors?.[0]?.message || clerkError.message || 'Error desconocido'
+              }`
             );
-            return; // Stop if Clerk update fails
           }
         }
 
-        // 2. Prepare data for database update (using the potentially new image URL)
-        const profileDataToUpdate: {
-          username: string;
-          bio?: string;
-          website?: string;
-          categories?: string[];
-          imageUrl?: string | null; // Ensure this uses the latest URL
-          backgroundImage?: string | null; // Corrected: Add background image URL
-        } = {
-          username: user.username, // Add username from the user prop
+        // 2. Prepara los datos para la actualización de la base de datos (usando la URL de imagen potencialmente nueva)
+        const profileDataToUpdate = {
           ...editForm,
+          username: user.username,
           categories: selectedCategories,
-          imageUrl: newImageUrl, // Use the URL obtained after potential Clerk update
-          backgroundImage: newBackgroundUrl, // Corrected: Add the new background URL
+          imageUrl: newImageUrl, // Usa la URL obtenida después de la posible actualización de Clerk
+          backgroundImage: newBackgroundUrl,
         };
 
-        // 3. Update profile details in the database via server action
-        const result = await updateProfile(profileDataToUpdate);
+        // 3. Actualiza los detalles del perfil en nuestra base de datos a través de la acción del servidor
+        const dbResult = await updateProfile(profileDataToUpdate);
+        if (dbResult.error) {
+          throw new Error(`Error al guardar detalles: ${dbResult.error}`);
+        }
 
-        if (result.error) {
-          console.error('Database update error:', result.error);
-          toast.error(`Error al guardar detalles: ${result.error}`);
-        } else {
-          toast.success('Perfil actualizado con éxito.', { id: toastId });
-          setIsEditDialogOpen(false); // Close dialog on success
-        }
-      } catch (error: any) {
-        // Catch any unexpected errors during the process
-        console.error('Profile update failed:', error);
-        if (toastId) {
-          toast.error(`Error inesperado: ${error.message || 'Ocurrió un problema'}`, {
-            id: toastId,
+        // 4. Actualiza el alcance de la empresa si corresponde
+        if (editForm.isCompany) {
+          await updateUserScope({
+            companyId: user.id,
+            scope: scope,
+            regions: selectedRegions,
+            communes: selectedCommunes,
           });
-        } else {
-          toast.error(`Error inesperado: ${error.message || 'Ocurrió un problema'}`);
         }
+
+        toast.success('Perfil actualizado con éxito!', { id: toastId });
+        router.refresh(); // Forzar una actualización de datos del lado del servidor
+        setIsEditDialogOpen(false); // Cierra el diálogo en caso de éxito
+      } catch (error) {
+        console.error('Error al guardar el perfil:', error);
+        toast.error(
+          error instanceof Error ? error.message : 'Ocurrió un error desconocido.',
+          { id: toastId }
+        );
       }
     });
   };
 
-  // Update selected categories state from MultiSelect component
   const handleCategoriesChange = (newSelection: string[]) => {
     if (editForm.isCompany && newSelection.length > 5) {
       toast.error('Las cuentas de empresa solo pueden seleccionar hasta 5 categorías.');
-      if (newSelection.length > selectedCategories.length) return; // Prevent adding if over limit
+      if (newSelection.length > selectedCategories.length) return;
     }
     setSelectedCategories(newSelection);
   };
 
-  // Handle removing a category via its badge
   const handleRemoveCategory = (categoryToRemove: string) => {
     setSelectedCategories((prev) => prev.filter((cat) => cat !== categoryToRemove));
   };
 
   const handleFollow = async () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      toast.error('Debes iniciar sesión para seguir a un usuario.');
+      return;
+    }
     setIsFollowingState(!isFollowingState);
     try {
       const result = await toggleFollow(user.id);
@@ -852,6 +935,126 @@ function ProfilePageClient({
                   </p>
                 )}
               </div>
+
+              {/* --- Nuevos campos para el Alcance Geográfico --- */}
+              {editForm.isCompany && (
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="text-lg font-semibold">Alcance Geográfico</h3>
+                  <div className="flex items-center space-x-6">
+                    <Label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="scope"
+                        value="COUNTRY"
+                        checked={scope === 'COUNTRY'}
+                        onChange={() => setScope('COUNTRY')}
+                      />
+                      <span>Nacional</span>
+                    </Label>
+                    <Label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="scope"
+                        value="REGION"
+                        checked={scope === 'REGION'}
+                        onChange={() => setScope('REGION')}
+                      />
+                      <span>Regional</span>
+                    </Label>
+                    <Label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="scope"
+                        value="COMMUNE"
+                        checked={scope === 'COMMUNE'}
+                        onChange={() => setScope('COMMUNE')}
+                      />
+                      <span>Comunal</span>
+                    </Label>
+                  </div>
+
+                  {scope === 'REGION' && (
+                    <div className="space-y-2">
+                      <Label>Selecciona Regiones</Label>
+                      <ScrollArea className="h-40 w-full rounded-md border p-2">
+                        {allRegions.map((region) => (
+                          <div key={region.id} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={`region-${region.id}`}
+                              checked={selectedRegions.includes(region.id)}
+                              onChange={(e) => {
+                                setSelectedRegions((prev) =>
+                                  e.target.checked
+                                    ? [...prev, region.id]
+                                    : prev.filter((id) => id !== region.id)
+                                );
+                              }}
+                            />
+                            <label htmlFor={`region-${region.id}`}>{region.name}</label>
+                          </div>
+                        ))}
+                      </ScrollArea>
+                    </div>
+                  )}
+
+                  {scope === 'COMMUNE' && (
+                    <div className="flex space-x-4">
+                      <div className="w-1/2 space-y-2">
+                        <Label>1. Selecciona Regiones</Label>
+                        <ScrollArea className="h-40 w-full rounded-md border p-2">
+                          {allRegions.map((region) => (
+                            <div key={region.id} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={`commune-region-${region.id}`}
+                                checked={selectedRegions.includes(region.id)}
+                                onChange={(e) => {
+                                  setSelectedRegions((prev) =>
+                                    e.target.checked
+                                      ? [...prev, region.id]
+                                      : prev.filter((id) => id !== region.id)
+                                  );
+                                }}
+                              />
+                              <label htmlFor={`commune-region-${region.id}`}>{region.name}</label>
+                            </div>
+                          ))}
+                        </ScrollArea>
+                      </div>
+                      <div className="w-1/2 space-y-2">
+                        <Label>2. Selecciona Comunas</Label>
+                        <ScrollArea className="h-40 w-full rounded-md border p-2">
+                          {communesForSelectedRegions.length > 0 ? (
+                            communesForSelectedRegions.map((commune) => (
+                              <div key={commune.id} className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  id={`commune-${commune.id}`}
+                                  checked={selectedCommunes.includes(commune.id)}
+                                  onChange={(e) => {
+                                    setSelectedCommunes((prev) =>
+                                      e.target.checked
+                                        ? [...prev, commune.id]
+                                        : prev.filter((id) => id !== commune.id)
+                                    );
+                                  }}
+                                />
+                                <label htmlFor={`commune-${commune.id}`}>{commune.name}</label>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              Selecciona una o más regiones para ver las comunas.
+                            </p>
+                          )}
+                        </ScrollArea>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* --- Fin de los campos de Alcance Geográfico --- */}
             </div>
           </ScrollArea>
           <DialogFooter className="mt-4 pt-4 border-t">

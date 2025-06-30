@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,84 +8,72 @@ datasource db {
 }
 
 model User {
-  id              String   @id @default(cuid())
-  email           String   @unique
-  username        String   @unique
-  clerkId         String   @unique
-  name            String?
-  bio             String?
-  image           String?
-  backgroundImage String? // Added background image field
-  location        String?
-  isCompany       Boolean  @default(false) // Is a company, by default false
-  categories      String[] // Categories of the company, and categories of interest of users
-  website         String?
-  createdAt       DateTime @default(now()) // member since 2020
-  updatedAt       DateTime @updatedAt
-
-  // Relations: 
-  posts           Post[] // One-to-many
-  comments        Comment[] // One-to-many
-  likes           Like[] // One-to-many
-  reviewsWritten  Review[]  @relation("ReviewsWritten") // Reviews written by this user
-  reviewsReceived Review[]  @relation("ReviewsReceived") // Reviews received by this user (if they are a company)
-
-  followers Follows[] @relation("following") // users who follow this user
-  following Follows[] @relation("follower") // users this user follows
-
-  notifications        Notification[] @relation("userNotifications") // notifications received by a user
-  notificationsCreated Notification[] @relation("notificationCreator") // notifications triggered by a user
-  feedbacks           Feedback[]      @relation("userFeedbacks") // feedback submitted by the user
+  id                   String               @id @default(cuid())
+  email                String               @unique
+  username             String               @unique
+  clerkId              String               @unique
+  name                 String?
+  bio                  String?
+  image                String?
+  location             String?
+  website              String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  isCompany            Boolean              @default(false)
+  categories           String[]
+  backgroundImage      String?
+  comments             Comment[]
+  CompanyServiceArea   CompanyServiceArea[]
+  feedbacks            Feedback[]           @relation("userFeedbacks")
+  following            Follows[]            @relation("follower")
+  followers            Follows[]            @relation("following")
+  likes                Like[]
+  notificationsCreated Notification[]       @relation("notificationCreator")
+  notifications        Notification[]       @relation("userNotifications")
+  posts                Post[]
+  reviewsWritten       Review[]             @relation("ReviewsWritten")
+  reviewsReceived      Review[]             @relation("ReviewsReceived")
 }
 
 model Post {
-  id        String   @id @default(cuid())
-  authorId  String
-  content   String?
-  image     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  author        User           @relation(fields: [authorId], references: [id], onDelete: Cascade) // cascade delete means delete all posts if author is deleted
+  id            String         @id @default(cuid())
+  authorId      String
+  content       String?
+  image         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   comments      Comment[]
   likes         Like[]
   notifications Notification[]
+  author        User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 model Review {
   id        String   @id @default(cuid())
-  rating    Int // Rating from 0 to 5
-  content   String? // Optional review text
+  rating    Int
+  content   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // Relation to the User who wrote the review
-  authorId String
-  author   User   @relation("ReviewsWritten", fields: [authorId], references: [id], onDelete: Cascade)
-
-  // Relation to the Company (User) being reviewed
+  authorId  String
   companyId String
-  company   User   @relation("ReviewsReceived", fields: [companyId], references: [id], onDelete: Cascade)
+  author    User     @relation("ReviewsWritten", fields: [authorId], references: [id], onDelete: Cascade)
+  company   User     @relation("ReviewsReceived", fields: [companyId], references: [id], onDelete: Cascade)
 
-  // Ensure a user can only review a company once (optional constraint)
   @@unique([authorId, companyId])
-  @@index([companyId, createdAt]) // Index for fetching reviews for a company
+  @@index([companyId, createdAt])
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  content   String
-  authorId  String
-  postId    String
-  createdAt DateTime @default(now())
-
-  // Relations
+  id            String         @id @default(cuid())
+  content       String
+  authorId      String
+  postId        String
+  createdAt     DateTime       @default(now())
   author        User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   post          Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
   notifications Notification[]
 
-  @@index([authorId, postId]) // composite index for faster queries
+  @@index([authorId, postId])
 }
 
 model Like {
@@ -99,36 +81,32 @@ model Like {
   postId    String
   userId    String
   createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, postId]) // this prevents same user liking post twice
-  @@index([userId, postId]) // composite index for faster queries
+  @@unique([userId, postId])
+  @@index([userId, postId])
 }
 
 model Follows {
   followerId  String
   followingId String
   createdAt   DateTime @default(now())
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
 
-  // Relations
-  follower  User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
-  following User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
-
-  @@id([followerId, followingId]) // composite primary key prevents duplicate follows
-  @@index([followerId, followingId]) // composite index for faster queries
+  @@id([followerId, followingId])
+  @@index([followerId, followingId])
 }
 
 model Feedback {
   id        String   @id @default(cuid())
   content   String
-  email     String?  // Optional email for follow-up
-  userId    String?  // Optional user ID if user is logged in
-  user      User?    @relation("userFeedbacks", fields: [userId], references: [id])
+  email     String?
+  userId    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User?    @relation("userFeedbacks", fields: [userId], references: [id])
 }
 
 model Notification {
@@ -140,12 +118,10 @@ model Notification {
   postId    String?
   commentId String?
   createdAt DateTime         @default(now())
-
-  // Relations
-  user    User     @relation("userNotifications", fields: [userId], references: [id], onDelete: Cascade)
-  creator User     @relation("notificationCreator", fields: [creatorId], references: [id], onDelete: Cascade)
-  post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  comment   Comment?         @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  creator   User             @relation("notificationCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  post      Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User             @relation("userNotifications", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }
@@ -163,8 +139,53 @@ model CompanyRequest {
   createdAt      DateTime @default(now())
 }
 
+model Commune {
+  id                 String               @id
+  name               String
+  regionId           String
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  Region             Region               @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  CompanyServiceArea CompanyServiceArea[]
+
+  @@unique([name, regionId])
+  @@index([regionId])
+}
+
+model CompanyServiceArea {
+  id        String    @id
+  companyId String
+  scope     ScopeType @default(COUNTRY)
+  regionId  String?
+  communeId String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime
+  Commune   Commune?  @relation(fields: [communeId], references: [id], onDelete: Cascade)
+  User      User      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  Region    Region?   @relation(fields: [regionId], references: [id], onDelete: Cascade)
+
+  @@index([communeId])
+  @@index([companyId])
+  @@index([regionId])
+}
+
+model Region {
+  id                 String               @id
+  name               String               @unique
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  Commune            Commune[]
+  CompanyServiceArea CompanyServiceArea[]
+}
+
 enum NotificationType {
   LIKE
   COMMENT
   FOLLOW
+}
+
+enum ScopeType {
+  COUNTRY
+  REGION
+  COMMUNE
 }
