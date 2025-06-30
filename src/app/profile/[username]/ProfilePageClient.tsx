@@ -7,7 +7,7 @@
 import { getUserPosts, updateProfile } from '@/actions/profile.action';
 import { getCompanyReviewsAndStats, ReviewWithAuthor } from '@/actions/review.action';
 import { toggleFollow } from '@/actions/user.action';
-import { updateUserScope } from '@/actions/scope.actions'; // Nueva importación para la acción de alcance
+import { updateUserScope } from '@/actions/scope.action'; // Nueva importación para la acción de alcance
 import { MultiSelectCategories } from '@/components/MultiSelectCategories';
 import PostCard from '@/components/PostCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
