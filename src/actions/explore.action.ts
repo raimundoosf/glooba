@@ -1,11 +1,11 @@
 /**
  * @file Server actions for company exploration features including filtering and pagination
  */
-'use server';
+"use server";
 
-import prisma from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
-import { getDbUserId } from './user.action';
+import prisma from "@/lib/prisma";
+import { Prisma, ScopeType } from "@prisma/client";
+import { getDbUserId } from "./user.action";
 
 // --- Constants ---
 const DEFAULT_PAGE_SIZE = 6;
@@ -14,13 +14,22 @@ const DEFAULT_PAGE_SIZE = 6;
 /**
  * Represents filter criteria for company search and filtering
  */
-export type SortOption = 'name_asc' | 'name_desc' | 'rating_desc' | 'reviews_desc' | 'followers_desc' | 'newest';
+export type SortOption =
+  | "name_asc"
+  | "name_desc"
+  | "rating_desc"
+  | "reviews_desc"
+  | "followers_desc"
+  | "newest";
 
 export interface CompanyFiltersType {
   searchTerm?: string;
   categories?: string[];
   location?: string;
   sortBy?: SortOption;
+  scope?: ScopeType;
+  regions?: string[];
+  communes?: string[];
 }
 
 /**
@@ -74,7 +83,7 @@ type CompanyDataWithRelations = Prisma.UserGetPayload<{
  */
 export type CompanyCardData = Omit<
   Prisma.UserGetPayload<{ select: typeof companyDataSelectBase }>,
-  'reviewsReceived' | '_count' // Remove raw relations/counts
+  "reviewsReceived" | "_count" // Remove raw relations/counts
 > & {
   isFollowing: boolean;
   averageRating: number | null;
@@ -99,12 +108,12 @@ export interface PaginatedCompaniesResponse {
 
 /**
  * Fetches companies based on filter criteria with pagination
- * 
+ *
  * Applies search filtering across multiple fields (name, username, bio)
  * Filters by categories and location if specified
  * Handles pagination and includes follow status for the current user
  * Calculates derived fields like average rating from raw data
- * 
+ *
  * @param filters - Filter criteria for companies (search term, categories, location)
  * @param pagination - Pagination options (page number, page size)
  * @returns Promise resolving to paginated companies with metadata
@@ -116,9 +125,13 @@ export async function getFilteredCompanies(
   try {
     const currentUserId = await getDbUserId(); // Null if not logged in
 
-    const { searchTerm, categories, location } = filters;
+    const { searchTerm, categories, location, scope, regions, communes } =
+      filters;
     const currentPage = Math.max(1, Math.floor(pagination.page || 1));
-    const currentPageSize = Math.max(1, Math.floor(pagination.pageSize || DEFAULT_PAGE_SIZE));
+    const currentPageSize = Math.max(
+      1,
+      Math.floor(pagination.pageSize || DEFAULT_PAGE_SIZE)
+    );
 
     const whereClause: Prisma.UserWhereInput = {
       isCompany: true,
@@ -131,9 +144,9 @@ export async function getFilteredCompanies(
     if (searchTerm) {
       (whereClause.AND as Prisma.UserWhereInput[]).push({
         OR: [
-          { name: { contains: searchTerm, mode: 'insensitive' } },
-          { username: { contains: searchTerm, mode: 'insensitive' } },
-          { bio: { contains: searchTerm, mode: 'insensitive' } },
+          { name: { contains: searchTerm, mode: "insensitive" } },
+          { username: { contains: searchTerm, mode: "insensitive" } },
+          { bio: { contains: searchTerm, mode: "insensitive" } },
         ],
       });
     }
@@ -152,8 +165,39 @@ export async function getFilteredCompanies(
     // Case-insensitive search in company location
     if (location) {
       (whereClause.AND as Prisma.UserWhereInput[]).push({
-        location: { contains: location, mode: 'insensitive' },
+        location: { contains: location, mode: "insensitive" },
       });
+    }
+
+    // Apply geographic scope filter if provided
+    if (scope) {
+      const scopeConditions: Prisma.CompanyServiceAreaWhereInput[] = [];
+
+      if (scope === "COUNTRY") {
+        scopeConditions.push({
+          scope: "COUNTRY",
+        });
+      } else if (scope === "REGION" && regions?.length) {
+        scopeConditions.push({
+          scope: "REGION",
+          regionId: { in: regions },
+        });
+      } else if (scope === "COMMUNE" && communes?.length) {
+        scopeConditions.push({
+          scope: "COMMUNE",
+          communeId: { in: communes },
+        });
+      }
+
+      if (scopeConditions.length > 0) {
+        (whereClause.AND as Prisma.UserWhereInput[]).push({
+          CompanyServiceArea: {
+            some: {
+              OR: scopeConditions,
+            },
+          },
+        });
+      }
     }
 
     // Clean up the where clause by removing empty AND array
@@ -166,19 +210,19 @@ export async function getFilteredCompanies(
     // Define sort order based on sortBy parameter
     const getOrderBy = () => {
       switch (filters.sortBy) {
-        case 'name_desc':
-          return { name: 'desc' as const };
-        case 'rating_desc':
-          return { reviewsReceived: { _count: 'desc' as const } };
-        case 'reviews_desc':
-          return { reviewsReceived: { _count: 'desc' as const } };
-        case 'followers_desc':
-          return { followers: { _count: 'desc' as const } };
-        case 'name_asc':
-          return { name: 'asc' as const };
-        case 'newest':
+        case "name_desc":
+          return { name: "desc" as const };
+        case "rating_desc":
+          return { reviewsReceived: { _count: "desc" as const } };
+        case "reviews_desc":
+          return { reviewsReceived: { _count: "desc" as const } };
+        case "followers_desc":
+          return { followers: { _count: "desc" as const } };
+        case "name_asc":
+          return { name: "asc" as const };
+        case "newest":
         default:
-          return { createdAt: 'desc' as const };
+          return { createdAt: "desc" as const };
       }
     };
 
@@ -203,28 +247,35 @@ export async function getFilteredCompanies(
     ]);
 
     // --- Process results ---
-    const companies: CompanyCardData[] = companiesRaw.map((company: CompanyDataWithRelations) => {
-      const isFollowing = !!currentUserId && company.followers.length > 0;
+    const companies: CompanyCardData[] = companiesRaw.map(
+      (company: CompanyDataWithRelations) => {
+        const isFollowing = !!currentUserId && company.followers.length > 0;
 
-      // Calculate average rating from fetched ratings
-      const reviewCount = company._count.reviewsReceived;
-      const sumOfRatings = company.reviewsReceived.reduce((acc, review) => acc + review.rating, 0);
-      const averageRating = reviewCount > 0 ? sumOfRatings / reviewCount : null;
+        // Calculate average rating from fetched ratings
+        const reviewCount = company._count.reviewsReceived;
+        const sumOfRatings = company.reviewsReceived.reduce(
+          (acc, review) => acc + review.rating,
+          0
+        );
+        const averageRating =
+          reviewCount > 0 ? sumOfRatings / reviewCount : null;
 
-      const followerCount = company._count.followers;
+        const followerCount = company._count.followers;
 
-      // Exclude raw relations/counts from the final object
-      const { followers, reviewsReceived, _count, ...restOfCompany } = company;
+        // Exclude raw relations/counts from the final object
+        const { followers, reviewsReceived, _count, ...restOfCompany } =
+          company;
 
-      return {
-        ...restOfCompany,
-        isFollowing,
-        averageRating,
-        reviewCount,
-        followerCount,
-        backgroundImage: company.backgroundImage, // Use fetched value
-      };
-    });
+        return {
+          ...restOfCompany,
+          isFollowing,
+          averageRating,
+          reviewCount,
+          followerCount,
+          backgroundImage: company.backgroundImage, // Use fetched value
+        };
+      }
+    );
 
     // --- Pagination Metadata ---
     const totalPages = Math.ceil(totalCount / currentPageSize);
@@ -239,8 +290,9 @@ export async function getFilteredCompanies(
       hasNextPage,
     };
   } catch (error: unknown) {
-    console.error('Error fetching filtered companies:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error("Error fetching filtered companies:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "An unknown error occurred";
     return {
       success: false,
       error: `Failed to fetch companies: ${errorMessage}`,
@@ -290,18 +342,11 @@ export async function getFeaturedCompanies(): Promise<
         username: true,
         image: true,
       },
-      // No specific order needed when taking a random slice
-      // orderBy: {
-      // 	createdAt: 'desc',
-      // },
     });
-
-    // Optional: If fewer than 'take' companies were returned (e.g., near the end of the list),
-    // and you absolutely need 10, you might need a fallback fetch, but this is often sufficient.
 
     return companies;
   } catch (error) {
-    console.error('Error fetching featured companies:', error);
+    console.error("Error fetching featured companies:", error);
     return []; // Return empty array on error
   }
 }

@@ -4,6 +4,7 @@
  */
 "use client";
 
+import { ScopeType } from "@prisma/client";
 import {
   CompanyCardData,
   CompanyFiltersType,
@@ -54,6 +55,14 @@ const parseFiltersFromParams = (
           .filter(Boolean)
       : undefined,
     sortBy: (params.get("sortBy") as SortOption) || "newest",
+    // Leer los parámetros de alcance de la URL
+    scope: (params.get("scope") as ScopeType) || undefined,
+    regions: params.get("regions")
+      ? params.get("regions")!.split(",").filter(Boolean)
+      : undefined,
+    communes: params.get("communes")
+      ? params.get("communes")!.split(",").filter(Boolean)
+      : undefined,
   };
   if (filters.categories && filters.categories.length === 0) {
     filters.categories = undefined;
@@ -146,6 +155,9 @@ export default function ExploreClientWrapper({
             : undefined,
         location: newFiltersFromComponent.location?.trim() || undefined,
         sortBy: newFiltersFromComponent.sortBy || "newest",
+        scope: newFiltersFromComponent.scope,
+        regions: newFiltersFromComponent.regions,
+        communes: newFiltersFromComponent.communes,
       };
 
       const params = new URLSearchParams();
@@ -160,12 +172,18 @@ export default function ExploreClientWrapper({
         );
       }
       if (filtersToApply.sortBy) params.set("sortBy", filtersToApply.sortBy);
+      if (filtersToApply.scope) params.set("scope", filtersToApply.scope);
+      if (filtersToApply.regions && filtersToApply.regions.length > 0) {
+        params.set("regions", filtersToApply.regions.join(","));
+      }
+      if (filtersToApply.communes && filtersToApply.communes.length > 0) {
+        params.set("communes", filtersToApply.communes.join(","));
+      }
 
       const queryString = params.toString();
       router.push(`${pathname}${queryString ? `?${queryString}` : ""}`, {
         scroll: false,
       });
-      // The useEffect listening to searchParams will update appliedFilters and trigger data fetch.
     },
     [router, pathname]
   );

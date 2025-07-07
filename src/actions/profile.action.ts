@@ -32,19 +32,8 @@ export async function getProfileByUsername(username: string) {
 
     const user = await prisma.user.findUnique({
       where: { username },
-      select: {
-        id: true,
-        clerkId: true,
-        username: true,
-        name: true,
-        image: true,
-        bio: true,
-        location: true,
-        website: true,
-        isCompany: true,
-        createdAt: true,
-        categories: true,
-        backgroundImage: true, // Corrected: Select background image
+      include: {
+        CompanyServiceArea: true, // Incluir el alcance geográfico
         followers: {
           select: {
             followerId: true,
@@ -200,6 +189,8 @@ export async function getUserLikedPosts(userId: string) {
     throw new Error('Failed to fetch liked posts');
   }
 }
+
+
 
 /**
  * Updates the profile of the currently authenticated user.

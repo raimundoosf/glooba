@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { SignInButton, useUser } from '@clerk/nextjs';
 import { Loader2, MapPin, UserCheck, UserPlus, Users } from 'lucide-react';
+import { getCategoryIcon, getCategoryColor } from '@/lib/constants';
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import toast from 'react-hot-toast';
@@ -263,26 +264,27 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
           {/* Categories */}
           {company.categories && company.categories.length > 0 && (
             <div className="flex flex-wrap gap-1 pt-1">
-              {' '}
-              {/* Slightly reduced gap, pt for space */}
-              {company.categories.slice(0, 3).map((category) => (
-                <Badge
-                  key={category}
-                  variant="secondary"
-                  className="font-normal text-xs py-0 px-1.5"
-                >
-                  {' '}
-                  {/* Smaller badge text and padding */}
-                  {category}
-                </Badge>
-              ))}
+              {company.categories.slice(0, 3).map((category) => {
+                const Icon = getCategoryIcon(category);
+                const iconColor = getCategoryColor(category);
+                
+                return (
+                  <Badge
+                    key={category}
+                    variant="secondary"
+                    className="font-normal text-xs py-0.5 px-1.5 flex items-center gap-1"
+                  >
+                    <Icon className={`h-3 w-3 ${iconColor}`} />
+                    <span>{category}</span>
+                  </Badge>
+                );
+              })}
               {company.categories.length > 3 && (
                 <Badge
                   variant="outline"
-                  className="font-normal text-xs py-0 px-1.5 text-muted-foreground"
+                  className="font-normal text-xs py-0.5 px-1.5 text-muted-foreground"
                 >
-                  {' '}
-                  {/* Styled count badge */}+{company.categories.length - 3} más
+                  +{company.categories.length - 3} más
                 </Badge>
               )}
             </div>

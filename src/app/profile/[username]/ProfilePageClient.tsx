@@ -2,17 +2,21 @@
  * Client-side component for the profile page
  * @module ProfilePageClient
  */
-'use client';
+"use client";
 
-import { getUserPosts, updateProfile } from '@/actions/profile.action';
-import { getCompanyReviewsAndStats, ReviewWithAuthor } from '@/actions/review.action';
-import { toggleFollow } from '@/actions/user.action';
-import { MultiSelectCategories } from '@/components/MultiSelectCategories';
-import PostCard from '@/components/PostCard';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { getUserPosts, updateProfile } from "@/actions/profile.action";
+import {
+  getCompanyReviewsAndStats,
+  ReviewWithAuthor,
+} from "@/actions/review.action";
+import { toggleFollow } from "@/actions/user.action";
+import { updateUserScope } from "@/actions/scope.action";
+import { MultiSelectCategories } from "@/components/MultiSelectCategories";
+import PostCard from "@/components/PostCard";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -20,16 +24,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import { COMPANY_CATEGORIES } from '@/lib/constants';
-import { SignInButton, useUser } from '@clerk/nextjs';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { COMPANY_CATEGORIES } from "@/lib/constants";
+import { SignInButton, useUser } from "@clerk/nextjs";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import {
   CalendarIcon,
   EditIcon,
@@ -40,14 +44,16 @@ import {
   MapPinIcon,
   Star,
   X,
-} from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
-import toast from 'react-hot-toast';
-import type { OurFileRouter } from '@/app/api/uploadthing/core';
-import { DisplayStars } from '@/components/reviews/DisplayStars';
-import { LeaveReviewForm } from '@/components/reviews/LeaveReviewForm';
-import { ReviewsSection } from '@/components/reviews/ReviewsSection';
-import { generateReactHelpers } from '@uploadthing/react';
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import toast from "react-hot-toast";
+import type { OurFileRouter } from "@/app/api/uploadthing/core";
+import { DisplayStars } from "@/components/reviews/DisplayStars";
+import { LeaveReviewForm } from "@/components/reviews/LeaveReviewForm";
+import { ReviewsSection } from "@/components/reviews/ReviewsSection";
+import { generateReactHelpers } from "@uploadthing/react";
+import { ScopeType, Region, Commune } from "@prisma/client"; // Nuevas importaciones de tipos
+import { useRouter } from "next/navigation"; // <<< IMPORTAR useRouter
 
 /**
  * Interface defining the user profile type
@@ -66,6 +72,11 @@ interface UserProfile {
   createdAt: Date;
   categories: string[];
   backgroundImage: string | null;
+  CompanyServiceArea: {
+    scope: ScopeType;
+    regionId: string | null;
+    communeId: string | null;
+  }[];
   followers: { followerId: string }[];
   _count: {
     posts: number;
@@ -134,41 +145,138 @@ function ProfilePageClient({
   user,
   initialReviewData,
 }: ProfilePageClientProps) {
+  const router = useRouter();
   const { user: currentUser, isLoaded: isClerkLoaded } = useUser();
-  const { startUpload, isUploading } = useUploadThing('profileBackground');
+  const { startUpload, isUploading } = useUploadThing("profileBackground");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backgroundInputRef = useRef<HTMLInputElement>(null);
   const [isEditPending, startEditTransition] = useTransition();
-  const [isFollowingState, setIsFollowingState] = useState<boolean>(initialIsFollowing);
+  const [isFollowingState, setIsFollowingState] =
+    useState<boolean>(initialIsFollowing);
   const [isFollowPending, startFollowTransition] = useTransition();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
   const [newProfilePic, setNewProfilePic] = useState<File | null>(null);
-  const [newBackgroundUrl, setNewBackgroundUrl] = useState<string | null>(user.backgroundImage);
-  const [profilePicPreview, setProfilePicPreview] = useState<string | null>(user.image);
+  const [newBackgroundUrl, setNewBackgroundUrl] = useState<string | null>(
+    user.backgroundImage
+  );
+  const [profilePicPreview, setProfilePicPreview] = useState<string | null>(
+    user.image
+  );
+
+  // --- Geographic Scope ---
+  const [scope, setScope] = useState<ScopeType | null>(() => {
+    // Initialize scope from user's service area if it exists
+    return user.CompanyServiceArea.length > 0
+      ? user.CompanyServiceArea[0].scope
+      : null;
+  });
+  const [allRegions, setAllRegions] = useState<Region[]>([]);
+  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+  const [communesForSelectedRegions, setCommunesForSelectedRegions] = useState<
+    Commune[]
+  >([]);
+  const [selectedCommunes, setSelectedCommunes] = useState<string[]>([]);
 
   const [editForm, setEditForm] = useState<ProfileEditFormData>({
-    name: user.name ?? '',
-    bio: user.bio ?? '',
-    location: user.location ?? '',
-    website: user.website ?? '',
+    name: user.name ?? "",
+    bio: user.bio ?? "",
+    location: user.location ?? "",
+    website: user.website ?? "",
     isCompany: user.isCompany ?? false,
   });
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(user.categories ?? []);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    user.categories ?? []
+  );
 
-  // Update form when user data changes
+  // --- Geographic Scope ---
+  useEffect(() => {
+    // Fetch regions
+    const fetchRegions = async () => {
+      try {
+        const res = await fetch("/api/regions");
+        if (!res.ok) throw new Error("Failed to fetch regions");
+        const data = await res.json();
+        setAllRegions(data);
+      } catch (error) {
+        console.error(error);
+        toast.error("No se pudieron cargar las regiones.");
+      }
+    };
+    fetchRegions();
+  }, []);
+
+  useEffect(() => {
+    // Fetch communes when user selects regions in 'COMMUNE' mode
+    if (scope !== "COMMUNE" || selectedRegions.length === 0) {
+      setCommunesForSelectedRegions([]);
+      return;
+    }
+
+    const fetchCommunes = async () => {
+      try {
+        const promises = selectedRegions.map((regionId) =>
+          fetch(`/api/regions/${regionId}/communes`).then((res) => res.json())
+        );
+        const results = await Promise.all(promises);
+        setCommunesForSelectedRegions(results.flat());
+      } catch (error) {
+        console.error(error);
+        toast.error("No se pudieron cargar las comunas.");
+      }
+    };
+    fetchCommunes();
+  }, [selectedRegions, scope]);
+
+  // Update form when user data changes or dialog opens/closes
   useEffect(() => {
     if (user) {
       setEditForm({
-        name: user.name ?? '',
-        bio: user.bio ?? '',
-        location: user.location ?? '',
-        website: user.website ?? '',
+        name: user.name ?? "",
+        bio: user.bio ?? "",
+        location: user.location ?? "",
+        website: user.website ?? "",
         isCompany: user.isCompany ?? false,
       });
       setSelectedCategories(user.categories ?? []);
       setNewProfilePic(null);
       setProfilePicPreview(user.image);
       setNewBackgroundUrl(user.backgroundImage);
+
+      // Initialize scope based on user's service areas
+      const serviceAreas = user.CompanyServiceArea ?? [];
+      if (serviceAreas.length > 0) {
+        const firstArea = serviceAreas[0];
+        setScope(firstArea.scope);
+
+        if (firstArea.scope === "REGION") {
+          setSelectedRegions(
+            serviceAreas
+              .map((area) => area.regionId)
+              .filter(Boolean) as string[]
+          );
+          setSelectedCommunes([]); // Clear communes if scope is regional
+        } else if (firstArea.scope === "COMMUNE") {
+          const communeIds = serviceAreas
+            .map((area) => area.communeId)
+            .filter(Boolean) as string[];
+          const regionIds = serviceAreas
+            .map((area) => area.regionId)
+            .filter(Boolean) as string[];
+
+          setSelectedCommunes(communeIds);
+          // Pre-select unique regions to which the saved communes belong
+          setSelectedRegions([...new Set(regionIds)]);
+        } else {
+          // Clear selections if scope is National
+          setSelectedRegions([]);
+          setSelectedCommunes([]);
+        }
+      } else {
+        // Clear scope and selections if no service areas
+        setScope(null);
+        setSelectedRegions([]);
+        setSelectedCommunes([]);
+      }
     }
   }, [user, isEditDialogOpen]);
 
@@ -191,114 +299,135 @@ function ProfilePageClient({
       setSelectedCategories([]);
     }
     setEditForm({
-      name: user.name ?? '',
-      bio: user.bio ?? '',
-      location: user.location ?? '',
-      website: user.website ?? '',
+      name: user.name ?? "",
+      bio: user.bio ?? "",
+      location: user.location ?? "",
+      website: user.website ?? "",
       isCompany: user.isCompany ?? false,
     });
     setIsFollowingState(initialIsFollowing);
   }, [user, initialIsFollowing]);
 
-  const handleEditSubmit = async () => {
-    if (!currentUser) return;
+  const handleEditSubmit = () => {
+    if (!currentUser) {
+      toast.error("Debes iniciar sesión para editar tu perfil.");
+      return;
+    }
 
-    const toastId = toast.loading('Guardando cambios...');
-    let newImageUrl: string | undefined | null = currentUser.imageUrl;
+    const toastId = toast.loading("Guardando cambios...");
 
     startEditTransition(async () => {
       try {
+        // 1. Upload new profile picture if available
+        let profileImageUrl = user.image;
         if (newProfilePic) {
-          try {
-            await currentUser.setProfileImage({
-              file: newProfilePic,
-            });
-            // Refetch or access the updated user object to get the new URL
-            // Assuming Clerk updates the currentUser object in place or provides a new one:
-            // It's safer to potentially refetch the user or rely on the structure
-            // returned by Clerk's methods if they provide the updated user state.
-            // For now, let's assume currentUser object is updated.
-            await currentUser.reload(); // Explicitly reload the user data from Clerk
-            newImageUrl = currentUser.imageUrl; // Get the *new* URL after update
-            setNewProfilePic(null); // Clear the preview state
-            toast.success('Imagen de perfil actualizada.', { id: toastId }); // Immediate feedback for image
-          } catch (clerkError: any) {
-            console.error('Clerk update error:', clerkError);
-            toast.error(
-              `Error al actualizar imagen: ${clerkError.errors?.[0]?.message || clerkError.message || 'Error desconocido'}`,
-              { id: toastId }
-            );
-            return; // Stop if Clerk update fails
+          const uploaded = await startUpload([newProfilePic]);
+          if (uploaded && uploaded[0]) {
+            profileImageUrl = uploaded[0].url;
           }
         }
 
-        // 2. Prepare data for database update (using the potentially new image URL)
-        const profileDataToUpdate: {
-          username: string;
-          bio?: string;
-          website?: string;
-          categories?: string[];
-          imageUrl?: string | null; // Ensure this uses the latest URL
-          backgroundImage?: string | null; // Corrected: Add background image URL
-        } = {
-          username: user.username, // Add username from the user prop
+        // 2. Upload new background image if available
+        let backgroundImageUrl = user.backgroundImage;
+        if (newBackgroundUrl && newBackgroundUrl !== user.backgroundImage) {
+          const backgroundFile = await fetch(newBackgroundUrl)
+            .then((res) => res.blob())
+            .then(
+              (blob) =>
+                new File([blob], "background.jpg", { type: "image/jpeg" })
+            );
+
+          const uploaded = await startUpload([backgroundFile]);
+          if (uploaded && uploaded[0]) {
+            backgroundImageUrl = uploaded[0].url;
+          }
+        }
+
+        // 3. Prepare data for database update (using potentially new image URL)
+        const profileDataToUpdate = {
           ...editForm,
+          username: user.username,
           categories: selectedCategories,
-          imageUrl: newImageUrl, // Use the URL obtained after potential Clerk update
-          backgroundImage: newBackgroundUrl, // Corrected: Add the new background URL
+          imageUrl: profileImageUrl, // Use the URL obtained after possible update
+          backgroundImage: backgroundImageUrl,
         };
 
-        // 3. Update profile details in the database via server action
-        const result = await updateProfile(profileDataToUpdate);
+        // 3. Update profile details in our database through the server action
+        const dbResult = await updateProfile(profileDataToUpdate);
+        if (dbResult.error) {
+          throw new Error(`Error al guardar detalles: ${dbResult.error}`);
+        }
 
-        if (result.error) {
-          console.error('Database update error:', result.error);
-          toast.error(`Error al guardar detalles: ${result.error}`);
-        } else {
-          toast.success('Perfil actualizado con éxito.', { id: toastId });
-          setIsEditDialogOpen(false); // Close dialog on success
+        // 4. Update company scope if applicable
+        if (editForm.isCompany) {
+          if (scope === null) {
+            // If scope is null, delete any existing entries
+            await updateUserScope({
+              companyId: user.id,
+              scope: "COUNTRY", // Use a default value to delete
+              regions: [],
+              communes: [],
+            });
+          } else {
+            // Update with the selected scope
+            await updateUserScope({
+              companyId: user.id,
+              scope: scope,
+              regions: scope === "REGION" ? selectedRegions : [],
+              communes: scope === "COMMUNE" ? selectedCommunes : [],
+            });
+          }
         }
-      } catch (error: any) {
-        // Catch any unexpected errors during the process
-        console.error('Profile update failed:', error);
-        if (toastId) {
-          toast.error(`Error inesperado: ${error.message || 'Ocurrió un problema'}`, {
-            id: toastId,
-          });
-        } else {
-          toast.error(`Error inesperado: ${error.message || 'Ocurrió un problema'}`);
-        }
+
+        toast.success("Perfil actualizado con éxito!", { id: toastId });
+        router.refresh(); // Force a refresh of the server-side data
+        setIsEditDialogOpen(false); // Close the dialog on success
+      } catch (error) {
+        console.error("Error al guardar el perfil:", error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Ocurrió un error desconocido.",
+          { id: toastId }
+        );
       }
     });
   };
 
-  // Update selected categories state from MultiSelect component
   const handleCategoriesChange = (newSelection: string[]) => {
     if (editForm.isCompany && newSelection.length > 5) {
-      toast.error('Las cuentas de empresa solo pueden seleccionar hasta 5 categorías.');
-      if (newSelection.length > selectedCategories.length) return; // Prevent adding if over limit
+      toast.error(
+        "Las cuentas de empresa solo pueden seleccionar hasta 5 categorías."
+      );
+      if (newSelection.length > selectedCategories.length) return;
     }
     setSelectedCategories(newSelection);
   };
 
-  // Handle removing a category via its badge
   const handleRemoveCategory = (categoryToRemove: string) => {
-    setSelectedCategories((prev) => prev.filter((cat) => cat !== categoryToRemove));
+    setSelectedCategories((prev) =>
+      prev.filter((cat) => cat !== categoryToRemove)
+    );
   };
 
   const handleFollow = async () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      toast.error("Debes iniciar sesión para seguir a un usuario.");
+      return;
+    }
     setIsFollowingState(!isFollowingState);
     try {
       const result = await toggleFollow(user.id);
       if (result?.success) {
         setIsFollowingState(!isFollowingState);
       } else {
-        throw new Error(result?.error || 'Failed to toggle follow');
+        throw new Error(result?.error || "Failed to toggle follow");
       }
     } catch (error: any) {
-      console.error('Error toggling follow:', error);
-      toast.error(error.message || 'Error al actualizar el estado de seguimiento');
+      console.error("Error toggling follow:", error);
+      toast.error(
+        error.message || "Error al actualizar el estado de seguimiento"
+      );
     }
   };
 
@@ -308,17 +437,21 @@ function ProfilePageClient({
       // Basic validation (optional: add size/type checks)
       if (file.size > 5 * 1024 * 1024) {
         // Example: 5MB limit
-        toast.error('La imagen no puede superar los 5MB.');
+        toast.error("La imagen no puede superar los 5MB.");
         setNewProfilePic(null);
         setProfilePicPreview(null);
-        event.target.value = ''; // Reset file input
+        event.target.value = ""; // Reset file input
         return;
       }
-      if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
-        toast.error('Tipo de archivo no válido. Sube JPG, PNG, WEBP o GIF.');
+      if (
+        !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(
+          file.type
+        )
+      ) {
+        toast.error("Tipo de archivo no válido. Sube JPG, PNG, WEBP o GIF.");
         setNewProfilePic(null);
         setProfilePicPreview(null);
-        event.target.value = ''; // Reset file input
+        event.target.value = ""; // Reset file input
         return;
       }
       setNewProfilePic(file);
@@ -328,46 +461,57 @@ function ProfilePageClient({
   };
 
   // Handler for Background Image Selection using Uploadthing
-  const handleBackgroundFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBackgroundFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     // Basic validation (optional: add size/type checks)
     if (file.size > 8 * 1024 * 1024) {
       // Example: 8MB limit for background
-      toast.error('La imagen de portada no puede superar los 8MB.');
-      event.target.value = ''; // Reset file input
+      toast.error("La imagen de portada no puede superar los 8MB.");
+      event.target.value = ""; // Reset file input
       return;
     }
-    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
-      toast.error('Tipo de archivo no válido para portada. Sube JPG, PNG, WEBP o GIF.');
-      event.target.value = ''; // Reset file input
+    if (
+      !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(
+        file.type
+      )
+    ) {
+      toast.error(
+        "Tipo de archivo no válido para portada. Sube JPG, PNG, WEBP o GIF."
+      );
+      event.target.value = ""; // Reset file input
       return;
     }
 
-    const toastId = toast.loading('Subiendo imagen de portada...');
+    const toastId = toast.loading("Subiendo imagen de portada...");
     try {
       // Use the 'profileBackground' endpoint defined in your core.ts
       const res = await startUpload([file]); // Endpoint is inferred from hook initialization
       if (res && res.length > 0) {
         setNewBackgroundUrl(res[0].url); // Update state with the new URL
-        toast.success('Imagen de portada actualizada.', { id: toastId });
+        toast.success("Imagen de portada actualizada.", { id: toastId });
       } else {
-        throw new Error('La carga no devolvió una URL.');
+        throw new Error("La carga no devolvió una URL.");
       }
     } catch (error: any) {
-      console.error('Background upload error:', error);
-      toast.error(`Error al subir portada: ${error.message || 'Error desconocido'}`, {
-        id: toastId,
-      });
+      console.error("Background upload error:", error);
+      toast.error(
+        `Error al subir portada: ${error.message || "Error desconocido"}`,
+        {
+          id: toastId,
+        }
+      );
     } finally {
-      event.target.value = ''; // Reset file input value regardless of outcome
+      event.target.value = ""; // Reset file input value regardless of outcome
     }
   };
 
   // Callback function to refresh reviews after submission
   const handleReviewSubmitted = useCallback(async () => {
-    console.log('Review submitted, refreshing reviews...');
+    console.log("Review submitted, refreshing reviews...");
     // Option 1: Increment key to force remount/refetch of ReviewsSection
     // Option 2: Fetch stats again here and update reviewStats state
     // This avoids remounting the list but requires fetching stats again
@@ -379,15 +523,14 @@ function ProfilePageClient({
         // Update reviewStats state
       }
     } catch (e) {
-      console.error('Failed to refresh review stats', e);
+      console.error("Failed to refresh review stats", e);
     }
   }, [user.id]); // Dependency on user.id
 
-  const isOwner = isClerkLoaded && currentUser?.id === user.clerkId; // Declare isOwner variable
   const isOwnProfile =
     currentUser?.username === user.username ||
-    currentUser?.emailAddresses[0].emailAddress.split('@')[0] === user.username;
-  const formattedDate = format(new Date(user.createdAt), 'MMMM yyyy', {
+    currentUser?.emailAddresses[0].emailAddress.split("@")[0] === user.username;
+  const formattedDate = format(new Date(user.createdAt), "MMMM yyyy", {
     locale: es,
   });
 
@@ -398,13 +541,13 @@ function ProfilePageClient({
       <div className="grid grid-cols-1 gap-6">
         <div className="w-full max-w-lg mx-auto">
           <Card className="bg-card overflow-hidden">
-            {' '}
+            {" "}
             {/* Added overflow-hidden */}
             {/* Removed pt-6, added relative positioning context and bottom padding */}
             <CardContent className="px-4 py-6 relative">
               {/* 1. Background Image Area - Positioned absolutely */}
               <div className="absolute inset-x-0 top-0 h-32 bg-muted">
-                {' '}
+                {" "}
                 {/* Container with fixed height & fallback bg */}
                 {user.backgroundImage ? (
                   <img
@@ -414,29 +557,32 @@ function ProfilePageClient({
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <div className="h-12 w-12 text-gray-500" /> {/* Centered placeholder */}
+                    <div className="h-12 w-12 text-gray-500" />{" "}
+                    {/* Centered placeholder */}
                   </div>
                 )}
               </div>
               <div className="flex flex-col items-center text-center pt-20">
-                {' '}
+                {" "}
                 {/* Adjusted top padding */}
                 <Avatar className="w-24 h-24 -mt-12 border-4 border-card relative z-10">
-                  {' '}
+                  {" "}
                   {/* Added negative margin, border, relative, z-index */}
                   <AvatarImage
-                    src={user.image ?? '/avatar.png'}
+                    src={user.image ?? "/avatar.png"}
                     alt={`${user.name ?? user.username}'s profile`}
                   />
                   <AvatarFallback>
-                    {user.name ? user.name.substring(0, 2) : user.username.substring(0, 2)}
+                    {user.name
+                      ? user.name.substring(0, 2)
+                      : user.username.substring(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 {/* --- REST OF THE ORIGINAL LAYOUT --- */}
                 {/* Ensure spacing below avatar is sufficient, original mt-4 might be fine */}
                 {/* Name, Username, Verified Badge */}
                 <h1 className="mt-4 text-2xl font-bold">
-                  {' '}
+                  {" "}
                   {/* Kept original mt-4 */}
                   {user.name ?? user.username}
                 </h1>
@@ -475,25 +621,31 @@ function ProfilePageClient({
                 {/* Profile Stats */}
                 <div className="w-full mt-6">
                   <div className="grid grid-cols-3 gap-4">
-                    {' '}
+                    {" "}
                     {/* Always 3 columns */}
                     <div className="flex flex-col items-center">
                       <div className="font-semibold">
                         {user._count?.following?.toLocaleString() ?? 0}
                       </div>
-                      <div className="text-sm text-muted-foreground">Siguiendo</div>
+                      <div className="text-sm text-muted-foreground">
+                        Siguiendo
+                      </div>
                     </div>
                     <div className="flex flex-col items-center">
                       <div className="font-semibold">
                         {user._count?.followers?.toLocaleString() ?? 0}
                       </div>
-                      <div className="text-sm text-muted-foreground">Seguidores</div>
+                      <div className="text-sm text-muted-foreground">
+                        Seguidores
+                      </div>
                     </div>
                     <div className="flex flex-col items-center">
                       <div className="font-semibold">
                         {user._count?.posts?.toLocaleString() ?? 0}
                       </div>
-                      <div className="text-sm text-muted-foreground">Publicaciones</div>
+                      <div className="text-sm text-muted-foreground">
+                        Publicaciones
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -504,7 +656,10 @@ function ProfilePageClient({
                       <Button className="w-full">Seguir</Button>
                     </SignInButton>
                   ) : isOwnProfile ? (
-                    <Button className="w-full" onClick={() => setIsEditDialogOpen(true)}>
+                    <Button
+                      className="w-full"
+                      onClick={() => setIsEditDialogOpen(true)}
+                    >
                       <EditIcon className="size-4 mr-2" />
                       Editar Perfil
                     </Button>
@@ -513,19 +668,19 @@ function ProfilePageClient({
                       className="w-full"
                       onClick={handleFollow}
                       disabled={isFollowPending}
-                      variant={isFollowingState ? 'outline' : 'default'}
+                      variant={isFollowingState ? "outline" : "default"}
                     >
                       {isFollowPending
-                        ? 'Actualizando...'
+                        ? "Actualizando..."
                         : isFollowingState
-                          ? 'Dejar de seguir'
-                          : 'Seguir'}
+                          ? "Dejar de seguir"
+                          : "Seguir"}
                     </Button>
                   )}
                 </div>
                 {/* Location, Website, Joined Date */}
                 <div className="w-full mt-6 space-y-2 text-sm text-left">
-                  {' '}
+                  {" "}
                   {/* Kept original text-left */}
                   {user.location && (
                     <div className="flex items-center text-muted-foreground">
@@ -538,7 +693,9 @@ function ProfilePageClient({
                       <LinkIcon className="size-4 mr-2 flex-shrink-0" />
                       <a
                         href={
-                          user.website.startsWith('http') ? user.website : `https://${user.website}`
+                          user.website.startsWith("http")
+                            ? user.website
+                            : `https://${user.website}`
                         }
                         className="hover:underline truncate" // Add truncate
                         target="_blank"
@@ -554,7 +711,7 @@ function ProfilePageClient({
                   </div>
                 </div>
                 {/* --- END OF ORIGINAL LAYOUT SECTION --- */}
-              </div>{' '}
+              </div>{" "}
               {/* End flex-col container */}
             </CardContent>
           </Card>
@@ -597,10 +754,16 @@ function ProfilePageClient({
           <div className="space-y-6">
             {posts.length > 0 ? (
               posts.map((post) => (
-                <PostCard key={post.id} post={post} dbUserId={currentUser?.id ?? null} />
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  dbUserId={currentUser?.id ?? null}
+                />
               ))
             ) : (
-              <div className="text-center py-8 text-muted-foreground">Aún no hay publicaciones</div>
+              <div className="text-center py-8 text-muted-foreground">
+                Aún no hay publicaciones
+              </div>
             )}
           </div>
         </TabsContent>
@@ -610,7 +773,11 @@ function ProfilePageClient({
           <div className="space-y-6">
             {likedPosts.length > 0 ? (
               likedPosts.map((post) => (
-                <PostCard key={post.id} post={post} dbUserId={currentUser?.id ?? null} />
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  dbUserId={currentUser?.id ?? null}
+                />
               ))
             ) : (
               <div className="text-center py-8 text-muted-foreground">
@@ -658,11 +825,11 @@ function ProfilePageClient({
           {/* Use max-h instead of fixed h for better adaptability */}
           <ScrollArea className="max-h-[70vh] pr-6">
             <div className="space-y-6 py-4">
-              {' '}
+              {" "}
               {/* Increased default spacing */}
               {/* Combined Image Preview Area */}
               <div className="relative mb-12 h-28 rounded-lg">
-                {' '}
+                {" "}
                 {/* Container: relative, height allows overlap, margin-bottom */}
                 {/* Background Upload Trigger & Preview Layer */}
                 <Label
@@ -703,14 +870,20 @@ function ProfilePageClient({
                     className="block relative cursor-pointer group"
                   >
                     <Avatar className="h-20 w-20 border-4 border-background rounded-full">
-                      {' '}
+                      {" "}
                       {/* Border matches dialog bg */}
                       <AvatarImage
-                        src={profilePicPreview || currentUser?.imageUrl || undefined}
+                        src={
+                          profilePicPreview ||
+                          currentUser?.imageUrl ||
+                          undefined
+                        }
                         alt="Previsualización Perfil"
                       />
                       <AvatarFallback>
-                        {editForm.name ? editForm.name.charAt(0).toUpperCase() : '?'}
+                        {editForm.name
+                          ? editForm.name.charAt(0).toUpperCase()
+                          : "?"}
                       </AvatarFallback>
                     </Avatar>
                     {/* Profile Picture Edit Icon Overlay */}
@@ -737,7 +910,9 @@ function ProfilePageClient({
                   id="name"
                   name="name"
                   value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, name: e.target.value })
+                  }
                   placeholder="Tu nombre"
                   disabled={isEditPending}
                 />
@@ -749,7 +924,9 @@ function ProfilePageClient({
                   id="edit-bio"
                   name="bio"
                   value={editForm.bio}
-                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, bio: e.target.value })
+                  }
                   className="min-h-[100px]"
                   placeholder="Cuéntanos sobre ti"
                   disabled={isEditPending}
@@ -762,7 +939,9 @@ function ProfilePageClient({
                   id="edit-location"
                   name="location"
                   value={editForm.location}
-                  onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, location: e.target.value })
+                  }
                   placeholder="¿Dónde te encuentras?"
                   disabled={isEditPending}
                 />
@@ -774,39 +953,18 @@ function ProfilePageClient({
                   id="edit-website"
                   name="website"
                   value={editForm.website}
-                  onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, website: e.target.value })
+                  }
                   placeholder="tuwebsite.com"
                   disabled={isEditPending}
                 />
               </div>
-              {/* Is Company Toggle */}
-              {/* <div className="flex items-center justify-between space-x-2 pt-2">
-                  <Label htmlFor="isCompany" className="flex flex-col space-y-1">
-                    <span>Cuenta Empresa</span>
-                    <span className="font-normal leading-snug text-muted-foreground text-xs">Activa esto si representas a una empresa u organización.</span>
-                  </Label>
-                  <input
-                    type="checkbox"
-                    id="isCompany"
-                    className="form-checkbox h-5 w-5 text-primary rounded shadow-none focus:ring-primary focus:ring-offset-0" // Adjusted focus ring
-                    checked={editForm.isCompany}
-                    disabled={isEditPending}
-                    onChange={(e) => {
-                      const isCompanyChecked = e.target.checked;
-                      setEditForm({ ...editForm, isCompany: isCompanyChecked });
-                      // Enforce category limit immediately if switching to company
-                      if (isCompanyChecked && selectedCategories.length > 5) {
-                        const limitedCategories = selectedCategories.slice(0, 5);
-                        setSelectedCategories(limitedCategories);
-                        toast.error('Las cuentas de empresa solo pueden seleccionar hasta 5 categorías. Se han eliminado las categorías excedentes.');
-                      }
-                    }}
-                  />
-                </div> */}
-              {/* Categories Section */}
               <div className="space-y-2 pt-2">
                 <Label>
-                  {editForm.isCompany ? 'Categorías de la Empresa' : 'Categorías de Interés'}
+                  {editForm.isCompany
+                    ? "Categorías de la Empresa"
+                    : "Categorías de Interés"}
                 </Label>
                 {/* Ensure MultiSelectCategories component is correctly imported and used */}
                 <MultiSelectCategories
@@ -852,6 +1010,149 @@ function ProfilePageClient({
                   </p>
                 )}
               </div>
+              {/* --- Geographical Scope Section --- */}
+              {editForm.isCompany && (
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="text-lg font-semibold">Alcance Geográfico</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-6">
+                      <Label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="scope"
+                          value="COUNTRY"
+                          checked={scope === "COUNTRY"}
+                          onChange={() => setScope("COUNTRY")}
+                        />
+                        <span>Nacional</span>
+                      </Label>
+                      <Label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="scope"
+                          value="REGION"
+                          checked={scope === "REGION"}
+                          onChange={() => setScope("REGION")}
+                        />
+                        <span>Regional</span>
+                      </Label>
+                      <Label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="scope"
+                          value="COMMUNE"
+                          checked={scope === "COMMUNE"}
+                          onChange={() => setScope("COMMUNE")}
+                        />
+                        <span>Comunal</span>
+                      </Label>
+                    </div>
+                    {scope === null && (
+                      <p className="text-sm text-muted-foreground">
+                        No se ha especificado un alcance geográfico
+                      </p>
+                    )}
+                  </div>
+
+                  {scope === "REGION" && (
+                    <div className="space-y-2">
+                      <Label>Selecciona Regiones</Label>
+                      <ScrollArea className="h-40 w-full rounded-md border p-2">
+                        {allRegions.map((region) => (
+                          <div
+                            key={region.id}
+                            className="flex items-center space-x-2"
+                          >
+                            <input
+                              type="checkbox"
+                              id={`region-${region.id}`}
+                              checked={selectedRegions.includes(region.id)}
+                              onChange={(e) => {
+                                setSelectedRegions((prev) =>
+                                  e.target.checked
+                                    ? [...prev, region.id]
+                                    : prev.filter((id) => id !== region.id)
+                                );
+                              }}
+                            />
+                            <label htmlFor={`region-${region.id}`}>
+                              {region.name}
+                            </label>
+                          </div>
+                        ))}
+                      </ScrollArea>
+                    </div>
+                  )}
+
+                  {scope === "COMMUNE" && (
+                    <div className="flex space-x-4">
+                      <div className="w-1/2 space-y-2">
+                        <Label>1. Selecciona Regiones</Label>
+                        <ScrollArea className="h-40 w-full rounded-md border p-2">
+                          {allRegions.map((region) => (
+                            <div
+                              key={region.id}
+                              className="flex items-center space-x-2"
+                            >
+                              <input
+                                type="checkbox"
+                                id={`commune-region-${region.id}`}
+                                checked={selectedRegions.includes(region.id)}
+                                onChange={(e) => {
+                                  setSelectedRegions((prev) =>
+                                    e.target.checked
+                                      ? [...prev, region.id]
+                                      : prev.filter((id) => id !== region.id)
+                                  );
+                                }}
+                              />
+                              <label htmlFor={`commune-region-${region.id}`}>
+                                {region.name}
+                              </label>
+                            </div>
+                          ))}
+                        </ScrollArea>
+                      </div>
+                      <div className="w-1/2 space-y-2">
+                        <Label>2. Selecciona Comunas</Label>
+                        <ScrollArea className="h-40 w-full rounded-md border p-2">
+                          {communesForSelectedRegions.length > 0 ? (
+                            communesForSelectedRegions.map((commune) => (
+                              <div
+                                key={commune.id}
+                                className="flex items-center space-x-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`commune-${commune.id}`}
+                                  checked={selectedCommunes.includes(
+                                    commune.id
+                                  )}
+                                  onChange={(e) => {
+                                    setSelectedCommunes((prev) =>
+                                      e.target.checked
+                                        ? [...prev, commune.id]
+                                        : prev.filter((id) => id !== commune.id)
+                                    );
+                                  }}
+                                />
+                                <label htmlFor={`commune-${commune.id}`}>
+                                  {commune.name}
+                                </label>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              Selecciona una o más regiones para ver las
+                              comunas.
+                            </p>
+                          )}
+                        </ScrollArea>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </ScrollArea>
           <DialogFooter className="mt-4 pt-4 border-t">
@@ -866,7 +1167,9 @@ function ProfilePageClient({
               // Consider adding || isUploading for profile pic if that state exists
               disabled={isEditPending || !isClerkLoaded || isUploading}
             >
-              {isEditPending || isUploading ? 'Guardando...' : 'Guardar Cambios'}
+              {isEditPending || isUploading
+                ? "Guardando..."
+                : "Guardar Cambios"}
             </Button>
           </DialogFooter>
         </DialogContent>

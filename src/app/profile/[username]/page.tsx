@@ -8,6 +8,8 @@ import { getCompanyReviewsAndStats } from '@/actions/review.action';
 import { notFound } from 'next/navigation';
 import ProfilePageClient from './ProfilePageClient';
 
+export const revalidate = 0; // No cachear esta página
+
 /**
  * Generates metadata for the profile page based on user data
  * @param params The route parameters containing the username
