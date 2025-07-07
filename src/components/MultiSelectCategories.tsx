@@ -16,7 +16,14 @@ import {
 } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { getCategoryEmoji } from '@/lib/constants';
+import { getCategoryIcon, getCategoryColor } from '@/lib/constants';
+
+/**
+ * Generates a consistent color for a given string
+ * @param str - The string to generate a color for
+ * @returns A Tailwind CSS color class
+ */
+// This function is no longer needed as we now use getCategoryColor
 
 /**
  * Props interface for the MultiSelectCategories component
@@ -103,7 +110,11 @@ export function MultiSelectCategories({
                   aria-selected={isSelected}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="text-lg">{getCategoryEmoji(category)}</span>
+                    {(() => {
+                      const Icon = getCategoryIcon(category);
+                      const iconColor = getCategoryColor(category);
+                      return <Icon className={`h-5 w-5 ${iconColor}`} />;
+                    })()}
                     <span>{category}</span>
                   </span>
                   <div
