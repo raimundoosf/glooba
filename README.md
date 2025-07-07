@@ -1,6 +1,7 @@
 <h1 align="center">✨ Glooba, the social platform that connects users with sustainable companies and initiatives in Latin America ✨</h1>
 
 ## Overview
+
 Glooba is a social platform built with Next.js 14, TypeScript, and modern web technologies. It provides features for company discovery, user profiles, and social interactions.
 
 ## Documentation
@@ -15,17 +16,18 @@ For detailed documentation, please refer to the following guides:
 ## Tech Stack
 
 ### Frontend
+
 - Next.js 14 with App Router
 - TypeScript
 - Tailwind CSS
 - Shadcn UI components
 - React Hook Form
-- Zod for validation
 - TanStack Query for data fetching
 - React Hot Toast for notifications
 - Clerk for authentication
 
 ### Backend
+
 - Prisma ORM
 - PostgreSQL (via Prisma)
 - UploadThing for file uploads
@@ -39,8 +41,8 @@ src/
 ├── components/       # Reusable React components
 │   ├── explore/     # Company exploration components
 │   ├── profile/     # User profile components
+│   ├── feed/        # Feed components
 │   └── shared/      # Shared UI components
-├── contexts/        # React Context providers
 ├── lib/             # Utility functions and configurations
 └── actions/         # Server actions
 ```
@@ -48,16 +50,19 @@ src/
 ## Quick Start
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Set up environment variables:
-Create a `.env` file with the following variables:
+   Create a `.env` file with the following variables:
+
 ```env
 DATABASE_URL=your_database_url
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_key
 CLERK_SECRET_KEY=your_clerk_secret
+CLERK_WEBHOOK_SECRET=your_clerk_webhook_secret
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
@@ -66,6 +71,7 @@ UPLOADTHING_TOKEN=your_uploadthing_token
 ```
 
 3. Start the development server:
+
 ```bash
 npm run dev
 ```
