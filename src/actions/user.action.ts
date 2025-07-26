@@ -165,3 +165,43 @@ export async function toggleFollow(targetUserId: string) {
     return { success: false, error: 'Error toggling follow' };
   }
 }
+
+/**
+ * Increments the profile view count for a given company.
+ * Does not increment if the viewer is the company owner.
+ *
+ * @param companyId - The database ID of the company to update.
+ * @returns Object indicating success status and any error message.
+ */
+export async function incrementProfileView(companyId: string) {
+  try {
+    const currentUserId = await getDbUserId();
+
+    // Don't increment if the user is viewing their own profile or not logged in
+    if (currentUserId === companyId) {
+      return {
+        success: true,
+        message: "View not incremented for own profile or anonymous user.",
+      };
+    }
+
+    await prisma.user.update({
+      where: {
+        id: companyId,
+      },
+      data: {
+        profileViews: {
+          increment: 1,
+        },
+      },
+    });
+
+    // No need to revalidate paths here as it's a simple counter
+    // that doesn't drastically change the UI layout immediately.
+    // The updated count will be fetched on the next page load/refresh.
+    return { success: true };
+  } catch (error) {
+    console.error("Error in incrementProfileView", error);
+    return { success: false, error: "Error incrementing profile view count" };
+  }
+}

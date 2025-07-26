@@ -89,23 +89,9 @@ async function Sidebar() {
 
             {user.bio && <p className="mt-3 text-sm text-muted-foreground">{user.bio}</p>}
 
-            <div className="w-full">
-              <Separator className="my-4" />
-              <div className="flex justify-between">
-                <div>
-                  <p className="font-medium">{user._count.following}</p>
-                  <p className="text-xs text-muted-foreground">Siguiendo</p>
-                </div>
-                <Separator orientation="vertical" />
-                <div>
-                  <p className="font-medium">{user._count.followers}</p>
-                  <p className="text-xs text-muted-foreground">Seguidores</p>
-                </div>
-              </div>
-              <Separator className="my-4" />
-            </div>
 
             <div className="w-full space-y-2 text-sm">
+              <Separator className="my-4" />
               <div className="flex items-center text-muted-foreground">
                 <MapPinIcon className="w-4 h-4 mr-2" />
                 {user.location || 'Sin localizacion'}

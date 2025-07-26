@@ -22,6 +22,7 @@ model User {
   isCompany            Boolean              @default(false)
   categories           String[]
   backgroundImage      String?
+  profileViews         Int                  @default(0)
   comments             Comment[]
   CompanyServiceArea   CompanyServiceArea[]
   feedbacks            Feedback[]           @relation("userFeedbacks")

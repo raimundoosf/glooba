@@ -9,7 +9,7 @@ import {
   getCompanyReviewsAndStats,
   ReviewWithAuthor,
 } from "@/actions/review.action";
-import { toggleFollow } from "@/actions/user.action";
+import { incrementProfileView, toggleFollow } from "@/actions/user.action";
 import { updateUserScope } from "@/actions/scope.action";
 import { MultiSelectCategories } from "@/components/MultiSelectCategories";
 import PostCard from "@/components/PostCard";
@@ -35,6 +35,11 @@ import { SignInButton, useUser } from "@clerk/nextjs";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
+  BellIcon, 
+  BellOffIcon, 
+  BellPlus, 
+  BellPlusIcon, 
+  BellRing, 
   CalendarIcon,
   EditIcon,
   FileTextIcon,
@@ -45,7 +50,13 @@ import {
   Star,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import toast from "react-hot-toast";
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
 import { DisplayStars } from "@/components/reviews/DisplayStars";
@@ -188,6 +199,16 @@ function ProfilePageClient({
     user.categories ?? []
   );
 
+  const viewIncremented = useRef(false);
+
+  // Increment profile view count on component mount for company profiles
+  useEffect(() => {
+    if (user.isCompany && !viewIncremented.current) {
+      incrementProfileView(user.id);
+      viewIncremented.current = true;
+    }
+  }, [user.id, user.isCompany]);
+
   // --- Geographic Scope ---
   useEffect(() => {
     // Fetch regions
@@ -318,12 +339,22 @@ function ProfilePageClient({
 
     startEditTransition(async () => {
       try {
-        // 1. Upload new profile picture if available
-        let profileImageUrl = user.image;
+        let profileImageUrl = currentUser.imageUrl;
+
+        // 1. Update profile picture via Clerk if a new one is selected
         if (newProfilePic) {
-          const uploaded = await startUpload([newProfilePic]);
-          if (uploaded && uploaded[0]) {
-            profileImageUrl = uploaded[0].url;
+          try {
+            await currentUser.setProfileImage({
+              file: newProfilePic,
+            });
+            await currentUser.reload(); // Reload user data to get the new URL
+            profileImageUrl = currentUser.imageUrl; // Get the new URL from Clerk
+            setNewProfilePic(null); // Clear the preview state
+          } catch (clerkError: any) {
+            console.error("Error al actualizar la imagen en Clerk:", clerkError);
+            throw new Error(
+              `Error al actualizar imagen: ${clerkError.errors?.[0]?.message || clerkError.message}`
+            );
           }
         }
 
@@ -343,33 +374,31 @@ function ProfilePageClient({
           }
         }
 
-        // 3. Prepare data for database update (using potentially new image URL)
+        // 3. Prepare data for database update
         const profileDataToUpdate = {
           ...editForm,
           username: user.username,
           categories: selectedCategories,
-          imageUrl: profileImageUrl, // Use the URL obtained after possible update
+          imageUrl: profileImageUrl,
           backgroundImage: backgroundImageUrl,
         };
 
-        // 3. Update profile details in our database through the server action
+        // 4. Update profile details in our database
         const dbResult = await updateProfile(profileDataToUpdate);
         if (dbResult.error) {
           throw new Error(`Error al guardar detalles: ${dbResult.error}`);
         }
 
-        // 4. Update company scope if applicable
+        // 5. Update company scope if applicable
         if (editForm.isCompany) {
           if (scope === null) {
-            // If scope is null, delete any existing entries
             await updateUserScope({
               companyId: user.id,
-              scope: "COUNTRY", // Use a default value to delete
+              scope: "COUNTRY",
               regions: [],
               communes: [],
             });
           } else {
-            // Update with the selected scope
             await updateUserScope({
               companyId: user.id,
               scope: scope,
@@ -380,8 +409,8 @@ function ProfilePageClient({
         }
 
         toast.success("Perfil actualizado con éxito!", { id: toastId });
-        router.refresh(); // Force a refresh of the server-side data
-        setIsEditDialogOpen(false); // Close the dialog on success
+        router.refresh();
+        setIsEditDialogOpen(false);
       } catch (error) {
         console.error("Error al guardar el perfil:", error);
         toast.error(
@@ -618,42 +647,11 @@ function ProfilePageClient({
                 )}
                 {/* Bio */}
                 <p className="mt-2 text-sm">{user.bio}</p>
-                {/* Profile Stats */}
-                <div className="w-full mt-6">
-                  <div className="grid grid-cols-3 gap-4">
-                    {" "}
-                    {/* Always 3 columns */}
-                    <div className="flex flex-col items-center">
-                      <div className="font-semibold">
-                        {user._count?.following?.toLocaleString() ?? 0}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Siguiendo
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="font-semibold">
-                        {user._count?.followers?.toLocaleString() ?? 0}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Seguidores
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="font-semibold">
-                        {user._count?.posts?.toLocaleString() ?? 0}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Publicaciones
-                      </div>
-                    </div>
-                  </div>
-                </div>
                 {/* Action Buttons (Follow/Edit) */}
                 <div className="w-full mt-4">
                   {!currentUser ? (
                     <SignInButton mode="modal">
-                      <Button className="w-full">Seguir</Button>
+                      <Button className="w-full"><BellPlus className="size-4 mr-2" /> Recibir novedades</Button>
                     </SignInButton>
                   ) : isOwnProfile ? (
                     <Button
@@ -670,11 +668,18 @@ function ProfilePageClient({
                       disabled={isFollowPending}
                       variant={isFollowingState ? "outline" : "default"}
                     >
+                      <>
+                      {isFollowingState ? (
+                        <BellRing className="size-4 mr-2" />
+                      ) : (
+                        <BellPlus className="size-4 mr-2" />
+                      )}
                       {isFollowPending
                         ? "Actualizando..."
                         : isFollowingState
-                          ? "Dejar de seguir"
-                          : "Seguir"}
+                        ? "Siguiendo"
+                        : "Recibir novedades"}
+                    </>
                     </Button>
                   )}
                 </div>

@@ -22,14 +22,13 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Loader2,
   Search,
   ArrowUpDown,
   ShoppingBag,
-  Bike,
   X,
-  MapPin,
+  Map,
   Check,
+  MapPin,
 } from "lucide-react";
 import React, { useCallback, useState, useEffect } from "react";
 
@@ -297,6 +296,18 @@ export function CompanyFilters({
       regions: undefined,
       communes: undefined,
     });
+  };
+
+  const handleApplyLocation = () => {
+    setLocationInput(localLocationInput);
+    onFilterChange({
+      searchTerm: searchInput.trim() || undefined,
+      location: localLocationInput.trim() || undefined,
+      categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+      sortBy,
+      viewMode: currentViewMode,
+    });
+    setIsLocationDialogOpen(false);
   };
 
   const handleClearCategories = () => {
@@ -648,6 +659,82 @@ export function CompanyFilters({
             </DialogContent>
           </Dialog>
 
+          <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                disabled={isDisabled}
+                className="flex items-center space-x-2 rounded-full bg-background border hover:bg-accent h-10 px-4 py-2 text-sm whitespace-nowrap"
+              >
+                <MapPin className="h-4 w-4" />
+                <span>Localización</span>
+                {locationInput && (
+                  <span className="w-2 h-2 rounded-full bg-primary ml-1"></span>
+                )}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] rounded-2xl border-0 shadow-xl">
+              <DialogHeader>
+                <DialogTitle className="text-lg font-semibold">Filtrar por ubicación</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-1">
+                <div className="space-y-2">
+                  <Label htmlFor="location" className="flex items-center gap-1">
+                    <span>📍</span>
+                    <span>Región o comuna</span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      placeholder="Ej: Santiago, Chile"
+                      value={localLocationInput}
+                      onChange={(e) => setLocalLocationInput(e.target.value)}
+                    />
+                    {/* <MapPin className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${localLocationInput ? 'text-primary' : 'text-muted-foreground'} transition-colors`} /> */}
+
+                    <button
+                      type="button"
+                      onClick={handleApplyLocation}
+                      disabled={!localLocationInput.trim()}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-muted hover:bg-accent transition-colors"
+                      aria-label="Buscar ubicación"
+                    >
+                      <Search className={`h-4 w-4 ${localLocationInput ? 'text-primary' : 'text-muted-foreground'} transition-colors`} />
+                    </button>
+
+                    {localLocationInput && (
+                      <button
+                        type="button"
+                        onClick={() => setLocalLocationInput('')}
+                        className="absolute right-14 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-accent transition-colors"
+                        aria-label="Limpiar ubicación"
+                      >
+                        <X className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-between pt-4 border-t gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleClearLocation}
+                  disabled={!localLocationInput}
+                  className="flex-1 rounded-lg border-border/50 hover:bg-accent/50 transition-colors"
+                >
+                  Limpiar
+                </Button>
+                <Button
+                  variant="default"
+                  className="flex-1 rounded-lg bg-primary hover:bg-primary/90 transition-colors"
+                  onClick={handleApplyLocation}
+                  disabled={!localLocationInput.trim()}
+                >
+                  Aplicar
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           {/* Geographical Scope Filter */}
           <Dialog open={isScopeDialogOpen} onOpenChange={setIsScopeDialogOpen}>
             <DialogTrigger asChild>
@@ -656,7 +743,7 @@ export function CompanyFilters({
                 disabled={isDisabled}
                 className="flex items-center space-x-2 rounded-full bg-background border hover:bg-accent h-10 px-4 py-2 text-sm whitespace-nowrap"
               >
-                <MapPin className="h-4 w-4" />
+                <Map className="h-4 w-4" />
                 <span>
                   {!scope
                     ? "Área de cobertura"
@@ -671,15 +758,12 @@ export function CompanyFilters({
             <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col rounded-2xl border-0 shadow-xl">
               <DialogHeader className="px-2">
                 <DialogTitle className="text-lg font-semibold">
-                  Filtrar por ubicación
+                  Filtrar por área de cobertura
                 </DialogTitle>
               </DialogHeader>
               <ScrollArea className="flex-1 -mx-6 px-6">
                 <div className="py-1 space-y-6">
                   <div>
-                    <h3 className="mb-3 text-sm font-medium">
-                      Área de cobertura
-                    </h3>
                     <div className="grid grid-cols-3 gap-2">
                       <button
                         type="button"

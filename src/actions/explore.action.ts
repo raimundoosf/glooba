@@ -51,6 +51,7 @@ const companyDataSelectBase = Prisma.validator<Prisma.UserSelect>()({
   categories: true,
   bio: true,
   backgroundImage: true, // Added backgroundImage here
+  profileViews: true, // Added profileViews here
   // Select ratings needed to calculate average
   reviewsReceived: {
     select: {
@@ -89,6 +90,7 @@ export type CompanyCardData = Omit<
   averageRating: number | null;
   reviewCount: number;
   followerCount: number;
+  profileViews: number;
   backgroundImage: string | null;
 };
 
@@ -272,6 +274,7 @@ export async function getFilteredCompanies(
           averageRating,
           reviewCount,
           followerCount,
+          profileViews: company.profileViews,
           backgroundImage: company.backgroundImage, // Use fetched value
         };
       }

@@ -2,24 +2,35 @@
  * Component that displays company information in a card format with interactive follow functionality.
  * @module CompanyCard
  */
-'use client';
+"use client";
 
 /**
  * Imports and dependencies for the CompanyCard component.
  */
-import { CompanyCardData } from '@/actions/explore.action';
-import { toggleFollow } from '@/actions/user.action';
-import { DisplayStars } from '@/components/reviews/DisplayStars';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
-import { SignInButton, useUser } from '@clerk/nextjs';
-import { Loader2, MapPin, UserCheck, UserPlus, Users } from 'lucide-react';
-import { getCategoryIcon, getCategoryColor } from '@/lib/constants';
-import Link from 'next/link';
-import { useState, useTransition } from 'react';
-import toast from 'react-hot-toast';
+import { CompanyCardData } from "@/actions/explore.action";
+import { toggleFollow } from "@/actions/user.action";
+import { DisplayStars } from "@/components/reviews/DisplayStars";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardTitle,
+} from "@/components/ui/card";
+import { SignInButton, useUser } from "@clerk/nextjs";
+import {
+  BellPlus,
+  BellRing,
+  Eye, // Import Eye icon
+  Loader2,
+  MapPin,
+} from "lucide-react";
+import { getCategoryIcon, getCategoryColor } from "@/lib/constants";
+import Link from "next/link";
+import { useState, useTransition } from "react";
+import toast from "react-hot-toast";
 
 /**
  * Props interface for the CompanyCard component.
@@ -37,14 +48,18 @@ interface CompanyCardProps {
  */
 export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
   const { user: loggedInUser, isSignedIn } = useUser();
-  const [isFollowingOptimistic, setIsFollowingOptimistic] = useState(company.isFollowing);
+  const [isFollowingOptimistic, setIsFollowingOptimistic] = useState(
+    company.isFollowing
+  );
   const [isPending, startTransition] = useTransition();
 
   /**
    * Generates a fallback name for the company avatar.
    * @returns {string} First letter of company name or username
    */
-  const fallbackName = (company.name || company.username || '?').charAt(0).toUpperCase();
+  const fallbackName = (company.name || company.username || "?")
+    .charAt(0)
+    .toUpperCase();
 
   /**
    * Handles follow/unfollow toggling with optimistic updates.
@@ -53,12 +68,12 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
     // Use dbUserId passed down AND check Clerk's isSignedIn
     if (!dbUserId || !isSignedIn || isPending) {
       if (!isSignedIn && !dbUserId) {
-         // If definitely not signed in, prompt login instead of just returning
-         // Find the sign-in button and click it programmatically or show a toast
-         // For simplicity now, just return, but ideally prompt login.
-         // Maybe find the SignInButton and trigger click?
-         console.warn("User not signed in, cannot follow."); // Log warning
-         toast.error("Debes iniciar sesión para seguir a una organización."); // User feedback
+        // If definitely not signed in, prompt login instead of just returning
+        // Find the sign-in button and click it programmatically or show a toast
+        // For simplicity now, just return, but ideally prompt login.
+        // Maybe find the SignInButton and trigger click?
+        console.warn("User not signed in, cannot follow."); // Log warning
+        toast.error("Debes iniciar sesión para seguir a una organización."); // User feedback
       }
       return;
     }
@@ -69,29 +84,31 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
     startTransition(async () => {
       try {
         const result = await toggleFollow(company.id);
-        if (result === undefined) throw new Error('Authentication error or invalid response.');
+        if (result === undefined)
+          throw new Error("Authentication error or invalid response.");
         if (!result.success) {
           setIsFollowingOptimistic(originalState);
-          toast.error(result.error || 'Failed to update follow status.');
+          toast.error(result.error || "Failed to update follow status.");
         }
       } catch (error) {
-        console.error('Follow toggle error:', error);
+        console.error("Follow toggle error:", error);
         setIsFollowingOptimistic(originalState);
-        toast.error('An error occurred. Please try again.');
+        toast.error("An error occurred. Please try again.");
       }
     });
   };
 
   // Determine if the logged-in user is viewing their own profile card
-  const isOwnProfile = isSignedIn && loggedInUser?.publicMetadata?.dbId === company.id;
-  
+  const isOwnProfile =
+    isSignedIn && loggedInUser?.publicMetadata?.dbId === company.id;
+
   // TODO: Consider disabling follow/unfollow for own profile in the UI
   // Currently, the backend handles this, but we might want to prevent the UI interaction as well
 
   /**
    * Generates dynamic tooltip text for the follow button based on follow state.
    * Shows appropriate action text for the button hover state.
-   * 
+   *
    * @returns {string} Tooltip text indicating follow/unfollow action
    */
   const followButtonTooltip = isFollowingOptimistic
@@ -101,21 +118,21 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
   /**
    * Generates dynamic icon for the follow button based on interaction state.
    * Shows loading spinner during API calls, or appropriate follow/unfollow icon.
-   * 
+   *
    * @returns {JSX.Element} The appropriate icon element based on current state
    */
   const followButtonIcon = isPending ? (
     <Loader2 className="h-4 w-4 animate-spin" /> // Loading spinner
   ) : isFollowingOptimistic ? (
-    <UserCheck className="h-4 w-4" /> // Icon for "Following"
+    <BellRing className="h-4 w-4" /> // Icon for "Following"
   ) : (
-    <UserPlus className="h-4 w-4" /> // Icon for "Not Following"
+    <BellPlus className="h-4 w-4" /> // Icon for "Not Following"
   );
 
   /**
    * Uses the company's custom background image if available.
    * Falls back to a default background handled by the bg-muted class if not provided.
-   * 
+   *
    * @see Default is specified in the CSS class applied to the background container
    */
   const backgroundImage = company.backgroundImage;
@@ -129,7 +146,9 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
         <div
           className="relative w-full h-28 bg-cover bg-center bg-muted" // Reduced height slightly
           style={{
-            backgroundImage: backgroundImage ? `url('${backgroundImage}')` : undefined,
+            backgroundImage: backgroundImage
+              ? `url('${backgroundImage}')`
+              : undefined,
           }} // Only apply style if image exists
         >
           {/* Avatar - Positioned absolutely to overlap background and content */}
@@ -149,14 +168,13 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
           </Link>
         </div>
       </Link>
-
       {/* Follow Button - Positioned absolutely in the top-right corner */}
       {!isOwnProfile && (
         <div className="absolute top-3 right-3 z-10">
           {isSignedIn ? (
             // Button for signed-in users (Follow/Unfollow)
             <Button
-              variant={isFollowingOptimistic ? 'outline' : 'secondary'}
+              variant={isFollowingOptimistic ? "outline" : "secondary"}
               size="sm" // Small size
               onClick={handleFollowToggle}
               disabled={isPending}
@@ -165,9 +183,9 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
             >
               {followButtonIcon}
               <span className="ml-1">
-                {' '}
+                {" "}
                 {/* Added span for text with margin */}
-                {isFollowingOptimistic ? 'Siguiendo' : 'Seguir'}
+                {isFollowingOptimistic ? "Siguiendo" : "Recibir novedades"}
               </span>
             </Button>
           ) : (
@@ -179,8 +197,10 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
                 className="h-7 rounded-full border bg-card/80 hover:bg-card backdrop-blur-sm px-3 text-xs inline-flex items-center" // Adjusted height, padding, and text size
                 aria-label={`Seguir a @${company.username}`}
               >
-                <UserPlus className="h-3.5 w-3.5" /> {/* Slightly smaller icon */}
-                <span className="ml-1">Seguir</span> {/* Added span for "Seguir" text */}
+                <BellPlus className="h-3.5 w-3.5" />{" "}
+                {/* Slightly smaller icon */}
+                <span className="ml-1">Recibir novedades</span>{" "}
+                {/* Added span for "Seguir" text */}
               </Button>
             </SignInButton>
           )}
@@ -190,7 +210,7 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
       {/* Add padding-top to make space for the overlapping avatar */}
       {/* Adjusted padding-top and overall vertical space */}
       <div className="flex flex-col flex-grow p-4 pt-8 space-y-2">
-        {' '}
+        {" "}
         {/* Adjusted pt and added space-y for main content blocks */}
         {/* Name and Username/Location */}
         {/* Flex container for Name and the Username/Location row below it */}
@@ -201,7 +221,7 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
             className="outline-none focus-visible:underline"
           >
             <CardTitle className="text-base font-bold hover:underline leading-snug break-words">
-              {' '}
+              {" "}
               {/* Reduced text size slightly, adjusted leading */}
               {company.name || company.username}
             </CardTitle>
@@ -211,23 +231,27 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
           {/* Use flex to put username and location side by side */}
           {(company.username || company.location) && ( // Only show this row if either username or location exists
             <div className="flex items-center text-xs text-muted-foreground mt-0.5">
-              {' '}
+              {" "}
               {/* Reduced text size, added small top margin */}
               {/* Username */}
               {company.username && (
                 <CardDescription className="truncate p-0 m-0 inline">
-                  {' '}
-                  {/* Use inline and remove default padding/margin */}@{company.username}
+                  {" "}
+                  {/* Use inline and remove default padding/margin */}@
+                  {company.username}
                 </CardDescription>
               )}
               {/* Add a separator and Location if location exists and username is also present */}
-              {company.username && company.location && <span className="mx-1">•</span>}
+              {company.username && company.location && (
+                <span className="mx-1">•</span>
+              )}
               {/* Location */}
               {company.location && (
                 <div className="flex items-center truncate">
-                  {' '}
+                  {" "}
                   {/* Flex for icon and location text */}
-                  <MapPin className="h-3 w-3 mr-1 flex-shrink-0" /> {/* Smaller icon */}
+                  <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />{" "}
+                  {/* Smaller icon */}
                   <span className="truncate">{company.location}</span>
                 </div>
               )}
@@ -236,7 +260,7 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
         </div>
         {/* Rest of the Content - Now managed by parent space-y-2 */}
         <CardContent className="flex-grow space-y-2 text-sm p-0">
-          {' '}
+          {" "}
           {/* space-y-2 for spacing between items within CardContent */}
           {/* Stats Row: Reviews & Followers */}
           {/* No need for pt here due to parent space-y */}
@@ -248,10 +272,10 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
               className="flex-shrink-0"
             />
             <div className="flex items-center flex-shrink-0">
-              <Users className="h-3 w-3 mr-1" /> {/* Smaller icon */}
+              <Eye className="h-3 w-3 mr-1" /> {/* Eye icon */}
               <span>
-                {company.followerCount.toLocaleString()} seguidor
-                {company.followerCount !== 1 ? 'es' : ''}
+                {company.profileViews.toLocaleString()} visita
+                {company.profileViews !== 1 ? "s" : ""}
               </span>
             </div>
           </div>
@@ -267,7 +291,7 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
               {company.categories.slice(0, 3).map((category) => {
                 const Icon = getCategoryIcon(category);
                 const iconColor = getCategoryColor(category);
-                
+
                 return (
                   <Badge
                     key={category}
@@ -291,7 +315,7 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
           )}
         </CardContent>
         {/* End Rest of the Content */}
-      </div>{' '}
+      </div>{" "}
       {/* End Content Area */}
     </Card>
   );
