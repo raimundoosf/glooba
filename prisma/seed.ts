@@ -30,9 +30,12 @@ async function main() {
   }
   const regionsData: ApiRegion[] = await regionsResponse.json();
 
+  const now = new Date();
   const regionsToCreate = regionsData.map((region) => ({
     id: region.codigo,
     name: region.nombre,
+    createdAt: now,
+    updatedAt: now,
   }));
 
   await prisma.region.createMany({
@@ -57,6 +60,8 @@ async function main() {
       id: commune.codigo,
       name: commune.nombre,
       regionId: region.codigo,
+      createdAt: now,
+      updatedAt: now,
     }));
 
     if (communesToCreate.length > 0) {

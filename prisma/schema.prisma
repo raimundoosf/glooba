@@ -145,10 +145,10 @@ model Commune {
   name               String
   regionId           String
   createdAt          DateTime             @default(now())
-  updatedAt          DateTime
+  updatedAt          DateTime             @updatedAt
   Region             Region               @relation(fields: [regionId], references: [id], onDelete: Cascade)
   CompanyServiceArea CompanyServiceArea[]
-
+  
   @@unique([name, regionId])
   @@index([regionId])
 }
@@ -174,7 +174,7 @@ model Region {
   id                 String               @id
   name               String               @unique
   createdAt          DateTime             @default(now())
-  updatedAt          DateTime
+  updatedAt          DateTime             @updatedAt
   Commune            Commune[]
   CompanyServiceArea CompanyServiceArea[]
 }
