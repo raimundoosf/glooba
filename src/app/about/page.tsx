@@ -1,31 +1,36 @@
-import { getFeaturedCompanies } from '@/actions/explore.action';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardTitle } from '@/components/ui/card';
-import { SignInButton } from '@clerk/nextjs';
+import { getFeaturedCompanies } from "@/actions/explore.action";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { SignInButton } from "@clerk/nextjs";
 import {
   CloudOff,
   Handshake,
-  Leaf,
-  Lightbulb,
-  MapPin,
-  Search,
-  TrendingUp,
   Users,
-  UserPlus,
-  CircleCheckBig,
-  MessagesSquare,
-  Recycle,
-  Goal,
-  ChartNoAxesCombined,
+  Search,
+  ArrowRight,
+  Leaf,
   HandHeart,
-} from 'lucide-react';
-import Link from 'next/link';
+  Recycle,
+  MessagesSquare,
+  Info,
+  ShieldCheck,
+  Users2,
+  MapPin,
+  BarChart3 as BarChart4,
+  MessageSquare,
+  Lightbulb,
+  UserPlus,
+  ChartNoAxesCombined,
+  TrendingUp,
+  Goal,
+} from "lucide-react";
+import Link from "next/link";
 
 export const metadata = {
-  title: 'Sobre Glooba | Conectando Sostenibilidad',
+  title: "Sobre Glooba | Conectando Sostenibilidad",
   description:
-    'Descubre la misión, visión y beneficios de Glooba, la plataforma que conecta personas con iniciativas sostenibles en Latam.',
+    "Descubre la misión, visión y beneficios de Glooba, la plataforma que conecta personas con iniciativas sostenibles en Latam.",
 };
 
 /**
@@ -41,22 +46,21 @@ export default async function AboutPage() {
       <div className="space-y-12 md:space-y-16 lg:space-y-20 mb-12 md:mb-16">
         {/* --- Hero Section: What is Glooba & Core Promise --- */}
         <section className="text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
-            El poder de tu decisión para <br /> <span className="text-primary">generar el cambio</span>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+            Ayudemos a construir <br />{" "}
+            <span className="text-primary">
+            un mundo más sostenible
+            </span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            Glooba es la plataforma que conecta a personas como tú con empresas y organizaciones que
-            impulsan iniciativas sostenibles en Latam.
-          </p>
           {/* Call to action integrated early */}
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12 max-w-2xl mx-auto">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4 mb-12 max-w-2xl mx-auto">
             <Link href="/">
               <Button
                 size="default"
                 variant="default"
                 className="font-semibold transition-all duration-200 hover:scale-105 hover:shadow-lg"
               >
-                <Search className="mr-2 h-5 w-5" /> Encuentra Iniciativas Ahora
+                <Search className="mr-2 h-5 w-5" /> Encuentra soluciones ahora
               </Button>
             </Link>
             <SignInButton mode="modal">
@@ -65,40 +69,25 @@ export default async function AboutPage() {
                 variant="outline"
                 className="font-semibold transition-all duration-200 hover:scale-105 hover:bg-primary/10"
               >
-                <UserPlus className="mr-2 h-5 w-5" /> Únete a la Comunidad
+                <UserPlus className="mr-2 h-5 w-5" /> Únete a la comunidad
               </Button>
             </SignInButton>
           </div>
-          {/* Key features/pillars presented visually below CTA */}
-          <div className="flex flex-wrap justify-center items-center gap-6 text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <CircleCheckBig className="h-5 w-5 text-blue-600" /> Alternativas verificadas
-            </div>
-            <div className="flex items-center gap-2">
-              <Handshake className="h-5 w-5 text-green-600" /> Actores locales
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-purple-600" /> Evaluación colaborativa
-            </div>
-          </div>
+          
         </section>
 
-        {/* --- Problem Section: Why Glooba Exists --- */}
-        {/* Using a more engaging visual style for the quote */}
-        <section className="max-w-4xl mx-auto">
-          <h2 className="sr-only">El Problema que Resolvemos</h2> {/* Accessible heading */}
-          <Card className="bg-secondary/50 dark:bg-secondary/30 border-l-4 border-primary p-6 md:p-8">
-            {' '}
-            {/* Added padding to Card */}
-            <blockquote className="text-xl md:text-2xl italic text-foreground mb-4 leading-relaxed">
-              {' '}
-              {/* Increased text size, adjusted leading */}
-              "9 de cada 10 consumidores latinoamericanos busca marcas comprometidas con la
-              sostenibilidad, solo el 30% encuentra opciones debido a la falta de información"
-            </blockquote>
-            <p className="text-sm text-muted-foreground text-right">- Kantar, 2022</p>{' '}
-            {/* Align source right */}
-          </Card>
+        {/* --- What we do --- */}
+        <section>
+          <div className="text-center max-w-3xl mx-auto mb-8 md:mb-12">
+            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-4">
+              En <span className="font-semibold text-foreground">Glooba</span>, transformamos la sostenibilidad de un concepto a una experiencia compartida. Somos el puente que conecta a personas con iniciativas que están construyendo un futuro mejor.
+            </p>
+            <div className="inline-flex items-center gap-2 text-muted-foreground/80 text-sm md:text-base">
+              <span className="h-px w-8 bg-foreground/20"></span>
+              <span>Juntos impulsamos la colaboración, la innovación y el cambio positivo</span>
+              <span className="h-px w-8 bg-foreground/20"></span>
+            </div>
+          </div>
         </section>
 
         {/* --- Solution Section: How Glooba Solves It (User Benefits Focused) --- */}
@@ -110,103 +99,116 @@ export default async function AboutPage() {
           {/* Grid of key user actions/benefits */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             <Card className="text-center hover:shadow-md transition-shadow p-6">
-              {' '}
+              {" "}
               {/* Added padding to Card */}
-              <MapPin className="h-10 w-10 text-teal-600 mx-auto mb-4" />{' '}
+              <MapPin className="h-10 w-10 text-primary mx-auto mb-4" />{" "}
               {/* Larger icon, centered */}
               <CardTitle className="text-xl font-semibold mb-2">
                 Encontrar Fácilmente
-              </CardTitle>{' '}
+              </CardTitle>{" "}
               {/* Stronger title */}
               <CardContent className="p-0">
-                {' '}
+                {" "}
                 {/* Removed default padding */}
                 <p className="text-muted-foreground text-sm">
-                  Alternativas sostenibles verificadas y cercanas a ti con nuestro buscador
-                  inteligente.
+                  Alternativas sostenibles verificadas y cercanas a ti con
+                  nuestro buscador inteligente.
                 </p>
               </CardContent>
             </Card>
             <Card className="text-center hover:shadow-md transition-shadow p-6">
-              <ChartNoAxesCombined className="h-10 w-10 text-lime-600 mx-auto mb-4" />{' '}
+              <ChartNoAxesCombined className="h-10 w-10 text-primary mx-auto mb-4" />{" "}
               {/* Larger icon, centered */}
-              <CardTitle className="text-xl font-semibold mb-2">Impulsar el Cambio</CardTitle>
+              <CardTitle className="text-xl font-semibold mb-2">
+                Impulsar el Cambio
+              </CardTitle>
               <CardContent className="p-0">
                 <p className="text-muted-foreground text-sm">
-                  Apoyando a entidades comprometidas y descubriendo formas de unirte al movimiento
-                  sostenible.
+                  Apoyando a entidades comprometidas y descubriendo formas de
+                  unirte al movimiento sostenible.
                 </p>
               </CardContent>
             </Card>
             <Card className="text-center hover:shadow-md transition-shadow p-6">
-              <MessagesSquare className="h-10 w-10 text-sky-600 mx-auto mb-4" />{' '}
+              <MessagesSquare className="h-10 w-10 text-primary mx-auto mb-4" />{" "}
               {/* Larger icon, centered */}
-              <CardTitle className="text-xl font-semibold mb-2">Conectar y Colaborar</CardTitle>
+              <CardTitle className="text-xl font-semibold mb-2">
+                Conectar y Colaborar
+              </CardTitle>
               <CardContent className="p-0">
                 <p className="text-muted-foreground text-sm">
-                  Interactúa con una comunidad, sigue organizaciones, comparte experiencias y ayuda
-                  a verificar iniciativas.
+                  Interactúa con una comunidad, recibe notificaciones, comparte
+                  experiencias y ayuda a verificar iniciativas.
                 </p>
               </CardContent>
             </Card>
           </div>
         </section>
 
-        {/* --- What we value / Focus Areas Section --- */}
-        {/* Renamed and styled this section to focus on the values/areas Glooba champions */}
-        <section className="max-w-5xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-semibold text-center mb-8 md:mb-12">
-            Nuestros Pilares de Sostenibilidad
-          </h2>
-          {/* Grid of focus areas */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {[
-              // Array for easy mapping
-              {
-                title: 'Economía Circular',
-                description: 'Fomentando la reutilización y el reciclaje.',
-                icon: Recycle,
-              },
-              {
-                title: 'Materiales Sustentables',
-                description: 'Priorizando recursos renovables y de bajo impacto.',
-                icon: Leaf,
-              }, // Assuming you have or add a Leaf icon
-              {
-                title: 'Comunidad Local',
-                description: 'Apoyando a productores y negocios cercanos.',
-                icon: HandHeart,
-              },
-              {
-                title: 'Disminución de Huella de Carbono',
-                description: 'Promoviendo prácticas que reducen emisiones.',
-                icon: CloudOff,
-              }, // Assuming you have or add a CloudOff icon
-            ].map((item) => (
-              // Added padding to Card, improved icon display
-              <Card
-                key={item.title}
-                className="text-center hover:shadow-md transition-shadow p-6 flex flex-col items-center"
-              >
-                <item.icon className="h-8 w-8 text-blue-600 mb-3" /> {/* Icon for each pillar */}
-                <CardTitle className="text-lg font-semibold mb-2">{item.title}</CardTitle>{' '}
-                {/* Stronger title */}
-                <CardContent className="p-0 flex-grow">
-                  {' '}
-                  {/* flex-grow to push description */}
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+
+        {/* --- ¿Por qué usar Glooba? --- */}
+        <section className="py-12 bg-muted/30">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <h2 className="text-2xl md:text-3xl font-semibold text-center mb-12">
+              ¿Por qué elegir Glooba?
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                {
+                  icon: <ShieldCheck className="h-8 w-8 text-green-600" />,
+                  title: "Información Verificada",
+                  description: "Accede a datos confiables y actualizados sobre iniciativas sostenibles verificadas por nuestra comunidad."
+                },
+                {
+                  icon: <Users2 className="h-8 w-8 text-blue-600" />,
+                  title: "Comunidad Activa",
+                  description: "Únete a una red de personas y organizaciones comprometidas con la sostenibilidad y el impacto positivo."
+                },
+                {
+                  icon: <MapPin className="h-8 w-8 text-purple-600" />,
+                  title: "Soluciones Locales",
+                  description: "Descubre iniciativas cercanas a ti y apoya el desarrollo sostenible en tu propia comunidad."
+                },
+                {
+                  icon: <BarChart4 className="h-8 w-8 text-amber-600" />,
+                  title: "Impacto Medible",
+                  description: "Visualiza el impacto real de las iniciativas y cómo contribuyen a los Objetivos de Desarrollo Sostenible."
+                },
+                {
+                  icon: <MessageSquare className="h-8 w-8 text-rose-600" />,
+                  title: "Feedback Colaborativo",
+                  description: "Comparte tus experiencias y ayuda a otros a tomar decisiones informadas con reseñas y calificaciones."
+                },
+                {
+                  icon: <Lightbulb className="h-8 w-8 text-indigo-600" />,
+                  title: "Innovación Abierta",
+                  description: "Conecta con emprendedores y organizaciones que están impulsando soluciones innovadoras para un futuro sostenible."
+                }
+              ].map((item, index) => (
+                <Card key={index} className="p-6 hover:shadow-md transition-shadow h-full">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-2 rounded-lg bg-muted">
+                      {item.icon}
+                    </div>
+                    <h3 className="text-lg font-semibold">{item.title}</h3>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    {item.description}
+                  </p>
+                </Card>
+              ))}
+            </div>
           </div>
         </section>
 
         {/* --- Allies Section --- */}
         <section>
-          <h2 className="text-2xl md:text-3xl font-semibold text-center mb-4">Nuestros Aliados</h2>
+          <h2 className="text-2xl md:text-3xl font-semibold text-center mb-4">
+            Nuestros Aliados
+          </h2>
           <p className="text-center text-muted-foreground mb-8 md:mb-12 max-w-3xl mx-auto">
-            Colaboramos con organizaciones y empresas líderes comprometidas con la sostenibilidad en
-            Latam.
+            Colaboramos con organizaciones y empresas líderes comprometidas con
+            la sostenibilidad en Latam.
           </p>
           {/* Horizontal Scroll Container */}
           <div className="relative">
@@ -215,18 +217,22 @@ export default async function AboutPage() {
               {featuredCompanies.length > 0 ? (
                 featuredCompanies.map((company) => (
                   <Link
-                    href={company.username ? `/profile/${company.username}` : '#'}
+                    href={
+                      company.username ? `/profile/${company.username}` : "#"
+                    }
                     key={company.id}
                     className="flex-shrink-0 transition-opacity hover:opacity-80"
-                    title={company.username || 'Company Profile'} // Add a title for accessibility
+                    title={company.username || "Company Profile"} // Add a title for accessibility
                   >
                     <Avatar className="h-16 w-16 md:h-20 md:w-20 border-2 border-muted">
                       <AvatarImage
                         src={company.image || undefined}
-                        alt={`${company.username || 'Company'} logo`}
+                        alt={`${company.username || "Company"} logo`}
                       />
                       <AvatarFallback className="text-xs">
-                        {company.username ? company.username.substring(0, 2).toUpperCase() : 'GBA'}
+                        {company.username
+                          ? company.username.substring(0, 2).toUpperCase()
+                          : "GBA"}
                       </AvatarFallback>
                     </Avatar>
                   </Link>
@@ -251,40 +257,42 @@ export default async function AboutPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
             <div className="md:col-span-1 space-y-3">
-              {' '}
+              {" "}
               {/* Added space-y */}
-              <Lightbulb className="h-8 w-8 text-yellow-600 mb-2" /> {/* Added icon */}
+              <Lightbulb className="h-8 w-8 text-yellow-600 mb-2" />{" "}
+              {/* Added icon */}
               <h3 className="text-xl font-semibold">¿Qué es Glooba?</h3>
               <p className="text-muted-foreground text-sm">
-                {' '}
+                {" "}
                 {/* Reduced text size */}
-                Glooba es una plataforma que conecta a consumidores con iniciativas y ofertas
-                sostenibles en Latam, facilitando el consumo responsable y apoyando a entidades
-                comprometidas.
+                Glooba es una plataforma que conecta a personas con organizaciones y empresas comprometidas con la sostenibilidad.
               </p>
             </div>
             <div className="md:col-span-1 space-y-3">
-              {' '}
+              {" "}
               {/* Added space-y */}
-              <Goal className="h-8 w-8 text-green-600 mb-2" /> {/* Added icon */}
+              <Goal className="h-8 w-8 text-green-600 mb-2" />{" "}
+              {/* Added icon */}
               <h3 className="text-xl font-semibold">Misión</h3>
               <p className="text-muted-foreground text-sm">
-                {' '}
+                {" "}
                 {/* Reduced text size */}
-                Facilitar la transición global hacia el consumo responsable conectando personas con
-                organizaciones sostenibles. Empoderamos elecciones conscientes para un futuro mejor.
+                Facilitar la transición global hacia la sostenibilidad. Empoderamos
+                elecciones conscientes para un futuro mejor.
               </p>
             </div>
             <div className="md:col-span-1 space-y-3">
-              {' '}
+              {" "}
               {/* Added space-y */}
-              <TrendingUp className="h-8 w-8 text-cyan-600 mb-2" /> {/* Added icon */}
+              <TrendingUp className="h-8 w-8 text-cyan-600 mb-2" />{" "}
+              {/* Added icon */}
               <h3 className="text-xl font-semibold">Visión</h3>
               <p className="text-muted-foreground text-sm">
-                {' '}
+                {" "}
                 {/* Reduced text size */}
-                Ser la comunidad líder donde la sostenibilidad es accesible y la opción preferida
-                para todos, transformando decisiones en impacto positivo.
+                Ser la comunidad líder donde la sostenibilidad es accesible y la
+                opción preferida para todos, transformando decisiones en impacto
+                positivo.
               </p>
             </div>
           </div>
@@ -296,8 +304,8 @@ export default async function AboutPage() {
             ¿Listo/a para ser parte del cambio?
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Únete a nuestra comunidad, explora iniciativas y descubre cómo tus acciones pueden
-            generar un impacto positivo.
+            Únete a nuestra comunidad, explora iniciativas y descubre cómo tus
+            acciones pueden generar un impacto positivo.
           </p>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12 max-w-2xl mx-auto">
             <Link href="/">

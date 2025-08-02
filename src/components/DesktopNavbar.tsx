@@ -2,12 +2,12 @@
  * Desktop navigation bar component with responsive design.
  * @module DesktopNavbar
  */
-import { Button } from '@/components/ui/button';
-import { SignInButton, UserButton } from '@clerk/nextjs';
-import { currentUser } from '@clerk/nextjs/server';
-import { BellIcon, HomeIcon, RssIcon, UserIcon } from 'lucide-react';
-import Link from 'next/link';
-import ModeToggle from './ModeToggle';
+import { Button } from "@/components/ui/button";
+import { SignInButton, UserButton } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
+import { BellIcon, HomeIcon, RssIcon, UserIcon } from "lucide-react";
+import Link from "next/link";
+import ModeToggle from "./ModeToggle";
 
 /**
  * Desktop navigation bar component that displays:
@@ -58,9 +58,15 @@ async function DesktopNavbar() {
         </>
       ) : (
         <SignInButton mode="modal">
-          <Button variant="outline">Iniciar sesión</Button>
+          <Button variant="default">Iniciar sesión</Button>
         </SignInButton>
       )}
+
+      <Button variant="outline" className="flex items-center gap-2" asChild>
+        <Link href="/enroll">
+          <span className="hidden lg:inline">¿Eres empresa?</span>
+        </Link>
+      </Button>
     </div>
   );
 }

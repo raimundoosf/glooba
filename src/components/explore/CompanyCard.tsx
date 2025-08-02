@@ -140,7 +140,7 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
   return (
     // Card container: Relative positioning for absolute children, full height,
     // overflow hidden, shadow transition, border, dark mode border adjustment.
-    <Card className="flex flex-col h-full overflow-hidden transition-shadow duration-200 hover:shadow-lg border dark:border-neutral-800 relative">
+    <Card className="flex flex-col h-full overflow-hidden transition-shadow duration-200 hover:shadow-lg dark:border-neutral-800 relative border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-transparent">
       {/* Background Image Section */}
       <Link href={`/profile/${company.username}`} className="block">
         <div
@@ -178,7 +178,7 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
               size="sm" // Small size
               onClick={handleFollowToggle}
               disabled={isPending}
-              className="h-7 rounded-full border bg-card/80 hover:bg-card backdrop-blur-sm px-3 text-xs inline-flex items-center" // Adjusted height, padding, and text size
+              className="h-7 rounded-full border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-transparent bg-card/80 hover:bg-card backdrop-blur-sm px-3 text-xs inline-flex items-center" // Adjusted height, padding, and text size
               aria-label={followButtonTooltip}
             >
               {followButtonIcon}
@@ -194,7 +194,7 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
               <Button
                 variant="secondary"
                 size="sm" // Small size
-                className="h-7 rounded-full border bg-card/80 hover:bg-card backdrop-blur-sm px-3 text-xs inline-flex items-center" // Adjusted height, padding, and text size
+                className="h-7 rounded-full border bg-card/80 border-primary/20 bg-gradient-to-b from-primary/5 to-transparent hover:bg-card backdrop-blur-sm px-3 text-xs inline-flex items-center" // Adjusted height, padding, and text size
                 aria-label={`Seguir a @${company.username}`}
               >
                 <BellPlus className="h-3.5 w-3.5" />{" "}

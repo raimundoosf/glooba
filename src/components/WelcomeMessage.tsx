@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * Component that displays a welcome message for new users.
- * On non-large screens, it appears as a modal that can be dismissed.
- * @module WelcomeMessage
- */
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,52 +8,37 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { TypeAnimation } from "react-type-animation";
 import {
-  Info,
   Users,
   CircleCheckBig,
   Handshake,
-  X,
   MousePointerClick,
+  Info,
 } from "lucide-react";
-import { useState, useEffect } from "react";
 
-/**
- * Component that displays a welcome card with:
- * - Welcome message in Spanish
- * - Description about the platform's purpose
- * - "Learn More" button linking to about page
- *
- * On non-large screens, it appears as a modal that can be dismissed.
- * On large screens, it appears as a card.
- *
- * @returns {JSX.Element} The welcome message component
- */
 export default function WelcomeMessage() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
+  const [animationStep, setAnimationStep] = useState(0);
+  const [showLink, setShowLink] = useState(false);
 
-  // Check screen size on mount and on resize
   useEffect(() => {
     const checkScreenSize = () => {
-      setIsLargeScreen(window.innerWidth >= 1024); // lg breakpoint in Tailwind
+      setIsLargeScreen(window.innerWidth >= 1024);
     };
 
-    // Initial check
-    checkScreenSize();
-
-    // Add event listener for window resize
-    window.addEventListener("resize", checkScreenSize);
-
-    // Clean up event listener on unmount
-    return () => window.removeEventListener("resize", checkScreenSize);
+    if (typeof window !== "undefined") {
+      checkScreenSize();
+      window.addEventListener("resize", checkScreenSize);
+      return () => window.removeEventListener("resize", checkScreenSize);
+    }
   }, []);
 
-  // Show modal on non-large screens when component mounts
   useEffect(() => {
     if (!isLargeScreen) {
-      // Check if user has dismissed the welcome message before
       const hasDismissed = localStorage.getItem("hasDismissedWelcome");
       if (!hasDismissed) {
         setIsOpen(true);
@@ -68,7 +48,6 @@ export default function WelcomeMessage() {
 
   const handleClose = () => {
     setIsOpen(false);
-    // Remember that user has dismissed the welcome message
     localStorage.setItem("hasDismissedWelcome", "true");
   };
 
@@ -79,16 +58,16 @@ export default function WelcomeMessage() {
           ¡Bienvenido/a a Glooba!
         </h2>
         <p className="text-muted-foreground">
-          Encuentra alternativas sostenibles de empresas y organizaciones.
+          Encuentra empresas y organizaciones comprometidas con la
+          sostenibilidad.
         </p>
       </div>
-
       <div className="mt-6 space-y-4">
         <div className="space-y-3">
           <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
             <CircleCheckBig className="h-6 w-6 text-blue-500 flex-shrink-0" />
             <span className="text-sm">
-              Buscador de alternativas sostenibles verificadas.
+              Buscador de organizaciones sostenibles verificadas.
             </span>
           </div>
           <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
@@ -100,11 +79,10 @@ export default function WelcomeMessage() {
           <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
             <Users className="h-6 w-6 text-purple-500 flex-shrink-0" />
             <span className="text-sm">
-              Sigue a empresas locales y deja tu reseña.
+              Sigue a emprendimientos locales y deja tu reseña.
             </span>
           </div>
         </div>
-
         <Button asChild className="w-full mt-4" onClick={handleClose}>
           <Link
             href="/about"
@@ -129,48 +107,81 @@ export default function WelcomeMessage() {
     </>
   );
 
-  // On large screens, show as a card
   if (isLargeScreen) {
     return (
       <Card className="mb-8">
-        <CardHeader className="items-center text-center">
-          <CardTitle className="text-3xl font-bold text-primary">
-            ¡Bienvenido/a a Glooba!
+        <CardHeader className="items-center text-center min-h-[9rem]">
+          {/* Título: Se renderiza de forma diferente según el paso de la animación */}
+          <CardTitle className="text-3xl font-bold text-card-foreground">
+            {animationStep < 1 ? (
+              // 1. ANTES Y DURANTE la animación del título
+              <TypeAnimation
+                sequence={[
+                  "¡Bienvenido/a a Glooba!",
+                  () => setAnimationStep(1),
+                ]}
+                wrapper="span"
+                speed={40}
+                repeat={0}
+                cursor={true}
+              />
+            ) : (
+              // 2. DESPUÉS de que la animación del título termina, se convierte en texto estático
+              <span>¡Bienvenido/a a Glooba!</span>
+            )}
           </CardTitle>
+
+          {/* Descripción: Se renderiza de forma diferente según el paso de la animación */}
+          {animationStep === 1 && (
+            // 3. SOLO DURANTE la animación de la descripción
+            <div className="text-lg text-muted-foreground font-normal mt-2">
+              <TypeAnimation
+                sequence={[
+                  "Encuentra empresas y organizaciones comprometidas con la sostenibilidad.",
+                  1000,
+                  () => {
+                    setAnimationStep(2);
+                    setShowLink(true);
+                  },
+                ]}
+                wrapper="span"
+                speed={55}
+                repeat={0}
+                cursor={true}
+              />
+            </div>
+          )}
+
+          {animationStep > 1 && (
+            // 4. DESPUÉS de que la animación de la descripción termina
+            <div className="text-lg text-muted-foreground font-normal mt-2">
+              <span>
+                Encuentra empresas y organizaciones comprometidas con la
+                sostenibilidad.
+              </span>
+            </div>
+          )}
+
           <CardDescription className="text-base text-muted-foreground">
-            <div className="space-y-2 mt-1">
-              <p className="text-lg">
-                Encuentra iniciativas sostenibles de empresas y organizaciones.
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                <div className="group flex items-center gap-2 p-1.5 rounded bg-muted/50 hover:bg-muted/70 transition-colors">
-                  <CircleCheckBig className="h-5 w-5 text-blue-500 transition-transform group-hover:scale-110" />
-                  <span className="font-medium">Alternativas verificadas</span>
-                </div>
-                <div className="group flex items-center gap-2 p-1.5 rounded bg-muted/50 hover:bg-muted-70 transition-colors">
-                  <Handshake className="h-5 w-5 text-green-500 transition-transform group-hover:scale-110" />
-                  <span className="font-medium">Actores locales</span>
-                </div>
-                <div className="group flex items-center gap-2 p-1.5 rounded bg-muted/50 hover:bg-muted-70 transition-colors">
-                  <Users className="h-5 w-5 text-purple-500 transition-transform group-hover:scale-110" />
-                  <span className="font-medium">Evaluación colaborativa</span>
-                </div>
+            {showLink && (
+              <div className="flex flex-wrap justify-center gap-2 animate-fade-in mt-2">
                 <Link
                   href="/about"
-                  className="group flex items-center gap-2 p-1.5 rounded bg-muted/50 hover:bg-muted-70 transition-colors"
+                  className="group flex items-center gap-1 px-2 py-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm hover:shadow-md"
                 >
-                  <Info className="h-5 w-5 text-muted-foreground transition-transform group-hover:scale-110" />
-                  <span className="font-medium">¡Conoce más!</span>
+                  <Info className="h-4 transition-transform group-hover:scale-110" />
+                  <span className="font-medium">
+                    ¡Conoce más sobre nosotros!
+                  </span>
                 </Link>
               </div>
-            </div>
+            )}
           </CardDescription>
         </CardHeader>
       </Card>
     );
   }
 
-  // On non-large screens, show as a modal
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-md [&>button]:hidden rounded-lg sm:rounded-lg">

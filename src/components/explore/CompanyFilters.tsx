@@ -303,7 +303,8 @@ export function CompanyFilters({
     onFilterChange({
       searchTerm: searchInput.trim() || undefined,
       location: localLocationInput.trim() || undefined,
-      categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+      categories:
+        selectedCategories.length > 0 ? selectedCategories : undefined,
       sortBy,
       viewMode: currentViewMode,
     });
@@ -480,20 +481,20 @@ export function CompanyFilters({
             onViewModeChange(value as ViewMode);
           }
         }}
-        className="w-full grid grid-cols-2 rounded-full bg-muted"
+        className="w-full grid grid-cols-2 rounded-full bg-secondary"
         disabled={isDisabled}
       >
         <ToggleGroupItem
           value="posts"
           aria-label="Toggle posts view"
-          className="rounded-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-muted-foreground py-2.5 text-base font-medium border-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=on]:shadow-sm transition-colors dark:data-[state=on]:bg-primary dark:data-[state=on]:text-primary-foreground dark:data-[state=off]:text-muted-foreground"
+          className="rounded-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:bg-secondary data-[state=off]:text-primary py-2.5 text-base font-medium border-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=on]:shadow-sm transition-colors dark:data-[state=on]:bg-primary dark:data-[state=on]:text-primary-foreground dark:data-[state=off]:bg-secondary dark:data-[state=off]:text-muted-foreground"
         >
           Publicaciones
         </ToggleGroupItem>
         <ToggleGroupItem
           value="list"
           aria-label="Toggle list view"
-          className="rounded-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-muted-foreground py-2.5 text-base font-medium border-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=on]:shadow-sm transition-colors dark:data-[state=on]:bg-primary dark:data-[state=on]:text-primary-foreground dark:data-[state=off]:text-muted-foreground"
+          className="rounded-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:bg-secondary data-[state=off]:text-primary py-2.5 text-base font-medium border-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=on]:shadow-sm transition-colors dark:data-[state=on]:bg-primary dark:data-[state=on]:text-primary-foreground dark:data-[state=off]:bg-secondary dark:data-[state=off]:text-muted-foreground"
         >
           Lista
         </ToggleGroupItem>
@@ -659,7 +660,10 @@ export function CompanyFilters({
             </DialogContent>
           </Dialog>
 
-          <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
+          <Dialog
+            open={isLocationDialogOpen}
+            onOpenChange={setIsLocationDialogOpen}
+          >
             <DialogTrigger asChild>
               <Button
                 variant="outline"
@@ -675,7 +679,9 @@ export function CompanyFilters({
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] rounded-2xl border-0 shadow-xl">
               <DialogHeader>
-                <DialogTitle className="text-lg font-semibold">Filtrar por ubicación</DialogTitle>
+                <DialogTitle className="text-lg font-semibold">
+                  Filtrar por ubicación
+                </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-1">
                 <div className="space-y-2">
@@ -698,13 +704,15 @@ export function CompanyFilters({
                       className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-muted hover:bg-accent transition-colors"
                       aria-label="Buscar ubicación"
                     >
-                      <Search className={`h-4 w-4 ${localLocationInput ? 'text-primary' : 'text-muted-foreground'} transition-colors`} />
+                      <Search
+                        className={`h-4 w-4 ${localLocationInput ? "text-primary" : "text-muted-foreground"} transition-colors`}
+                      />
                     </button>
 
                     {localLocationInput && (
                       <button
                         type="button"
-                        onClick={() => setLocalLocationInput('')}
+                        onClick={() => setLocalLocationInput("")}
                         className="absolute right-14 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-accent transition-colors"
                         aria-label="Limpiar ubicación"
                       >

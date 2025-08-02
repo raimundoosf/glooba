@@ -11,6 +11,7 @@ import {
   BellIcon,
   FileText,
   HomeIcon,
+  InfoIcon,
   LogOutIcon,
   MenuIcon,
   MoonIcon,
@@ -86,6 +87,7 @@ function MobileNavbar() {
           <nav className="flex flex-col space-y-4 mt-6">
             <MenuLink href="/" icon={HomeIcon} label="Inicio" />
             <MenuLink href="/feed" icon={RssIcon} label="Feed" />
+            <MenuLink href="/about" icon={InfoIcon} label="Nosotros" />
 
             {isSignedIn ? (
               <>
@@ -110,6 +112,12 @@ function MobileNavbar() {
                 </Button>
               </SignInButton>
             )}
+
+            <Link href="/enroll">
+              <Button variant="outline" className="w-full">
+                ¿Eres empresa?
+              </Button>
+            </Link>
             
             <div className="pt-4 mt-4 border-t">
               <p className="text-xs text-muted-foreground px-2 mb-2">Legal</p>

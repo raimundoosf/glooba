@@ -35,11 +35,11 @@ import { SignInButton, useUser } from "@clerk/nextjs";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
-  BellIcon, 
-  BellOffIcon, 
-  BellPlus, 
-  BellPlusIcon, 
-  BellRing, 
+  BellIcon,
+  BellOffIcon,
+  BellPlus,
+  BellPlusIcon,
+  BellRing,
   CalendarIcon,
   EditIcon,
   FileTextIcon,
@@ -50,13 +50,7 @@ import {
   Star,
   X,
 } from "lucide-react";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
 import { DisplayStars } from "@/components/reviews/DisplayStars";
@@ -351,7 +345,10 @@ function ProfilePageClient({
             profileImageUrl = currentUser.imageUrl; // Get the new URL from Clerk
             setNewProfilePic(null); // Clear the preview state
           } catch (clerkError: any) {
-            console.error("Error al actualizar la imagen en Clerk:", clerkError);
+            console.error(
+              "Error al actualizar la imagen en Clerk:",
+              clerkError
+            );
             throw new Error(
               `Error al actualizar imagen: ${clerkError.errors?.[0]?.message || clerkError.message}`
             );
@@ -569,7 +566,7 @@ function ProfilePageClient({
       {/* Profile Header Card */}
       <div className="grid grid-cols-1 gap-6">
         <div className="w-full max-w-lg mx-auto">
-          <Card className="bg-card overflow-hidden">
+          <Card className="bg-card overflow-hidden border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-transparent">
             {" "}
             {/* Added overflow-hidden */}
             {/* Removed pt-6, added relative positioning context and bottom padding */}
@@ -651,7 +648,9 @@ function ProfilePageClient({
                 <div className="w-full mt-4">
                   {!currentUser ? (
                     <SignInButton mode="modal">
-                      <Button className="w-full"><BellPlus className="size-4 mr-2" /> Recibir novedades</Button>
+                      <Button className="w-full">
+                        <BellPlus className="size-4 mr-2" /> Recibir novedades
+                      </Button>
                     </SignInButton>
                   ) : isOwnProfile ? (
                     <Button
@@ -669,17 +668,17 @@ function ProfilePageClient({
                       variant={isFollowingState ? "outline" : "default"}
                     >
                       <>
-                      {isFollowingState ? (
-                        <BellRing className="size-4 mr-2" />
-                      ) : (
-                        <BellPlus className="size-4 mr-2" />
-                      )}
-                      {isFollowPending
-                        ? "Actualizando..."
-                        : isFollowingState
-                        ? "Siguiendo"
-                        : "Recibir novedades"}
-                    </>
+                        {isFollowingState ? (
+                          <BellRing className="size-4 mr-2" />
+                        ) : (
+                          <BellPlus className="size-4 mr-2" />
+                        )}
+                        {isFollowPending
+                          ? "Actualizando..."
+                          : isFollowingState
+                            ? "Siguiendo"
+                            : "Recibir novedades"}
+                      </>
                     </Button>
                   )}
                 </div>

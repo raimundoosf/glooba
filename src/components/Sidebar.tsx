@@ -5,7 +5,7 @@
 import { getUserByClerkId } from '@/actions/user.action';
 import { SignInButton, SignUpButton } from '@clerk/nextjs';
 import { currentUser } from '@clerk/nextjs/server';
-import { Info, Instagram, Linkedin, LinkIcon, Mail, MapPinIcon, MessageSquareText, Smartphone, BookOpen, FileText, Shield } from 'lucide-react';
+import { Info, Instagram, Linkedin, LinkIcon, Mail, MapPinIcon, MessageSquareText, Smartphone, BookOpen, FileText, Shield, Zap, Bell } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -123,7 +123,7 @@ async function Sidebar() {
 const UnAuthenticatedSidebar = () => (
   <div className="sticky top-20 space-y-6">
     {/* Glooba Info Card */}
-    <Card>
+    <Card className="border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-transparent">
       <CardContent className="pt-6">
         <div className="flex flex-col items-center space-y-3 text-center">
           <h2 className="text-2xl font-bold">
@@ -149,28 +149,32 @@ const UnAuthenticatedSidebar = () => (
     </Card>
 
     {/* Información Legal */}
-    <Card>
+    <Card className="border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-transparent">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center text-lg font-semibold">
-          <BookOpen className="h-5 w-5 mr-2" />
-          Información Legal
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center text-lg font-semibold">
+            <Zap className="h-5 w-5 mr-2 text-primary" />
+            ¡Próximamente!
+          </CardTitle>
+          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+            Nuevo
+          </span>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <Link
-          href="/terms"
-          className="flex items-center space-x-3 rounded-lg bg-primary-50 p-3 hover:bg-primary-100 transition-colors"
-        >
-          <FileText className="h-5 w-5 text-primary" />
-          <span className="text-sm">Términos de Servicio</span>
-        </Link>
-        <Link
-          href="/privacy"
-          className="flex items-center space-x-3 rounded-lg bg-primary-50 p-3 hover:bg-primary-100 transition-colors"
-        >
-          <Shield className="h-5 w-5 text-primary" />
-          <span className="text-sm">Política de Privacidad</span>
-        </Link>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Estamos trabajando en una nueva actualización más intuitiva y poderosa. 
+          <span className="font-medium text-foreground">¡Sé de los primeros en probarla!</span>
+        </p>
+        <Button className="w-full" variant="default" size="sm" asChild>
+          <Link href="/feedback">
+            <Bell className="h-4 w-4 mr-2" />
+            Notificarme al lanzar
+          </Link>
+        </Button>
+        <div className="text-xs text-muted-foreground text-center">
+          <p>Disponible en: <span className="font-medium">Octubre 2025</span></p>
+        </div>
       </CardContent>
     </Card>
   </div>
