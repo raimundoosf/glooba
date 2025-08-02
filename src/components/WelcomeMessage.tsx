@@ -109,7 +109,7 @@ export default function WelcomeMessage() {
 
   if (isLargeScreen) {
     return (
-      <Card className="mb-8">
+      <Card className="mb-8 border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-transparent">
         <CardHeader className="items-center text-center min-h-[9rem]">
           {/* Título: Se renderiza de forma diferente según el paso de la animación */}
           <CardTitle className="text-3xl font-bold text-card-foreground">
