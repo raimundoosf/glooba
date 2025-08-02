@@ -2,22 +2,32 @@
  * Component for displaying individual posts with interactions.
  * @module PostCard
  */
-'use client';
+"use client";
 
-import { PostWithDetails, createComment, deletePost, toggleLike } from '@/actions/post.action';
-import TimeAgo from '@/components/TimeAgo';
-import { SignInButton, useUser } from '@clerk/nextjs';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { HeartIcon, LogInIcon, MessageCircleIcon, SendIcon } from 'lucide-react';
-import Link from 'next/link';
-import { useRef, useState, useTransition } from 'react';
-import toast from 'react-hot-toast';
-import { DeleteAlertDialog } from './DeleteAlertDialog';
-import { Avatar, AvatarImage } from './ui/avatar';
-import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
-import { Textarea } from './ui/textarea';
+import {
+  PostWithDetails,
+  createComment,
+  deletePost,
+  toggleLike,
+} from "@/actions/post.action";
+import TimeAgo from "@/components/TimeAgo";
+import { SignInButton, useUser } from "@clerk/nextjs";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
+import {
+  HeartIcon,
+  LogInIcon,
+  MessageCircleIcon,
+  SendIcon,
+} from "lucide-react";
+import Link from "next/link";
+import { useRef, useState, useTransition } from "react";
+import toast from "react-hot-toast";
+import { DeleteAlertDialog } from "./DeleteAlertDialog";
+import { Avatar, AvatarImage } from "./ui/avatar";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
+import { Textarea } from "./ui/textarea";
 
 /**
  * Props interface for the PostCard component
@@ -39,14 +49,20 @@ interface PostCardProps {
  * @param {PostCardProps} props - Component props
  * @returns {JSX.Element} The post card component
  */
-export default function PostCard({ post, dbUserId, onActionComplete }: PostCardProps) {
+export default function PostCard({
+  post,
+  dbUserId,
+  onActionComplete,
+}: PostCardProps) {
   const { user } = useUser();
 
-  const [newComment, setNewComment] = useState('');
+  const [newComment, setNewComment] = useState("");
   const [isCommenting, startCommentTransition] = useTransition();
   const [isLiking, setIsLiking] = useState(false);
   const [isDeleting, startDeleteTransition] = useTransition();
-  const [hasLiked, setHasLiked] = useState(post.likes.some((like) => like.userId === dbUserId));
+  const [hasLiked, setHasLiked] = useState(
+    post.likes.some((like) => like.userId === dbUserId)
+  );
   const [optimisticLikes, setOptmisticLikes] = useState(post._count.likes);
   const [showComments, setShowComments] = useState(false);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
@@ -64,7 +80,7 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
     try {
       await toggleLike(post.id);
     } catch (error) {
-      toast.error('Failed to update like status.');
+      toast.error("Failed to update like status.");
       setHasLiked(originalLiked);
       setOptmisticLikes(originalCount);
     } finally {
@@ -81,11 +97,11 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
       try {
         const result = await createComment(post.id, newComment);
         if (result?.success) {
-          toast.success('Comentario publicado exitosamente');
-          setNewComment('');
+          toast.success("Comentario publicado exitosamente");
+          setNewComment("");
           if (onActionComplete) await onActionComplete();
         } else {
-          throw new Error(result.error || 'Unknown error adding comment');
+          throw new Error(result.error || "Unknown error adding comment");
         }
       } catch (error) {
         toast.error(
@@ -103,10 +119,10 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
       try {
         const result = await deletePost(post.id);
         if (result.success) {
-          toast.success('Publicación eliminada exitosamente');
+          toast.success("Publicación eliminada exitosamente");
           if (onActionComplete) await onActionComplete();
         } else {
-          throw new Error(result.error || 'Unknown error deleting post');
+          throw new Error(result.error || "Unknown error deleting post");
         }
       } catch (error) {
         toast.error(
@@ -117,13 +133,13 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden border-2 border-primary/20">
       <CardContent className="p-4 sm:p-6">
         <div className="space-y-4">
           <div className="flex space-x-3 sm:space-x-4">
             <Link href={`/profile/${post.author.username}`}>
               <Avatar className="size-8 sm:w-10 sm:h-10 flex-shrink-0">
-                <AvatarImage src={post.author.image ?? '/avatar.png'} />
+                <AvatarImage src={post.author.image ?? "/avatar.png"} />
               </Avatar>
             </Link>
 
@@ -138,7 +154,9 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
                     {post.author.name}
                   </Link>
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Link href={`/profile/${post.author.username}`}>@{post.author.username}</Link>
+                    <Link href={`/profile/${post.author.username}`}>
+                      @{post.author.username}
+                    </Link>
                     {post.author.isCompany && (
                       <svg
                         width="18px"
@@ -161,18 +179,27 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
                 </div>
                 {/* Delete Button (only if author) */}
                 {dbUserId === post.authorId && (
-                  <DeleteAlertDialog onDelete={handleDeletePost} isDeleting={isDeleting} />
+                  <DeleteAlertDialog
+                    onDelete={handleDeletePost}
+                    isDeleting={isDeleting}
+                  />
                 )}
               </div>
             </div>
           </div>
 
-          <p className="mt-2 text-sm text-foreground break-words">{post.content}</p>
+          <p className="mt-2 text-sm text-foreground break-words">
+            {post.content}
+          </p>
 
           {/* POST IMAGE */}
           {post.image && (
             <div className="rounded-lg overflow-hidden">
-              <img src={post.image} alt="Post content" className="w-full h-auto object-cover" />
+              <img
+                src={post.image}
+                alt="Post content"
+                className="w-full h-auto object-cover"
+              />
             </div>
           )}
 
@@ -183,7 +210,9 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
                 variant="ghost"
                 size="sm"
                 className={`text-muted-foreground gap-2 ${
-                  hasLiked ? 'text-red-500 hover:text-red-600' : 'hover:text-red-500'
+                  hasLiked
+                    ? "text-red-500 hover:text-red-600"
+                    : "hover:text-red-500"
                 }`}
                 onClick={handleLike}
               >
@@ -196,7 +225,11 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
               </Button>
             ) : (
               <SignInButton mode="modal">
-                <Button variant="ghost" size="sm" className="text-muted-foreground gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground gap-2"
+                >
                   <HeartIcon className="size-5" />
                   <span>{optimisticLikes}</span>
                 </Button>
@@ -215,8 +248,8 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
                   // Use setTimeout to ensure the textarea is rendered before scrolling
                   setTimeout(() => {
                     commentInputRef.current?.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'center',
+                      behavior: "smooth",
+                      block: "center",
                     });
                     commentInputRef.current?.focus();
                   }, 100);
@@ -224,7 +257,7 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
               }}
             >
               <MessageCircleIcon
-                className={`size-5 ${showComments ? 'fill-blue-500 text-blue-500' : ''}`}
+                className={`size-5 ${showComments ? "fill-blue-500 text-blue-500" : ""}`}
               />
               <span>{post.comments.length}</span>
             </Button>
@@ -232,17 +265,21 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
 
           {/* Comments Section */}
           {showComments && (
-            <div className="space-y-4 pt-4 border-t">
+            <div className="space-y-4 pt-4 border-t-2 border-primary/20">
               <div className="space-y-4">
                 {/* DISPLAY COMMENTS */}
                 {post.comments.map((comment) => (
                   <div key={comment.id} className="flex space-x-3">
                     <Avatar className="size-8 flex-shrink-0">
-                      <AvatarImage src={comment.author.image ?? '/avatar.png'} />
+                      <AvatarImage
+                        src={comment.author.image ?? "/avatar.png"}
+                      />
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="font-medium text-sm">{comment.author.name}</span>
+                        <span className="font-medium text-sm">
+                          {comment.author.name}
+                        </span>
                         <span className="text-sm text-muted-foreground">
                           @{comment.author.username}
                         </span>
@@ -265,7 +302,7 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
                         )}
                         <span className="text-sm text-muted-foreground">·</span>
                         <span className="text-sm text-muted-foreground">
-                          Hace{' '}
+                          Hace{" "}
                           {formatDistanceToNow(new Date(comment.createdAt), {
                             locale: es,
                           })}
@@ -280,7 +317,7 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
               {user ? (
                 <div className="flex space-x-3">
                   <Avatar className="size-8 flex-shrink-0">
-                    <AvatarImage src={user?.imageUrl || '/avatar.png'} />
+                    <AvatarImage src={user?.imageUrl || "/avatar.png"} />
                   </Avatar>
                   <div className="flex-1">
                     <Textarea
@@ -298,7 +335,7 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
                         disabled={!newComment.trim() || isCommenting}
                       >
                         {isCommenting ? (
-                          'Publicando...'
+                          "Publicando..."
                         ) : (
                           <>
                             <SendIcon className="size-4" />
@@ -310,7 +347,7 @@ export default function PostCard({ post, dbUserId, onActionComplete }: PostCardP
                   </div>
                 </div>
               ) : (
-                <div className="flex justify-center p-4 border rounded-lg bg-muted/50">
+                <div className="flex justify-center p-4 border-2 border-primary/20 rounded-lg bg-muted/50">
                   <SignInButton mode="modal">
                     <Button variant="outline" className="gap-2">
                       <LogInIcon className="size-4" />

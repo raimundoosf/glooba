@@ -2,16 +2,30 @@
  * Sidebar component that displays user profile information.
  * @module Sidebar
  */
-import { getUserByClerkId } from '@/actions/user.action';
-import { SignInButton, SignUpButton } from '@clerk/nextjs';
-import { currentUser } from '@clerk/nextjs/server';
-import { Info, Instagram, Linkedin, LinkIcon, Mail, MapPinIcon, MessageSquareText, Smartphone, BookOpen, FileText, Shield, Zap, Bell } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Separator } from './ui/separator';
+import { getUserByClerkId } from "@/actions/user.action";
+import { SignInButton, SignUpButton } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
+import {
+  Info,
+  Instagram,
+  Linkedin,
+  LinkIcon,
+  Mail,
+  MapPinIcon,
+  MessageSquareText,
+  Smartphone,
+  BookOpen,
+  FileText,
+  Shield,
+  Zap,
+  Bell,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Separator } from "./ui/separator";
 
 /**
  * Main sidebar component that displays:
@@ -33,7 +47,7 @@ async function Sidebar() {
 
   return (
     <div className="sticky top-20">
-      <Card className="bg-card overflow-hidden">
+      <Card className="bg-card overflow-hidden border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-transparent">
         <CardContent className="px-4 py-6 relative">
           <div className="absolute inset-x-0 top-0 h-32 bg-muted">
             {user.backgroundImage ? (
@@ -53,10 +67,10 @@ async function Sidebar() {
             <Link
               href={`/profile/${user.username}`}
               className="flex flex-col items-center justify-center"
-              style={{ alignItems: 'center' }}
+              style={{ alignItems: "center" }}
             >
               <Avatar className="w-24 h-24 border-4 border-card relative z-10 -mt-12">
-                <AvatarImage src={user.image || '/avatar.png'} />
+                <AvatarImage src={user.image || "/avatar.png"} />
                 <AvatarFallback>
                   {user.name?.substring(0, 2) || user.username.substring(0, 2)}
                 </AvatarFallback>
@@ -65,7 +79,9 @@ async function Sidebar() {
               <div className="mt-4 space-y-1 flex flex-col items-center">
                 <h3 className="font-semibold">{user.name}</h3>
                 <div className="flex items-center">
-                  <p className="text-sm text-muted-foreground">@{user.username}</p>
+                  <p className="text-sm text-muted-foreground">
+                    @{user.username}
+                  </p>
                   {user.isCompany && (
                     <svg
                       className="ml-2 inline-flex"
@@ -87,23 +103,28 @@ async function Sidebar() {
               </div>
             </Link>
 
-            {user.bio && <p className="mt-3 text-sm text-muted-foreground">{user.bio}</p>}
-
+            {user.bio && (
+              <p className="mt-3 text-sm text-muted-foreground">{user.bio}</p>
+            )}
 
             <div className="w-full space-y-2 text-sm">
               <Separator className="my-4" />
               <div className="flex items-center text-muted-foreground">
                 <MapPinIcon className="w-4 h-4 mr-2" />
-                {user.location || 'Sin localizacion'}
+                {user.location || "Sin localizacion"}
               </div>
               <div className="flex items-center text-muted-foreground">
                 <LinkIcon className="w-4 h-4 mr-2 shrink-0" />
                 {user.website ? (
-                  <a href={`${user.website}`} className="hover:underline truncate" target="_blank">
+                  <a
+                    href={`${user.website}`}
+                    className="hover:underline truncate"
+                    target="_blank"
+                  >
                     {user.website}
                   </a>
                 ) : (
-                  'Sin sitio web'
+                  "Sin sitio web"
                 )}
               </div>
             </div>
@@ -126,21 +147,33 @@ const UnAuthenticatedSidebar = () => (
     <Card className="border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-transparent">
       <CardContent className="pt-6">
         <div className="flex flex-col items-center space-y-3 text-center">
-          <h2 className="text-2xl font-bold">
-            Glooba
-          </h2>
+          <h2 className="text-2xl font-bold">Glooba</h2>
           <p className="text-sm text-muted-foreground px-4">
-            Conectamos a personas con organizaciones que impulsan iniciativas sostenibles
+            Conectamos a personas con organizaciones que impulsan iniciativas
+            sostenibles
           </p>
           <div className="flex space-x-3 pt-1">
-            <Link href="https://www.instagram.com/gloobacl" target="_blank" rel="noopener noreferrer" className="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition-colors">
+            <Link
+              href="https://www.instagram.com/gloobacl"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition-colors"
+            >
               <Instagram className="h-5 w-5 text-primary" />
             </Link>
-            <Link href="https://www.linkedin.com/company/gloobapp" target="_blank" rel="noopener noreferrer" className="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition-colors">
+            <Link
+              href="https://www.linkedin.com/company/gloobapp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition-colors"
+            >
               <Linkedin className="h-5 w-5 text-primary" />
             </Link>
           </div>
-          <Link href="/about" className="flex items-center space-x-2 rounded-full bg-muted px-4 py-2 text-sm text-primary-600 hover:bg-gray-200 transition-all duration-200 ease-in-out">
+          <Link
+            href="/about"
+            className="flex items-center space-x-2 rounded-full bg-muted px-4 py-2 text-sm text-primary-600 hover:bg-gray-200 transition-all duration-200 ease-in-out"
+          >
             <Info className="h-4 w-4 text-primary mr-2" />
             Conoce más
           </Link>
@@ -148,7 +181,7 @@ const UnAuthenticatedSidebar = () => (
       </CardContent>
     </Card>
 
-    {/* Información Legal */}
+    {/* New version */}
     <Card className="border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-transparent">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
@@ -163,8 +196,11 @@ const UnAuthenticatedSidebar = () => (
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Estamos trabajando en una nueva actualización más intuitiva y poderosa. 
-          <span className="font-medium text-foreground">¡Sé de los primeros en probarla!</span>
+          Estamos trabajando en una nueva actualización más intuitiva y
+          poderosa.
+          <span className="font-medium text-foreground">
+            ¡Sé de los primeros en probarla!
+          </span>
         </p>
         <Button className="w-full" variant="default" size="sm" asChild>
           <Link href="/feedback">
@@ -173,7 +209,9 @@ const UnAuthenticatedSidebar = () => (
           </Link>
         </Button>
         <div className="text-xs text-muted-foreground text-center">
-          <p>Disponible en: <span className="font-medium">Octubre 2025</span></p>
+          <p>
+            Disponible en: <span className="font-medium">Octubre 2025</span>
+          </p>
         </div>
       </CardContent>
     </Card>

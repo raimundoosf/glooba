@@ -64,8 +64,8 @@ function NotificationsPage() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="border-b">
+      <Card className="border-2 border-primary/20">
+        <CardHeader className="border-b border-primary/20">
           <div className="flex items-center justify-between">
             <CardTitle>Notificaciones</CardTitle>
             <span className="text-sm text-muted-foreground">
@@ -81,7 +81,7 @@ function NotificationsPage() {
               notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`flex items-start gap-4 p-4 border-b hover:bg-muted/25 transition-colors ${
+                  className={`flex items-start gap-4 p-4 border-b border-primary/20 hover:bg-muted/25 transition-colors ${
                     !notification.read ? 'bg-muted/50' : ''
                   }`}
                 >
