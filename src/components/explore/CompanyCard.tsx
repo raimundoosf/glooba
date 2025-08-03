@@ -156,9 +156,9 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
           <Link
             href={`/profile/${company.username}`}
             aria-label={`Ver perfil de ${company.name || company.username}`}
-            className="absolute -bottom-6 left-4 z-10 block" // Adjusted -bottom
+            className="absolute -bottom-6 right-4 z-10 block"
           >
-            <Avatar className="h-14 w-14 border-2 border-background bg-background shadow-md">
+            <Avatar className="h-16 w-16 border-2 border-background bg-background shadow-md">
               <AvatarImage
                 src={company.image || undefined}
                 alt={`${company.name || company.username}'s avatar`}
@@ -209,7 +209,7 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
       {/* Content Area Below Background Image */}
       {/* Add padding-top to make space for the overlapping avatar */}
       {/* Adjusted padding-top and overall vertical space */}
-      <div className="flex flex-col flex-grow p-4 pt-8 space-y-2">
+      <div className="flex flex-col flex-grow px-4 py-2 space-y-2">
         {" "}
         {/* Adjusted pt and added space-y for main content blocks */}
         {/* Name and Username/Location */}
@@ -220,7 +220,7 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
             href={`/profile/${company.username}`}
             className="outline-none focus-visible:underline"
           >
-            <CardTitle className="text-base font-bold hover:underline leading-snug break-words">
+            <CardTitle className="text-xl font-bold hover:underline leading-snug break-words">
               {" "}
               {/* Reduced text size slightly, adjusted leading */}
               {company.name || company.username}
@@ -271,13 +271,19 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
               size={12} // Slightly smaller stars
               className="flex-shrink-0"
             />
-            <div className="flex items-center flex-shrink-0">
-              <Eye className="h-3 w-3 mr-1" /> {/* Eye icon */}
-              <span>
-                {company.profileViews.toLocaleString()} visita
-                {company.profileViews !== 1 ? "s" : ""}
-              </span>
-            </div>
+            {company.profileViews > 10 && (
+              <div className="flex items-center flex-shrink-0">
+                <Eye className="h-3 w-3 mr-1" />
+                <span>
+                  {company.profileViews > 1000 
+                    ? "+1k visitas" 
+                    : company.profileViews > 100 
+                      ? "+100 visitas" 
+                      : `${company.profileViews} visitas`
+                  }
+                </span>
+              </div>
+            )}
           </div>
           {/* Bio - Uncomment and style if needed */}
           {/* {company.bio && (
