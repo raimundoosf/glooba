@@ -3,24 +3,16 @@
  * @module Sidebar
  */
 import { getUserByClerkId } from "@/actions/user.action";
-import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
 import {
   Info,
   Instagram,
   Linkedin,
   LinkIcon,
-  Mail,
   MapPinIcon,
-  MessageSquareText,
-  Smartphone,
-  BookOpen,
-  FileText,
-  Shield,
   Zap,
   Bell,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -171,11 +163,11 @@ const UnAuthenticatedSidebar = () => (
             </Link>
           </div>
           <Link
-            href="/about"
+            href="/explore"
             className="flex items-center space-x-2 rounded-full bg-muted px-4 py-2 text-sm text-primary-600 hover:bg-gray-200 transition-all duration-200 ease-in-out"
           >
             <Info className="h-4 w-4 text-primary mr-2" />
-            Conoce más
+            Probar demo
           </Link>
         </div>
       </CardContent>

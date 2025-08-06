@@ -5,6 +5,7 @@
 import Link from 'next/link';
 import DesktopNavbar from './DesktopNavbar';
 import MobileNavbar from './MobileNavbar';
+import ThemeAwareLogo from './ThemeAwareLogo';
 
 /**
  * Main navigation bar component that displays:
@@ -23,7 +24,7 @@ async function Navbar() {
               href="/"
               className="flex items-center gap-2"
             >
-              <img src="/glooba.png" alt="Glooba logo" className="h-8" />
+              <ThemeAwareLogo />
             </Link>
           </div>
 

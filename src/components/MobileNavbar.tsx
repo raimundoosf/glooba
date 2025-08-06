@@ -16,6 +16,7 @@ import {
   MenuIcon,
   MoonIcon,
   RssIcon,
+  SearchIcon,
   Shield,
   SunIcon,
   UserIcon,
@@ -85,12 +86,12 @@ function MobileNavbar() {
           </SheetHeader>
 
           <nav className="flex flex-col space-y-4 mt-6">
-            <MenuLink href="/" icon={HomeIcon} label="Inicio" />
-            <MenuLink href="/feed" icon={RssIcon} label="Feed" />
-            <MenuLink href="/about" icon={InfoIcon} label="Nosotros" />
+            <MenuLink href={user ? "/explore" : "/"} icon={HomeIcon} label="Inicio" />
+            {!isSignedIn ? <MenuLink href="/explore" icon={RssIcon} label="Explorar" /> : null}
 
             {isSignedIn ? (
               <>
+                <MenuLink href="/feed" icon={RssIcon} label="Feed" />
                 <MenuLink href="/notifications" icon={BellIcon} label="Notificaciones" />
                 <MenuLink href={`/profile/${user?.username}`} icon={UserIcon} label="Perfil" />
                 <Button

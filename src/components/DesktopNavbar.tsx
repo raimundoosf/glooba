@@ -27,18 +27,27 @@ async function DesktopNavbar() {
       <ModeToggle />
 
       <Button variant="ghost" className="flex items-center gap-2" asChild>
-        <Link href="/">
+        <Link href={user ? "/explore" : "/"}>
           <HomeIcon className="w-4 h-4" />
           <span className="hidden lg:inline">Inicio</span>
         </Link>
       </Button>
 
-      <Button variant="ghost" className="flex items-center gap-2" asChild>
-        <Link href="/feed">
-          <RssIcon className="w-4 h-4" />
-          <span className="hidden lg:inline">Feed</span>
-        </Link>
-      </Button>
+      {user ? (
+        <Button variant="ghost" className="flex items-center gap-2" asChild>
+          <Link href="/feed">
+            <RssIcon className="w-4 h-4" />
+            <span className="hidden lg:inline">Feed</span>
+          </Link>
+        </Button>
+      ) : (
+        <Button variant="ghost" className="flex items-center gap-2" asChild>
+          <Link href="/explore">
+            <RssIcon className="w-4 h-4" />
+            <span className="hidden lg:inline">Explorar</span>
+          </Link>
+        </Button>
+      )}
 
       {user ? (
         <>
