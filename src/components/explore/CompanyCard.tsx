@@ -156,7 +156,7 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
           <Link
             href={`/profile/${company.username}`}
             aria-label={`Ver perfil de ${company.name || company.username}`}
-            className="absolute -bottom-6 right-4 z-10 block"
+            className="absolute -bottom-8 right-4 z-10 block"
           >
             <Avatar className="h-16 w-16 border-2 border-background bg-background shadow-md">
               <AvatarImage
@@ -210,7 +210,6 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
       {/* Add padding-top to make space for the overlapping avatar */}
       {/* Adjusted padding-top and overall vertical space */}
       <div className="flex flex-col flex-grow px-4 py-2 space-y-2">
-        {" "}
         {/* Adjusted pt and added space-y for main content blocks */}
         {/* Name and Username/Location */}
         {/* Flex container for Name and the Username/Location row below it */}
@@ -220,77 +219,67 @@ export default function CompanyCard({ company, dbUserId }: CompanyCardProps) {
             href={`/profile/${company.username}`}
             className="outline-none focus-visible:underline"
           >
-            <CardTitle className="text-xl font-bold hover:underline leading-snug break-words">
-              {" "}
-              {/* Reduced text size slightly, adjusted leading */}
+            <CardTitle className="text-xl font-bold leading-snug break-words line-clamp-1 mr-6">
               {company.name || company.username}
             </CardTitle>
           </Link>
 
-          {/* Username and Location Row - Tighter spacing */}
-          {/* Use flex to put username and location side by side */}
-          {(company.username || company.location) && ( // Only show this row if either username or location exists
+          
             <div className="flex items-center text-xs text-muted-foreground mt-0.5">
-              {" "}
-              {/* Reduced text size, added small top margin */}
-              {/* Username */}
-              {company.username && (
-                <CardDescription className="truncate p-0 m-0 inline">
-                  {" "}
-                  {/* Use inline and remove default padding/margin */}@
-                  {company.username}
-                </CardDescription>
-              )}
-              {/* Add a separator and Location if location exists and username is also present */}
-              {company.username && company.location && (
-                <span className="mx-1">•</span>
-              )}
-              {/* Location */}
               {company.location && (
                 <div className="flex items-center truncate">
                   {" "}
                   {/* Flex for icon and location text */}
-                  <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />{" "}
+                  <MapPin className="h-3 w-3 mr-1 flex-shrink-0 text-primary" />{" "}
                   {/* Smaller icon */}
                   <span className="truncate">{company.location}</span>
                 </div>
               )}
+              <div className="flex items-center flex-shrink-0 ml-2">
+                <DisplayStars
+                  rating={company.averageRating}
+                  count={company.reviewCount}
+                  size={12}
+                  className="flex-shrink-0"
+                  textSize="xs"
+                />
+                {company.profileViews > 10 && (
+                  <div className="flex items-center flex-shrink-0 ml-2">
+                    <Eye className="h-3 w-3 mr-1" />
+                    <span>
+                      {company.profileViews > 1000 
+                        ? "+1k visitas" 
+                        : company.profileViews > 100 
+                          ? "+100 visitas"
+                          : company.profileViews > 80 
+                            ? "+80 visitas"
+                            : company.profileViews > 60 
+                              ? "+60 visitas"
+                              : company.profileViews > 40 
+                                ? "+40 visitas"
+                                : company.profileViews > 20 
+                                ? "+20 visitas"
+                                : company.profileViews > 10 
+                                  ? "+10 visitas"
+                                  : ""
+                      }
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+      
         </div>
         {/* Rest of the Content - Now managed by parent space-y-2 */}
         <CardContent className="flex-grow space-y-2 text-sm p-0">
           {" "}
           {/* space-y-2 for spacing between items within CardContent */}
-          {/* Stats Row: Reviews & Followers */}
-          {/* No need for pt here due to parent space-y */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <DisplayStars
-              rating={company.averageRating}
-              count={company.reviewCount}
-              size={12} // Slightly smaller stars
-              className="flex-shrink-0"
-            />
-            {company.profileViews > 10 && (
-              <div className="flex items-center flex-shrink-0">
-                <Eye className="h-3 w-3 mr-1" />
-                <span>
-                  {company.profileViews > 1000 
-                    ? "+1k visitas" 
-                    : company.profileViews > 100 
-                      ? "+100 visitas" 
-                      : `${company.profileViews} visitas`
-                  }
-                </span>
-              </div>
-            )}
-          </div>
           {/* Bio - Uncomment and style if needed */}
           {/* {company.bio && (
-            <p className="text-muted-foreground line-clamp-2 leading-snug text-xs"> // Reduced line-clamp and text size
+            <p className="hidden md:block text-muted-foreground line-clamp-2 leading-snug text-xs">
               {company.bio}
             </p>
-          )} */}
+          )}  */}
           {/* Categories */}
           {company.categories && company.categories.length > 0 && (
             <div className="flex flex-wrap gap-1 pt-1">

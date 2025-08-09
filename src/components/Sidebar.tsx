@@ -3,21 +3,27 @@
  * @module Sidebar
  */
 import { getUserByClerkId } from "@/actions/user.action";
+import { getRandomFeaturedCompanies } from "@/actions/explore.action";
 import { currentUser } from "@clerk/nextjs/server";
 import {
-  Info,
-  Instagram,
-  Linkedin,
+  Bell,
   LinkIcon,
   MapPinIcon,
-  Zap,
-  Bell,
+  Sparkles,
+  Zap
 } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
+import dynamic from 'next/dynamic';
+
+// Importar dinámicamente el carrusel para evitar problemas de hidratación
+const FeaturedCompaniesCarousel = dynamic(
+  () => import('@/components/explore/FeaturedCompaniesCarousel'),
+  { ssr: false, loading: () => <div className="h-64 flex items-center justify-center">Cargando empresas...</div> }
+);
 
 /**
  * Main sidebar component that displays:
@@ -129,52 +135,26 @@ async function Sidebar() {
 
 /**
  * Unauthenticated sidebar component that displays Glooba information and contact details.
- * - Glooba card: Logo, title, subtitle, social links (Instagram, LinkedIn), and a "Conoce más" link.
  * - Contact card: Title "Contacto", WhatsApp link, and Email link.
  * @returns {JSX.Element} The unauthenticated sidebar component.
  */
 const UnAuthenticatedSidebar = () => (
   <div className="sticky top-20 space-y-6">
     {/* Glooba Info Card */}
-    <Card className="border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-transparent">
-      <CardContent className="pt-6">
-        <div className="flex flex-col items-center space-y-3 text-center">
-          <h2 className="text-2xl font-bold">Glooba</h2>
-          <p className="text-sm text-muted-foreground px-4">
-            Conectamos a personas con organizaciones que impulsan iniciativas
-            sostenibles
-          </p>
-          <div className="flex space-x-3 pt-1">
-            <Link
-              href="https://www.instagram.com/gloobacl"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition-colors"
-            >
-              <Instagram className="h-5 w-5 text-primary" />
-            </Link>
-            <Link
-              href="https://www.linkedin.com/company/gloobapp"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 bg-primary-50 rounded-full hover:bg-primary-100 transition-colors"
-            >
-              <Linkedin className="h-5 w-5 text-primary" />
-            </Link>
-          </div>
-          <Link
-            href="/explore"
-            className="flex items-center space-x-2 rounded-full bg-muted px-4 py-2 text-sm text-primary-600 hover:bg-gray-200 transition-all duration-200 ease-in-out"
-          >
-            <Info className="h-4 w-4 text-primary mr-2" />
-            Probar demo
-          </Link>
+    <Card className="border-2 border-primary/20 bg-background overflow-hidden">
+      <CardHeader className="p-2">
+        <div className="flex items-center">
+          <Sparkles className="h-5 w-5 mr-2 text-primary" />
+          <CardTitle className="text-lg">Destacados</CardTitle>
         </div>
+      </CardHeader>
+      <CardContent className="px-2 py-0">
+        <FeaturedCompaniesCarouselWrapper />
       </CardContent>
     </Card>
 
     {/* New version */}
-    <Card className="border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-transparent">
+    <Card className="border-2 border-primary/20 bg-white dark:bg-background dark:border-primary/10">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center text-lg font-semibold">
@@ -209,5 +189,20 @@ const UnAuthenticatedSidebar = () => (
     </Card>
   </div>
 );
+
+// Componente envuelto para manejar la carga de empresas destacadas
+async function FeaturedCompaniesCarouselWrapper() {
+  const companies = await getRandomFeaturedCompanies(5);
+  
+  if (!companies || companies.length === 0) {
+    return (
+      <div className="text-center py-6 text-sm text-muted-foreground">
+        No hay empresas destacadas en este momento.
+      </div>
+    );
+  }
+
+  return <FeaturedCompaniesCarousel companies={companies} />;
+}
 
 export default Sidebar;

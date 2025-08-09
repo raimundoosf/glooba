@@ -16,8 +16,7 @@ import ThemeAwareLogo from './ThemeAwareLogo';
  */
 async function Navbar() {
   return (
-    <nav className="sticky top-0 w-full border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-transparent z-50">
-      <div className="max-w-7xl mx-auto px-4">
+<nav className="sticky top-0 w-full border-b-2 border-primary/20 bg-background z-50">      <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Link

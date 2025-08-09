@@ -2,17 +2,17 @@
  * Root layout component for the application.
  * @module layout
  */
-import Navbar from '@/components/Navbar';
-import { ReactQueryProvider } from '@/components/providers/ReactQueryProvider';
-import Sidebar from '@/components/Sidebar';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import { esES } from '@clerk/localizations';
-import { ClerkProvider } from '@clerk/nextjs';
-import type { Metadata } from 'next';
-import localFont from 'next/font/local';
-import { Toaster } from 'react-hot-toast';
-import './globals.css';
-import AnalyticsWrapper from '@/components/analytics/AnalyticsWrapper';
+import Navbar from "@/components/Navbar";
+import { ReactQueryProvider } from "@/components/providers/ReactQueryProvider";
+import Sidebar from "@/components/Sidebar";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { esES } from "@clerk/localizations";
+import { ClerkProvider } from "@clerk/nextjs";
+import type { Metadata } from "next";
+import localFont from "next/font/local";
+import { Toaster } from "react-hot-toast";
+import "./globals.css";
+import AnalyticsWrapper from "@/components/analytics/AnalyticsWrapper";
 
 /**
  * Geist Sans font configuration for the application.
@@ -22,9 +22,9 @@ import AnalyticsWrapper from '@/components/analytics/AnalyticsWrapper';
  * @property {string} weight - Font weight range
  */
 const geistSans = localFont({
-  src: './fonts/GeistVF.woff',
-  variable: '--font-geist-sans',
-  weight: '100 900',
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
 });
 
 /**
@@ -35,9 +35,9 @@ const geistSans = localFont({
  * @property {string} weight - Font weight range
  */
 const geistMono = localFont({
-  src: './fonts/GeistMonoVF.woff',
-  variable: '--font-geist-mono',
-  weight: '100 900',
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  weight: "100 900",
 });
 
 /**
@@ -47,8 +47,8 @@ const geistMono = localFont({
  * @property {string} description - Application description
  */
 export const metadata: Metadata = {
-  title: 'Glooba',
-  description: 'The social network of sustainability',
+  title: "Glooba",
+  description: "The social network of sustainability",
 };
 
 /**
@@ -73,7 +73,9 @@ export default function RootLayout({
   return (
     <ClerkProvider localization={esES}>
       <html lang="es" suppressHydrationWarning>
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        >
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

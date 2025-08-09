@@ -35,6 +35,7 @@ import { SignInButton, useUser } from "@clerk/nextjs";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
+  BadgeCheck,
   BellIcon,
   BellOffIcon,
   BellPlus,
@@ -572,7 +573,7 @@ function ProfilePageClient({
             {/* Removed pt-6, added relative positioning context and bottom padding */}
             <CardContent className="px-4 py-6 relative">
               {/* 1. Background Image Area - Positioned absolutely */}
-              <div className="absolute inset-x-0 top-0 h-32 bg-muted">
+              <div className="absolute inset-x-0 top-0 h-44 bg-muted">
                 {" "}
                 {/* Container with fixed height & fallback bg */}
                 {user.backgroundImage ? (
@@ -588,10 +589,11 @@ function ProfilePageClient({
                   </div>
                 )}
               </div>
-              <div className="flex flex-col items-center text-center pt-20">
+              {/* 2. Profile Content Positioned below background */}
+              <div className="flex flex-col items-center text-center pt-24">
                 {" "}
                 {/* Adjusted top padding */}
-                <Avatar className="w-24 h-24 -mt-12 border-4 border-card relative z-10">
+                <Avatar className="w-24 h-24 border-4 border-card relative bg-background z-10">
                   {" "}
                   {/* Added negative margin, border, relative, z-index */}
                   <AvatarImage
@@ -607,41 +609,26 @@ function ProfilePageClient({
                 {/* --- REST OF THE ORIGINAL LAYOUT --- */}
                 {/* Ensure spacing below avatar is sufficient, original mt-4 might be fine */}
                 {/* Name, Username, Verified Badge */}
-                <h1 className="mt-4 text-2xl font-bold">
-                  {" "}
-                  {/* Kept original mt-4 */}
+                <h1 className="mt-2 text-2xl font-bold">
                   {user.name ?? user.username}
                 </h1>
-                <p className="text-muted-foreground">
-                  @{user.username}
+                <div className="flex items-center justify-center gap-1">
+                  <p className="text-muted-foreground">
+                    @{user.username}
+                  </p>
                   {user.isCompany && (
-                    <svg
-                      className="ml-1.5 inline-flex items-center"
-                      width="18px"
-                      height="18px"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                        d="M9.02975 3.3437C10.9834 2.88543 13.0166 2.88543 14.9703 3.3437C17.7916 4.00549 19.9945 6.20842 20.6563 9.02975C21.1146 10.9834 21.1146 13.0166 20.6563 14.9703C19.9945 17.7916 17.7916 19.9945 14.9703 20.6563C13.0166 21.1146 10.9834 21.1146 9.02975 20.6563C6.20842 19.9945 4.0055 17.7916 3.3437 14.9703C2.88543 13.0166 2.88543 10.9834 3.3437 9.02974C4.0055 6.20841 6.20842 4.00549 9.02975 3.3437ZM15.0524 10.4773C15.2689 10.2454 15.2563 9.88195 15.0244 9.6655C14.7925 9.44906 14.4291 9.46159 14.2126 9.6935L11.2678 12.8487L9.77358 11.3545C9.54927 11.1302 9.1856 11.1302 8.9613 11.3545C8.73699 11.5788 8.73699 11.9425 8.9613 12.1668L10.8759 14.0814C10.986 14.1915 11.1362 14.2522 11.2919 14.2495C11.4477 14.2468 11.5956 14.181 11.7019 14.0671L15.0524 10.4773Z"
-                        fill="#1281ff"
-                      />
-                    </svg>
+                    <BadgeCheck className="inline-flex items-center text-primary mr-1" size={16} />
                   )}
-                </p>
-                {/* Display Average Rating for Companies */}
-                {user.isCompany && (
-                  <div className="mt-3 flex items-center gap-2">
+                  {/* Display Average Rating for Companies */}
+                  {user.isCompany && (
                     <DisplayStars
                       rating={initialReviewData.averageRating}
                       count={initialReviewData.totalCount}
-                      size={18}
+                      size={16}
+                      textSize="sm"
                     />
-                  </div>
-                )}
+                  )}
+                </div>
                 {/* Bio */}
                 <p className="mt-2 text-sm">{user.bio}</p>
                 {/* Action Buttons (Follow/Edit) */}

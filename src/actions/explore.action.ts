@@ -353,3 +353,76 @@ export async function getFeaturedCompanies(): Promise<
     return []; // Return empty array on error
   }
 }
+
+/**
+ * Fetches a limited number of random companies with full details for the carousel
+ * @param count - Number of companies to fetch (default: 5)
+ * @returns Promise resolving to an array of random companies with full details
+ */
+export async function getRandomFeaturedCompanies(count = 5): Promise<CompanyCardData[]> {
+  try {
+    // 1. Get the total count of companies
+    const totalCompanies = await prisma.user.count({
+      where: {
+        isCompany: true,
+      },
+    });
+
+    // 2. Calculate a random skip offset
+    const take = Math.min(count, 10); // Limit to max 10 companies
+    const maxSkip = Math.max(0, totalCompanies - take);
+    const randomSkip = Math.floor(Math.random() * (maxSkip + 1));
+
+    // 3. Fetch companies with the random skip and include necessary relations
+    const companies = await prisma.user.findMany({
+      where: {
+        isCompany: true,
+      },
+      take,
+      skip: randomSkip,
+      select: {
+        ...companyDataSelectBase,
+        followers: {
+          select: {
+            followerId: true,
+          },
+        },
+        reviewsReceived: {
+          select: {
+            rating: true,
+          },
+        },
+        _count: {
+          select: {
+            followers: true,
+            reviewsReceived: true,
+          },
+        },
+      },
+    });
+
+    // 4. Process the data to match CompanyCardData type
+    const processedCompanies = companies.map((company) => {
+      const ratings = company.reviewsReceived.map((r) => r.rating);
+      const averageRating = ratings.length > 0 
+        ? ratings.reduce((a, b) => a + b, 0) / ratings.length 
+        : null;
+
+      return {
+        ...company,
+        isFollowing: company.followers.length > 0,
+        averageRating,
+        reviewCount: company._count.reviewsReceived,
+        followerCount: company._count.followers,
+        profileViews: company.profileViews || 0,
+        backgroundImage: company.backgroundImage || null,
+      };
+    });
+
+    // 5. Shuffle the array to ensure randomness even with small result sets
+    return processedCompanies.sort(() => Math.random() - 0.5);
+  } catch (error) {
+    console.error("Error fetching random featured companies:", error);
+    return [];
+  }
+}

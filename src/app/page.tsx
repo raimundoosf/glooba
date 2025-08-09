@@ -54,7 +54,7 @@ export default async function AboutPage() {
           </h1>
           {/* Call to action integrated early */}
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4 mb-12 max-w-2xl mx-auto">
-            <Link href="/">
+            <Link href="/explore">
               <Button
                 size="default"
                 variant="default"
@@ -308,7 +308,7 @@ export default async function AboutPage() {
             acciones pueden generar un impacto positivo.
           </p>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12 max-w-2xl mx-auto">
-            <Link href="/">
+            <Link href="/explore">
               <Button
                 size="default"
                 variant="default"
