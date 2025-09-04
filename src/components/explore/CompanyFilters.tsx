@@ -769,7 +769,7 @@ export function CompanyFilters({
                   Filtrar por área de cobertura
                 </DialogTitle>
               </DialogHeader>
-              <ScrollArea className="flex-1 -mx-6 px-6">
+              <div className="flex-1 overflow-y-auto -mx-6 px-6">
                 <div className="py-1 space-y-6">
                   <div>
                     <div className="grid grid-cols-3 gap-2">
@@ -802,27 +802,29 @@ export function CompanyFilters({
                       <h3 className="mb-3 text-sm font-medium">
                         Seleccionar Regiones
                       </h3>
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      <div className="space-y-4">
                         {allRegions.map((region) => (
                           <div
                             key={region.id}
-                            className="flex items-center space-x-2"
+                            className="space-y-2"
                           >
-                            <input
-                              type="checkbox"
-                              id={`region-${region.id}`}
-                              checked={localSelectedRegions.includes(region.id)}
-                              onChange={(e) =>
-                                handleRegionToggle(region.id, e.target.checked)
-                              }
-                              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                            />
-                            <label
-                              htmlFor={`region-${region.id}`}
-                              className="text-sm leading-none"
-                            >
-                              {region.name}
-                            </label>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={`region-${region.id}`}
+                                checked={localSelectedRegions.includes(region.id)}
+                                onChange={(e) =>
+                                  handleRegionToggle(region.id, e.target.checked)
+                                }
+                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                              />
+                              <label
+                                htmlFor={`region-${region.id}`}
+                                className="font-medium text-sm"
+                              >
+                                {region.name}
+                              </label>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -836,7 +838,10 @@ export function CompanyFilters({
                       </h3>
                       <div className="space-y-4">
                         {allRegions.map((region) => (
-                          <div key={region.id} className="space-y-2">
+                          <div 
+                            key={region.id} 
+                            className="space-y-2"
+                          >
                             <div className="flex items-center space-x-2">
                               <input
                                 type="checkbox"
@@ -850,7 +855,7 @@ export function CompanyFilters({
                                     e.target.checked
                                   )
                                 }
-                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                className="h-4 w-4 border-primary text-primary focus:ring-primary"
                               />
                               <label
                                 htmlFor={`region-commune-${region.id}`}
@@ -898,7 +903,7 @@ export function CompanyFilters({
                     </div>
                   )}
                 </div>
-              </ScrollArea>
+              </div>
               <div className="flex justify-between px-6 py-4 border-t">
                 <Button
                   type="button"
