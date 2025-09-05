@@ -26,6 +26,7 @@ import {
   Laptop,
   SunDim,
   Tag,
+  TvMinimalPlay,
   LeafyGreen as LeafyGreen2,
 } from "lucide-react";
 
@@ -41,6 +42,7 @@ export const CATEGORY_COLORS: Record<string, string> = {
   Cocina: "text-gray-500",
   "Cosmética e higiene personal": "text-purple-600",
   Deportes: "text-yellow-600",
+  Entretenimiento: "text-red-500",
   Ferias: "text-green-600",
   "Gestión de residuos": "text-gray-500",
   "Gestión del agua": "text-blue-600",
@@ -84,6 +86,7 @@ export const CATEGORY_ICONS: Record<
   Cocina: Utensils,
   "Cosmética e higiene personal": SprayCan,
   Deportes: Trophy,
+  Entretenimiento: TvMinimalPlay,
   Ferias: Tent,
   "Gestión de residuos": Trash2,
   "Gestión del agua": Droplets,
