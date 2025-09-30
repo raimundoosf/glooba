@@ -4,28 +4,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { SignInButton } from "@clerk/nextjs";
 import {
-  CloudOff,
-  Handshake,
-  Users,
-  Search,
-  ArrowRight,
-  Leaf,
-  HandHeart,
-  Recycle,
-  MessagesSquare,
-  Info,
-  ShieldCheck,
-  Users2,
-  MapPin,
   BarChart3 as BarChart4,
-  MessageSquare,
-  Lightbulb,
-  UserPlus,
+  Building,
   ChartNoAxesCombined,
-  TrendingUp,
   Goal,
+  Lightbulb,
+  MapPin,
+  MessageSquare,
+  MessagesSquare,
+  MousePointerClick,
+  Search,
+  ShieldCheck,
+  TrendingUp,
+  UserPlus,
+  Users,
+  Users2,
 } from "lucide-react";
 import Link from "next/link";
+import { TypeAnimation } from "react-type-animation";
 
 export const metadata = {
   title: "Sobre Glooba | Conectando Sostenibilidad",
@@ -73,9 +69,33 @@ export default async function AboutPage() {
               </Button>
             </SignInButton>
           </div>
+        {/* --- Stats Section --- */}
+        <section className="bg-white dark:bg-background px-4 py-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="bg-card dark:bg-card-dark border dark:border-card-dark rounded-lg p-6 flex flex-col items-center text-center shadow-md hover:shadow-lg transition-shadow">
+              <Users className="w-12 h-12 text-success mb-4" />
+              <span className="text-4xl font-bold text-success">{355}</span>
+              <p className="text-lg text-muted-foreground mt-2">Usuarios activos</p>
+            </div>
+            <div className="bg-card dark:bg-card-dark border dark:border-card-dark rounded-lg p-6 flex flex-col items-center text-center shadow-md hover:shadow-lg transition-shadow">
+              <Building className="w-12 h-12 text-success mb-4" />
+              <span className="text-4xl font-bold text-success">+{170}</span>
+              <p className="text-lg text-muted-foreground mt-2">Empresas registradas</p>
+            </div>
+            <div className="bg-card dark:bg-card-dark border dark:border-card-dark rounded-lg p-6 flex flex-col items-center text-center shadow-md hover:shadow-lg transition-shadow">
+              <UserPlus className="w-12 h-12 text-warning mb-4" />
+              <span className="text-4xl font-bold text-warning">{316}</span>
+              <p className="text-lg text-muted-foreground mt-2">Usuarios nuevos</p>
+            </div>
+            <div className="bg-card dark:bg-card-dark border dark:border-card-dark rounded-lg p-6 flex flex-col items-center text-center shadow-md hover:shadow-lg transition-shadow">
+              <MousePointerClick className="w-12 h-12 text-info mb-4" />
+              <span className="text-4xl font-bold text-info">+{2400}</span>
+              <p className="text-lg text-muted-foreground mt-2">Interacciones</p>
+            </div>
+          </div>
+        </section>
           
         </section>
-
         {/* --- What we do --- */}
         <section>
           <div className="text-center max-w-3xl mx-auto mb-8 md:mb-12">
