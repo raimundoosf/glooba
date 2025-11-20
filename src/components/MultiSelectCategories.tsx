@@ -15,15 +15,8 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { getCategoryIcon, getCategoryColor } from '@/lib/constants';
-
-/**
- * Generates a consistent color for a given string
- * @param str - The string to generate a color for
- * @returns A Tailwind CSS color class
- */
-// This function is no longer needed as we now use getCategoryColor
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 /**
  * Props interface for the MultiSelectCategories component
@@ -59,9 +52,8 @@ export function MultiSelectCategories({
   disabled = false,
   className,
   renderBareList = false,
-}: MultiSelectCategoriesProps) {
+}: MultiSelectCategoriesProps): JSX.Element {
   const [open, setOpen] = React.useState(false);
-  const [inputValue, setInputValue] = React.useState('');
   const selectedSet = React.useMemo(() => new Set(selectedCategories), [selectedCategories]);
   const buttonRef = React.useRef<HTMLButtonElement>(null);
 
@@ -84,61 +76,93 @@ export function MultiSelectCategories({
 
   const isMaxSelected = maxSelection && selectedCategories.length >= maxSelection;
 
-  // Define the Command component structure
+  // Define the bare list component for multi-column display
+  const bareListComponent = (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pr-3">
+      {allCategories.map((category) => {
+        const isSelected = selectedSet.has(category);
+        const isDisabledItem = !isSelected && isMaxSelected;
+        const Icon = getCategoryIcon(category);
+        const iconColor = getCategoryColor(category);
+
+        return (
+          <button
+            key={category}
+            type="button"
+            onClick={() => {
+              if (!isDisabledItem) handleSelect(category);
+            }}
+            disabled={isDisabledItem || disabled}
+            className={cn(
+              'flex items-center justify-between p-2 rounded-md text-sm',
+              'transition-colors',
+              isSelected
+                ? 'bg-primary/10 text-primary font-semibold'
+                : 'hover:bg-accent/50',
+              isDisabledItem && 'opacity-50 cursor-not-allowed'
+            )}
+            aria-pressed={isSelected}
+          >
+            <span className="flex items-center gap-2 truncate">
+              <Icon className={`h-5 w-5 ${iconColor}`} />
+              <span className="truncate">{category}</span>
+            </span>
+            {isSelected && <Check className="h-4 w-4" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  // Define the Command component structure for the popover
   const commandComponent = (
     <Command>
       <CommandList>
-        <ScrollArea className="h-[200px]">
-          <CommandGroup>
-            {allCategories.map((category) => {
-              const isSelected = selectedSet.has(category);
-              const isDisabledItem = !isSelected && isMaxSelected;
-
-              return (
-                <CommandItem
-                  key={category}
-                  value={category}
-                  onSelect={() => {
-                    if (!isDisabledItem) handleSelect(category);
-                  }}
-                  disabled={isDisabledItem || disabled}
-                  className={cn(
-                    'flex items-center justify-between',
-                    isDisabledItem && 'opacity-50 cursor-not-allowed',
-                    'px-4 py-2 text-sm'
-                  )}
-                  aria-selected={isSelected}
-                >
-                  <span className="flex items-center gap-2">
-                    {(() => {
-                      const Icon = getCategoryIcon(category);
-                      const iconColor = getCategoryColor(category);
-                      return <Icon className={`h-5 w-5 ${iconColor}`} />;
-                    })()}
-                    <span>{category}</span>
-                  </span>
-                  <div
-                    className={cn(
-                      'flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
-                      isSelected
-                        ? 'bg-primary text-primary-foreground'
-                        : 'opacity-50 [&_svg]:invisible'
-                    )}
-                  >
-                    <Check className="h-3 w-3" />
-                  </div>
-                </CommandItem>
-              );
-            })}
-          </CommandGroup>
-        </ScrollArea>
+        <CommandGroup>
+          {allCategories.map((category) => (
+            <CommandItem
+              key={category}
+              value={category}
+              onSelect={() => {
+                if (!isMaxSelected || selectedSet.has(category)) {
+                  handleSelect(category);
+                }
+              }}
+              disabled={!!(isMaxSelected && !selectedSet.has(category))}
+              className={cn(
+                'flex items-center justify-between',
+                isMaxSelected && !selectedSet.has(category) && 'opacity-50 cursor-not-allowed',
+                'px-4 py-2 text-sm'
+              )}
+              aria-selected={selectedSet.has(category)}
+            >
+              <span className="flex items-center gap-2">
+                {(() => {
+                  const Icon = getCategoryIcon(category);
+                  const iconColor = getCategoryColor(category);
+                  return <Icon className={`h-5 w-5 ${iconColor}`} />;
+                })()}
+                <span>{category}</span>
+              </span>
+              <div
+                className={cn(
+                  'flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
+                  selectedSet.has(category)
+                    ? 'bg-primary text-primary-foreground'
+                    : 'opacity-50 [&_svg]:invisible'
+                )}
+              >
+                <Check className="h-3 w-3" />
+              </div>
+            </CommandItem>
+          ))}
+        </CommandGroup>
       </CommandList>
     </Command>
   );
 
-  // Conditionally render based on renderBareList
   if (renderBareList) {
-    return commandComponent; // Render only the command list
+    return bareListComponent;
   }
 
   // Event handlers

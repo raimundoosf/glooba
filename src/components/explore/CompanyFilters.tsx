@@ -622,7 +622,7 @@ export function CompanyFilters({
                 )}
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] max-h-[80vh] flex flex-col rounded-2xl border-0 shadow-xl">
+            <DialogContent className="sm:max-w-[425px] lg:max-w-[600px] max-h-[80vh] flex flex-col rounded-2xl border-0 shadow-xl">
               <DialogHeader className="px-2">
                 <DialogTitle className="text-lg font-semibold">
                   Filtrar por categoría

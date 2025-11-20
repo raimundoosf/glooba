@@ -5,24 +5,25 @@
 import { getUserByClerkId } from "@/actions/user.action";
 import { getRandomFeaturedCompanies } from "@/actions/explore.action";
 import { currentUser } from "@clerk/nextjs/server";
-import {
-  Bell,
-  LinkIcon,
-  MapPinIcon,
-  Sparkles,
-  Zap
-} from "lucide-react";
+import { Bell, LinkIcon, MapPinIcon, Sparkles, Zap } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 
 // Importar dinámicamente el carrusel para evitar problemas de hidratación
 const FeaturedCompaniesCarousel = dynamic(
-  () => import('@/components/explore/FeaturedCompaniesCarousel'),
-  { ssr: false, loading: () => <div className="h-64 flex items-center justify-center">Cargando empresas...</div> }
+  () => import("@/components/explore/FeaturedCompaniesCarousel"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 flex items-center justify-center">
+        Cargando empresas...
+      </div>
+    ),
+  }
 );
 
 /**
@@ -182,7 +183,7 @@ const UnAuthenticatedSidebar = () => (
         </Button>
         <div className="text-xs text-muted-foreground text-center">
           <p>
-            Disponible en: <span className="font-medium">Octubre 2025</span>
+            Disponible en: <span className="font-medium">Diciembre 2025</span>
           </p>
         </div>
       </CardContent>
@@ -193,7 +194,7 @@ const UnAuthenticatedSidebar = () => (
 // Componente envuelto para manejar la carga de empresas destacadas
 async function FeaturedCompaniesCarouselWrapper() {
   const companies = await getRandomFeaturedCompanies(5);
-  
+
   if (!companies || companies.length === 0) {
     return (
       <div className="text-center py-6 text-sm text-muted-foreground">
